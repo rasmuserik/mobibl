@@ -1,0 +1,39 @@
+# MoBibl
+
+The purpose of this project is to make an app for the public danish libraries. 
+
+Feel free to use the issue tracker (https://github.com/solsort/mobibl/issues), for discussions, comments, suggest features etc.
+
+## Status
+
+The project starts medio February 2016. Nothing is up and running yet.
+
+## Roadmap
+### Version 0.1
+
+- Functionality
+    - Search for library materials, order books
+    - News / calendar for library
+    - Locate library
+    - Patron status / renew books, etc.
+- Backend
+    - search etc. must build on real services
+    - actual patron status, order books etc. might be mocked if we do not have access to those APIs yet
+- Platforms
+    - HTML5 browser app
+    - Packagede Cordova app
+
+### Later versions
+
+- Functionality
+    - Exploration of related materials
+- Platforms
+    - react-native apps (reusing all logic, but rewritten UI using native widgets on Android/iOS)
+
+# Openness
+
+The project will be released under a **proper open source license** when/if the Danish Public Library Sector decides, that they want to use the app, and pays for the development cost.
+
+Current versions is released as Creative Commons BY-NC-ND, and is copyrighted by solsort.com ApS.
+
+The development happens in full openness on the project github repository, and release status, features etc. can be seen/discussed here.

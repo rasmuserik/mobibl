@@ -1,4 +1,6 @@
-(defproject solsort.mobibl/mobibl "0.0.1"
+(defproject solsort.mobibl/mobibl "0.0.1-SNAPSHOT"
+  :license "Creative Commons BY-NC-ND"
+
   :dependencies
   [[org.clojure/clojure "1.8.0"]
    [org.clojure/clojurescript "1.7.170"]
