@@ -24,6 +24,12 @@ The project starts medio February 2016. Nothing is up and running yet.
     - HTML5 browser app
     - Packagede Cordova app
 
+Wireframes:
+
+<img src=doc/wireframes/search.jpg width=20%>
+<img src=doc/wireframes/work.jpg width=20%>
+<img src=doc/wireframes/library.jpg width=20%>
+<img src=doc/wireframes/patron-status.jpg width=20%>
 ### Later versions
 
 - Functionality
