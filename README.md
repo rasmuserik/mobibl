@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/solsort/mobibl.png?label=ready&title=Ready)](https://waffle.io/solsort/mobibl)
 # MoBibl
 
 The purpose of this project is to make an app for the public danish libraries. 
