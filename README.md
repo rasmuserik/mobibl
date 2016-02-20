@@ -26,10 +26,10 @@ The project starts medio February 2016. Nothing is up and running yet.
 
 Wireframes:
 
-<img style="vertical-align:top; width:20%" src=doc/wireframes/search.jpg>
-<img style="vertical-align:top; width:20%" src=doc/wireframes/work.jpg>
-<img style="vertical-align:top; width:20%" src=doc/wireframes/library.jpg>
-<img style="vertical-align:top; width:20%" src=doc/wireframes/patron-status.jpg>
+<img width=20% align=top src=doc/wireframes/search.jpg>
+<img width=20% align=top src=doc/wireframes/work.jpg>
+<img width=20% align=top src=doc/wireframes/library.jpg>
+<img width=20% align=top src=doc/wireframes/patron-status.jpg>
 ### Later versions
 
 - Functionality
