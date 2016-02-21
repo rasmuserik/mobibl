@@ -50,10 +50,12 @@ The development happens in full openness on the project github repository, and r
 # Prelude of literate source code
 
     (ns solsort.mobibl.mobibl
-      (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]])
+      (:require-macros
+        [cljs.core.async.macros :refer [go go-loop alt!]]
+        [reagent.ratom :as ratom :refer  [reaction]])
       (:require
         [solsort.util
-         :refer 
+         :refer
          [<ajax <seq<! js-seq normalize-css load-style! put!close! parse-json-or-nil log page-ready render
           dom->clj]]
         [reagent.core :as reagent :refer []]
@@ -72,7 +74,7 @@ To be extracted into utility library.
 As we are starting out implementing the views, we just have dummy data here so far.
 
     (def sample-db
-      {:route "work"
+      {:route ["work" "870970-basis:28934297"]
        :current
        {:search-query "Murakami"
         :work "870970-basis:28934297"
@@ -97,11 +99,12 @@ As we are starting out implementing the views, we just have dummy data here so f
           {:name "Lydbog (online) (bind 2)" :availability :available}
           {:name "Lydbog (online) (bind 3)" :availability :available}]}}
        })
+    (dispatch [:reset-db sample-db])
 
 # Handlers
 
     (register-handler :reset-db (fn [_ [_ db]] db))
-    (register-handler :route (fn [_ [_ db]] db))
+    (register-handler :route (fn [db [_ route]] (assoc db :route route)))
 
 # Subscriptions
 
@@ -109,33 +112,32 @@ As we are starting out implementing the views, we just have dummy data here so f
     (register-sub :current-library (fn [db] (reaction (get-in @db [:current :library]))))
     (register-sub :current-work (fn [db] (reaction (get-in @db [:current :work]))))
     (register-sub :current-query (fn [db] (reaction (get-in @db [:current :query]))))
-    (register-sub :work (fn [db [_ ting-id]] (reaction (get-in @db [:work ting-id] {}))))
+    (register-sub :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
 
 # HTML5 view
 
 ## Styling
 
-## Events/routing
-
 ## Components
 
     (defn search []
       [:div
-       [input {:value @(subscribe [:current-query])}]
+       [:input {:value @(subscribe [:current-query])}]
        "..."])
 
     (defn work [id]
       (let [work-id @(subscribe [:current-work])
             work @(subscribe [:work work-id]) ]
-       [:div
-       [:div "TODO: Work history here"]
-       [:h1 (:title work)]
-       [:div "af " (:creator work)]
-       "..."]))
+        [:div
+         [:div "TODO: Work history here"]
+         [:h1 (:title work)]
+         [:div "af " (:creator work)]
+         [:img {:src (:cover-url work)}]
+         "..."]))
 
     (defn library []
       [:div
-       [:h1 @(subscribe :current-library)]
+       [:h1 @(subscribe [:current-library])]
        "..."])
     (defn patron []
       [:div
@@ -143,11 +145,13 @@ As we are starting out implementing the views, we just have dummy data here so f
        "..."])
 
     (defn app []
-      (case @(subscribe :route)
+      (case (first @(subscribe [:route]))
         "library" [library]
         "patron" [patron]
         "work" [work]
-        "search" [search]))
+        "search" [search]
+        [search]
+        ))
 
 ## Execute and events
     (render [app])
