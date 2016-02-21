@@ -23,7 +23,8 @@
   :clean-targets ^{:protect false} 
   ["resources/public/out"
    "resources/public/index.js"
-   "resources/public/test.js"
+   "resources/public/tests.js"
+   "resources/public/out-tests"
    "figwheel_server.log"
    "out/"
    "target/"]
