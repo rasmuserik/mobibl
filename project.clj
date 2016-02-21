@@ -23,6 +23,8 @@
   :clean-targets ^{:protect false} 
   ["resources/public/out"
    "resources/public/index.js"
+   "resources/public/tests.js"
+   "resources/public/out-tests"
    "figwheel_server.log"
    "target/"]
 
@@ -47,6 +49,7 @@
     {:id "test"
      :source-paths ["src" "test"]
      :compiler {:output-to "resources/public/tests.js"
+                :output-dir "resources/public/out-tests"
                 :main solsort.mobibl.runner
                 :optimizations :none}}
     {:id "dist"
