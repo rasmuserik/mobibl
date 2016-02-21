@@ -9,14 +9,14 @@
    [cljsjs/showdown "0.4.0-1"]
    [solsort/util "0.1.2-SNAPSHOT"]
    [reagent "0.5.1"]
-   [re-frame "0.6.0"]
-   ]
+   [re-frame "0.6.0"]]
 
   :plugins
   [[lein-cljsbuild "1.1.1"]
    [lein-ancient "0.6.8"]
    [lein-figwheel "0.5.0-2"]
-   [lein-kibit "0.1.2"]]
+   [lein-kibit "0.1.2"]
+   [lein-doo "0.1.6"]]
 
   :source-paths ["src/"]
 
@@ -38,6 +38,11 @@
                 :output-to "resources/public/index.js"
                 :output-dir "resources/public/out"
                 :source-map-timestamp true }}
+    {:id "test"
+     :source-paths ["src" "test"]
+     :compiler {:output-to "resources/public/tests.js"
+                :main solsort.mobibl.runner
+                :optimizations :none}}
     {:id "dist"
      :source-paths ["src"]
      :compiler {:output-to "index.js"
