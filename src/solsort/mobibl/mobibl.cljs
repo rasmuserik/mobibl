@@ -50,13 +50,16 @@
 ;; # Prelude of literate source code
 ;;
 (ns solsort.mobibl.mobibl
-  (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]])
+  (:require-macros
+    [cljs.core.async.macros :refer [go go-loop alt!]]
+    [reagent.ratom :as ratom :refer  [reaction]])
   (:require
     [solsort.util
-     :refer 
+     :refer
      [<ajax <seq<! js-seq normalize-css load-style! put!close! parse-json-or-nil log page-ready render
       dom->clj]]
     [reagent.core :as reagent :refer []]
+    [re-frame.core :as re-frame :refer  [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
@@ -71,7 +74,7 @@
 ;; As we are starting out implementing the views, we just have dummy data here so far.
 
 (def sample-db
-  {:route "work"
+  {:route ["work" "870970-basis:28934297"]
    :current
    {:search-query "Murakami"
     :work "870970-basis:28934297"
@@ -96,11 +99,12 @@
       {:name "Lydbog (online) (bind 2)" :availability :available}
       {:name "Lydbog (online) (bind 3)" :availability :available}]}}
    })
+(dispatch [:reset-db sample-db])
 
 ;; # Handlers
 
 (register-handler :reset-db (fn [_ [_ db]] db))
-(register-handler :route (fn [_ [_ db]] db))
+(register-handler :route (fn [db [_ route]] (assoc db :route route)))
 
 ;; # Subscriptions
 
@@ -108,45 +112,46 @@
 (register-sub :current-library (fn [db] (reaction (get-in @db [:current :library]))))
 (register-sub :current-work (fn [db] (reaction (get-in @db [:current :work]))))
 (register-sub :current-query (fn [db] (reaction (get-in @db [:current :query]))))
-(register-sub :work (fn [db [_ ting-id]] (reaction (get-in @db [:work ting-id] {}))))
+(register-sub :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
 
 ;; # HTML5 view
 
 ;; ## Styling
 
-;; ## Events/routing
-
 ;; ## Components
 
 (defn search []
   [:div
-   [input {:value }]
+   [:input {:value @(subscribe [:current-query])}]
    "..."])
 
 (defn work [id]
   (let [work-id @(subscribe [:current-work])
         work @(subscribe [:work work-id]) ]
-   [:div
-   [:div "TODO: Work history here"]
-   [:h1 (:title work)]
-   [:div "af " (:creator work)]
-   "..."]))
+    [:div
+     [:div "TODO: Work history here"]
+     [:h1 (:title work)]
+     [:div "af " (:creator work)]
+     [:img {:src (:cover-url work)}]
+     "..."]))
 
 (defn library []
   [:div
-   [:h1 @(subscribe :current-library)]
+   [:h1 @(subscribe [:current-library])]
    "..."])
 (defn patron []
   [:div
    [:h1 "Låner status"]
    "..."])
 
-(defn app
-  (case @(subscribe :route)
+(defn app []
+  (case (first @(subscribe [:route]))
     "library" [library]
     "patron" [patron]
     "work" [work]
-    "search" [search]))
+    "search" [search]
+    [search]
+    ))
 
 ;; ## Execute and events
 (render [app])
