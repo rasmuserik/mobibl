@@ -25,3 +25,6 @@ cp -a platforms/browser/www/cordova* resources/public/
 #find assets -type f >> index.appcache
 #echo "index.js" >> index.appcache
 #find */config.xml >> index.appcache
+
+cat src/solsort/mobibl/mobibl.cljs | 
+  sed -e "s/^[^/]/    \0/" | sed -e s'/^ *[;][;] \?//' > README.md
