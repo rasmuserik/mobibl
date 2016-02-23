@@ -1,18 +1,21 @@
 (ns solsort.mobibl.mock-data)
 ;; # DB
 ;;
-;; As we are starting out implementing the views, we just have dummy data here so far.
+;; As we are starting out implementing the views, we just have dummy data here
+;; so far.  The precise format and content of this data has not yet been
+;; determined.
+;;
 (def sample-db
-  {:patron 
-    {:reservations
-     [{:id "123456-basis:12345678"}]}}
-  {:route ["work" "870970-basis:28934297"]
+  {
+   :route ["work" "870970-basis:28934297"]
+   ;:route ["patron" "870970-basis:28934297"]
+   :patron 
+   {:reservations
+    [{:id "123456-basis:12345678"}]}
    :current
    {:search-query "Murakami"
     :work "870970-basis:28934297"
     :library "Københavns Hovedbibliotek"}
-   :patron
-
    :works
    {"870970-basis:28934297"
     {:title "1Q84"
@@ -39,9 +42,9 @@
      :description "Regn den ud"
      :keywords ["Matematik" "Regne"]
      :location "Faglitteratur"
-     :languages: ["Dansk"]
+     :languages ["Dansk"]
      :editions
-     [ {:name "Bog (bind 3)" :availability :available}
+     [{:name "Bog (bind 3)" :availability :available}
       {:name "Lydbog (cd) (bind 1)" :availability :available}
       {:name "Lydbog (cd) (bind 2)" :availability :available}
       {:name "Lydbog (cd) (bind 3)" :availability :available}
@@ -53,7 +56,7 @@
      :description "Musik"
      :keywords ["Rock"]
      :location "Musik"
-     :languages: ["Engelsk"]
+     :languages ["Engelsk"]
      :editions
      [{:name "Lydbog (cd) (bind 1)" :availability :available}
       {:name "Lydbog (cd) (bind 2)" :availability :loaned}
@@ -65,7 +68,7 @@
      :description "Musik"
      :keywords ["Rock"]
      :location "Musik"
-     :languages: ["Engelsk"]
+     :languages ["English"]
      :editions
      [{:name "Lydbog (cd) (bind 1)" :availability :loaned}
       {:name "Lydbog (cd) (bind 2)" :availability :available}
