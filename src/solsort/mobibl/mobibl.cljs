@@ -54,7 +54,6 @@
     [cljs.core.async.macros :refer [go go-loop alt!]]
     [reagent.ratom :as ratom :refer  [reaction]])
   (:require
-<<<<<<< 2bcdbd90248cfc195b777286dc71434808065def
     [solsort.util
      :refer
      [<ajax <seq<! js-seq normalize-css load-style! put!close! parse-json-or-nil log page-ready render
