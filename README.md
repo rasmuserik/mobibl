@@ -9,9 +9,15 @@ Feel free to use the issue tracker (https://github.com/solsort/mobibl/issues), f
 ## Status
 
 The work on the project has started. No public demo is available yet.
+# Contributing
+
+TODO: this is under rewrite. Make a getting started guide, for hacking on the project, including workflow description, different kinds of tases etc.
+
+The development happens in full openness on the project github repository, and release status, features etc. can be seen/discussed here.
+
 # Openness
 
-The project will be released under a **proper MIT open source license** when/if the Danish Public Library Sector decides, that they want to use the app, and pays for the development cost. Until then it is only released as (Creative Commons BY-NC-ND)[https://creativecommons.org/licenses/by-nc-nd/3.0/], and copyrighted by solsort.com ApS. The development cost calculated from actual number hours used on the project, plus expenses such as: transport to meetings with stakeholders, buying of graphics assets for the projects, etc. Contributors should keep track of how many hours we use on the project.
+The project will be released under a **proper MIT open source license** when/if the Danish Public Library Sector decides, that they want to use the app, and pays for the development cost. Until then it is only released as [Creative Commons BY-NC-ND](https://creativecommons.org/licenses/by-nc-nd/3.0/), and copyrighted by solsort.com ApS. The development cost calculated from actual number hours used on the project, plus expenses such as: transport to meetings with stakeholders, buying of graphics assets for the projects, etc. Contributors should keep track of how many hours we use on the project.
 # Prelude of literate source code
 
     (ns solsort.mobibl.mobibl
@@ -85,7 +91,7 @@ As we are starting out implementing the views, we just have dummy data here so f
 
 ## Components
 
-### Searcy
+### Search
 <img width=20% align=top src=doc/wireframes/search.jpg>
 
     (defn search []
@@ -95,6 +101,7 @@ As we are starting out implementing the views, we just have dummy data here so f
 
 ### Work
 <img width=20% align=top src=doc/wireframes/work.jpg>
+
     (defn work [id]
       (let [work-id @(subscribe [:current-work])
             work @(subscribe [:work work-id]) ]
@@ -107,6 +114,7 @@ As we are starting out implementing the views, we just have dummy data here so f
 
 ### Library
 <img width=20% align=top src=doc/wireframes/library.jpg>
+
     (defn library []
       [:div
        [:h1 @(subscribe [:current-library])]
@@ -114,6 +122,7 @@ As we are starting out implementing the views, we just have dummy data here so f
 
 ### Status
 <img width=20% align=top src=doc/wireframes/patron-status.jpg>
+
     (defn patron []
       [:div
        [:h1 "Låner status"]

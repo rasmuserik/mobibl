@@ -71,7 +71,7 @@
 
 ;; ## Components
 
-;; ### Searcy
+;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
 (defn search []
