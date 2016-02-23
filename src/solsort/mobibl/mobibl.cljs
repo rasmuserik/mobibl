@@ -64,14 +64,13 @@
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
     [solsort.mobibl.mock-data :refer [sample-db]]))
 
-
 ;; # Handlers
-
 
 (register-handler :reset-db (fn [_ [_ db]] db))
 (register-handler :route (fn [db [_ route]] (assoc db :route route)))
 
 ;; Initialise the database with sample data
+
 (dispatch [:reset-db sample-db])
 
 ;; # Subscriptions
@@ -81,6 +80,12 @@
 (register-sub :current-work (fn [db] (reaction (get-in @db [:current :work]))))
 (register-sub :current-query (fn [db] (reaction (get-in @db [:current :query]))))
 (register-sub :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
+(register-sub :reservations
+              (fn [db [_ ids]] (reaction (get-in @db [:patron :reservations]))))
+(register-sub :reservations-arrived
+              (fn [db [_ ids]] (reaction (get-in @db [:patron :reservations-arrived]))))
+(register-sub :borrowed
+              (fn [db [_ ids]] (reaction (get-in @db [:patron :borrowed]))))
 
 ;; # HTML5 view
 
@@ -110,22 +115,40 @@
 
 (defn patron []
   (let [reservations-arrived (subscribe [:reservations-arrived])
-        borrowed       (subscribe [:borrowed])
+        borrowed             (subscribe [:borrowed])
         reservations         (subscribe [:reservations])]
     (fn []
         [:div
          [:div {:class "menu"}
           [:button {:type "submit"} "Log Ud"]]
          [:h1 "Låner status"]
-         [:div 
+         [:div
           [:h2 "Hjemkomne"]
-          [:div ]]
+          (into
+           [:ul]
+           (for [ra @reservations-arrived]
+                [:li
+                 [:a {:href (str "#/patron/arrived/" (:id ra))} (:title ra)]]))]
          [:div
           [:h2 "Hjemlån"]
-          [:div ]]
+          [:div
+           [:a {:href (str "#/patron/borrowed/renew/all")} "Forny Alle"]]
+          (into
+           [:ul]
+           (for [b @borrowed]
+                [:li
+                 [:a {:href (str "#/patron/borrowed/" (:id b))} (:title b)]
+                 [:span {:style {:margin-left "1em"}}
+                  [:a {:href (str "#/patron/borrowed/renew/" (:id b))} "Forny"]]]))]
          [:div
           [:h2 "Bestillinger"]
-          [:div ]]])))
+          (into
+           [:ul]
+           (for [r @reservations]
+                [:li
+                 [:a {:href (str "#/patron/reservation/" (:id r))} (:title r)]
+                 [:span {:style {:margin-left "1em"}}
+                  [:a {:href (str "#/patron/reservation/remove/" (:id r))} "Slet"]]]))]])))
 
 (defn app []
   (case (first @(subscribe [:route]))
