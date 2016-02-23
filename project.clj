@@ -2,6 +2,9 @@
 (def server-port
   (read-string (or (System/getenv "FIGWHEEL_SERVER_PORT") "3449")))
 
+(def nrepl-port
+  (read-string (or (System/getenv "FIGWHEEL_NREPL_PORT") "7888")))
+
 (defproject solsort.mobibl/mobibl "0.0.1-SNAPSHOT"
   :license "Creative Commons BY-NC-ND"
 
@@ -66,5 +69,5 @@
                 :externs ["externs.js"]
                 :optimizations :advanced
                 :pretty-print false}}]}
-                :figwheel {:nrepl-port 7888
+                :figwheel {:nrepl-port ~nrepl-port
                             :server-port ~server-port})
