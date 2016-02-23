@@ -61,7 +61,7 @@ If you are making major contributions to the project, please keep track of the h
 Current version is released under [Creative Commons BY-NC-ND](https://creativecommons.org/licenses/by-nc-nd/3.0/), and copyrighted by solsort.com ApS.
 
 The project will be released under a **proper MIT open source license** if the Danish Public Library Sector, or someone else, decides, that they want to use the app, and pays for the development cost. 
-# Prelude of literate source code
+# mobibl.cljs
 
     (ns solsort.mobibl.mobibl
       (:require-macros
@@ -134,11 +134,26 @@ As we are starting out implementing the views, we just have dummy data here so f
 
 ## Components
 
+### Tab bar - menu in bottom of the screen
+
+    (defn tabbar-button [id s]
+       [:a {:href (str "#" id)} 
+        [:img {:src (str "assets/" id "-icon.png")
+               :alt s}]]
+      )
+    (defn tabbar []
+      [:div.tabbar
+       [tabbar-button "search" "Søg"]
+       [tabbar-button "work" "Materiale"]
+       [tabbar-button "library" "Bibliotek"]
+       [tabbar-button "status" "Status"]])
+
 ### Search
 <img width=20% align=top src=doc/wireframes/search.jpg>
 
     (defn search []
       [:div
+       [tabbar]
        [:input {:value @(subscribe [:current-query])}]
        "..."])
 
@@ -149,17 +164,20 @@ As we are starting out implementing the views, we just have dummy data here so f
       (let [work-id @(subscribe [:current-work])
             work @(subscribe [:work work-id]) ]
         [:div
+         [tabbar]
          [:div "TODO: Work history here"]
          [:h1 (:title work)]
          [:div "af " (:creator work)]
          [:img {:src (:cover-url work)}]
          "..."]))
 
+
 ### Library
 <img width=20% align=top src=doc/wireframes/library.jpg>
 
     (defn library []
       [:div
+       [tabbar]
        [:h1 @(subscribe [:current-library])]
        "..."])
 
@@ -168,19 +186,19 @@ As we are starting out implementing the views, we just have dummy data here so f
 
     (defn patron []
       [:div
+       [tabbar]
        [:h1 "Låner status"]
        "..."])
 
 ### Main App entry point
     (defn app []
       (case (first @(subscribe [:route]))
-        "library" [library]
-        "patron" [patron]
-        "work" [work]
         "search" [search]
+        "work" [work]
+        "library" [library]
+        "status" [patron]
         [search]
         ))
 
 ## Execute and events
     (render [app])
-
