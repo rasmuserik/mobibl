@@ -62,7 +62,8 @@
     [reagent.core :as reagent :refer []]
     [re-frame.core :as re-frame :refer  [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
-    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
+    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
+    [soda-ash.element :as soda]))
 
 ;; # Utility functions
 ;;
@@ -140,6 +141,7 @@
   [:div
    [:h1 @(subscribe [:current-library])]
    "..."])
+
 (defn patron []
   [:div
    [:h1 "Låner status"]

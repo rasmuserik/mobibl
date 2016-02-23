@@ -9,7 +9,8 @@
    [cljsjs/showdown "0.4.0-1"]
    [solsort/util "0.1.2-SNAPSHOT"]
    [reagent "0.5.1"]
-   [re-frame "0.6.0"]]
+   [re-frame "0.6.0"]
+   [soda-ash "0.1.0-beta"]]
 
   :plugins
   [[lein-cljsbuild "1.1.1"]
