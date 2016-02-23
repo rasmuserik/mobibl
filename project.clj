@@ -20,7 +20,8 @@
    [lein-ancient "0.6.8"]
    [lein-figwheel "0.5.0-2"]
    [lein-kibit "0.1.2"]
-   [lein-doo "0.1.6"]]
+  ; [lein-doo "0.1.6"]
+   ]
 
   :source-paths ["src/" "test/"]
 
@@ -33,7 +34,7 @@
    "out/"
    "target/"]
 
-  :doo {:build "test"}
+  ;:doo {:build "test"}
 
   :profiles
   {:dev  {:dependencies  [[com.cemerick/piggieback "0.2.1"]
