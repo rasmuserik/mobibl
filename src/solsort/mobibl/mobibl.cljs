@@ -81,6 +81,7 @@
 
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
+
 (defn work [id]
   (let [work-id @(subscribe [:current-work])
         work @(subscribe [:work work-id]) ]
@@ -93,6 +94,7 @@
 
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
+
 (defn library []
   [:div
    [:h1 @(subscribe [:current-library])]
@@ -100,6 +102,7 @@
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
+
 (defn patron []
   [:div
    [:h1 "Låner status"]
