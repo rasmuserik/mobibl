@@ -62,63 +62,17 @@
     [re-frame.core :as re-frame :refer  [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
-    [soda-ash.element :as soda]))
+    [solsort.mobibl.mock-data :refer [sample-db]]))
 
-;; # Utility functions
-;;
-;; To be extracted into utility library.
-
-; generic code here
-
-;; # DB
-;;
-;; As we are starting out implementing the views, we just have dummy data here so far.
-
-(def sample-db
-
-  {:route ["work" "870970-basis:28934297"]
-   :current
-   {:search-query "Murakami"
-    :work "870970-basis:28934297"
-    :library "Københavns Hovedbibliotek"}
-   :patron
-   {:patron 
-    {:reservations
-     [{id: "123456-basis:12345678"
-       
-       }]}}
-   :works
-   {"870970-basis:28934297"
-    {:title "1Q84"
-     :creator "Haruki Murakami"
-     :cover-url "http://www.bogpriser.dk/Covers/202/9788779559202.jpg"
-     :description "Aomame er en 30-årig smart pige, uddannet kampsportsinstruktør, men arbejder p.t. som lejemorder. Tengo er matematiklærer med forfatterdrømme. Han skal omskrive en sær 17-årig piges sære historie. Begge hovedfigurer oplever, at deres virkelighed forvrides let, hvad påvirker deres virkelighed?"
-     :keywords ["Kultur" "Kærlighed" "Magisk Realisme" "Magt" "Parallelle Verdener" "Skrivekunst" "Japan" "1980-1989"]
-     :location "Skønlitteratur"
-     :language "Dansk"
-     :editions
-     [{:name "Bog (bind 1)" :availability :available}
-      {:name "Bog (bind 2)" :availability :loaned}
-      {:name "Bog (bind 3)" :availability :available}
-      {:name "Lydbog (cd) (bind 1)" :availability :available}
-      {:name "Lydbog (cd) (bind 2)" :availability :available}
-      {:name "Lydbog (cd) (bind 3)" :availability :available}
-      {:name "Lydbog (online) (bind 1)" :availability :available}
-      {:name "Lydbog (online) (bind 2)" :availability :available}
-      {:name "Lydbog (online) (bind 3)" :availability :available}]}
-    {:title "Harry Potter 5 - Harry Potter og Fønixordenen"
-     :creator "Some Person"
-     :cover-url "http://www.bogpriser.dk/Covers/260/9788702173260.jpg"
-      :description "Harry Potter er desperat efter at komme tilbage til Hogwarts og finde ud af, hvorfor Ron og Hermione har været så hemmelighedsfulde hele sommeren. Men det femte år på Hogwarts bliver hverken let eller behageligt for Harry.  Ministeriet for Magi nægter at tro på Harrys og Dumbledores forsikringer om, at Voldemort er vendt tilbage.  Ministeren sender en repræsentant til skolen, som skal sørge for at udbrede Ministeriets holdning og lukke munden på Harry - med alle midler. Og med katastrofale følger..."
-     }
-    }
-   })
-(dispatch [:reset-db sample-db])
 
 ;; # Handlers
 
+
 (register-handler :reset-db (fn [_ [_ db]] db))
 (register-handler :route (fn [db [_ route]] (assoc db :route route)))
+
+;; Initialise the database with sample data
+(dispatch [:reset-db sample-db])
 
 ;; # Subscriptions
 
