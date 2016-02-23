@@ -16,7 +16,6 @@ All kinds of contributions are welcome, including:
 Labels are used to make it easier to find tasks within different areas.
 If you cannot find a task that fits you, feel free to make one, or create an issue about a task missing within the area you would like to contribute in.
 
-
 ## Workflow
 
 We use the following labels to keep track of issue status.
@@ -42,3 +41,7 @@ Recommended readings:
 - http://reagent-project.github.io/
 - https://github.com/Day8/re-frame/wiki/Creating%20Reagent%20Components
 - ... feel free to add more references here
+
+----
+
+If you are making major contributions to the project, please keep track of the hours/effort you use (in case we apply for or get some funding for the project).

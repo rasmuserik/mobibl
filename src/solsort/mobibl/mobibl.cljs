@@ -1,4 +1,4 @@
-;; # Prelude of literate source code
+;; # mobibl.cljs
 ;;
 (ns solsort.mobibl.mobibl
   (:require-macros

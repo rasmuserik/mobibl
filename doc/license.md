@@ -1,3 +1,0 @@
-# Openness
-
-The project will be released under a **proper MIT open source license** when/if the Danish Public Library Sector decides, that they want to use the app, and pays for the development cost. Until then it is only released as [Creative Commons BY-NC-ND](https://creativecommons.org/licenses/by-nc-nd/3.0/), and copyrighted by solsort.com ApS. The development cost calculated from actual number hours used on the project, plus expenses such as: transport to meetings with stakeholders, buying of graphics assets for the projects, etc. Contributors should keep track of how many hours we use on the project.
