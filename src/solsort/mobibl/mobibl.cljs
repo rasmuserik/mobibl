@@ -142,9 +142,23 @@
    "..."])
 
 (defn patron []
-  [:div
-   [:h1 "Låner status"]
-   "..."])
+  (let [orders-arrived (subscribe [:orders-arrived])
+        borrowed       (subscribe [:borrowed])
+        orders         (subscribe [:orders])]
+    (fn []
+        [:div
+         [:div {:class "menu"}
+          [button "Log Ud"]]
+         [:h1 "Låner status"]
+         [:div 
+          [:h2 "Hjemkomne"]
+          [:div ]]
+         [:div
+          [:h2 "Hjemlån"]
+          [:div ]]
+         [:div
+          [:h2 "Bestillinger"]
+          [:div ]]])))
 
 (defn app []
   (case (first @(subscribe [:route]))
