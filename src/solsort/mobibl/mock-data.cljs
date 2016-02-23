@@ -7,11 +7,16 @@
 ;;
 (def sample-db
   {
-   :route ["work" "870970-basis:28934297"]
-   ;:route ["patron" "870970-basis:28934297"]
+   ; :route ["work" "870970-basis:28934297"]
+   :route ["patron" "870970-basis:28934297"]
    :patron 
    {:reservations
-    [{:id "123456-basis:12345678"}]}
+    [{:id "775100-katalog:28934572" :title "A momentary lapse of reason"}]
+    :reservations-arrived
+    [{:id "775100-katalog:50643662" :title "Matematik i virkeligheden"}
+     {:id "775100-katalog:10260744" :title "Ummagumma"} ]
+    :borrowed
+    [{:id "870970-basis:28934297" :title "1Q84"}]}
    :current
    {:search-query "Murakami"
     :work "870970-basis:28934297"
