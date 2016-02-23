@@ -75,11 +75,18 @@
 ;; As we are starting out implementing the views, we just have dummy data here so far.
 
 (def sample-db
+
   {:route ["work" "870970-basis:28934297"]
    :current
    {:search-query "Murakami"
     :work "870970-basis:28934297"
     :library "Københavns Hovedbibliotek"}
+   :patron
+   {:patron 
+    {:reservations
+     [{id: "123456-basis:12345678"
+       
+       }]}}
    :works
    {"870970-basis:28934297"
     {:title "1Q84"
@@ -98,7 +105,13 @@
       {:name "Lydbog (cd) (bind 3)" :availability :available}
       {:name "Lydbog (online) (bind 1)" :availability :available}
       {:name "Lydbog (online) (bind 2)" :availability :available}
-      {:name "Lydbog (online) (bind 3)" :availability :available}]}}
+      {:name "Lydbog (online) (bind 3)" :availability :available}]}
+    {:title "Harry Potter 5 - Harry Potter og Fønixordenen"
+     :creator "Some Person"
+     :cover-url "http://www.bogpriser.dk/Covers/260/9788702173260.jpg"
+      :description "Harry Potter er desperat efter at komme tilbage til Hogwarts og finde ud af, hvorfor Ron og Hermione har været så hemmelighedsfulde hele sommeren. Men det femte år på Hogwarts bliver hverken let eller behageligt for Harry.  Ministeriet for Magi nægter at tro på Harrys og Dumbledores forsikringer om, at Voldemort er vendt tilbage.  Ministeren sender en repræsentant til skolen, som skal sørge for at udbrede Ministeriets holdning og lukke munden på Harry - med alle midler. Og med katastrofale følger..."
+     }
+    }
    })
 (dispatch [:reset-db sample-db])
 
@@ -142,13 +155,13 @@
    "..."])
 
 (defn patron []
-  (let [orders-arrived (subscribe [:orders-arrived])
+  (let [reservations-arrived (subscribe [:reservations-arrived])
         borrowed       (subscribe [:borrowed])
-        orders         (subscribe [:orders])]
+        reservations         (subscribe [:reservations])]
     (fn []
         [:div
          [:div {:class "menu"}
-          [button "Log Ud"]]
+          [:button {:type "submit"} "Log Ud"]]
          [:h1 "Låner status"]
          [:div 
           [:h2 "Hjemkomne"]
