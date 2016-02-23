@@ -26,5 +26,9 @@ cp -a platforms/browser/www/cordova* resources/public/
 #echo "index.js" >> index.appcache
 #find */config.xml >> index.appcache
 
-cat src/solsort/mobibl/mobibl.cljs | 
-  sed -e "s/^[^/]/    \0/" | sed -e s'/^ *[;][;] \?//' > README.md
+cat doc/intro.md doc/contributing.md doc/license.md > README.md
+for SRC in mobibl
+do
+cat src/solsort/mobibl/${SRC}.cljs | 
+  sed -e "s/^[^/]/    \0/" | sed -e s'/^ *[;][;] \?//' >> README.md
+done
