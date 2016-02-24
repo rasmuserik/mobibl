@@ -71,11 +71,26 @@
 
 ;; ## Components
 
+;; ### Tab bar - menu in bottom of the screen
+
+(defn tabbar-button [id s]
+   [:a {:href (str "#" id)} 
+    [:img {:src (str "assets/" id "-icon.png")
+           :alt s}]]
+  )
+(defn tabbar []
+  [:div.tabbar
+   [tabbar-button "search" "Søg"]
+   [tabbar-button "work" "Materiale"]
+   [tabbar-button "library" "Bibliotek"]
+   [tabbar-button "status" "Status"]])
+
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
 (defn search []
   [:div
+   [tabbar]
    [:input {:value @(subscribe [:current-query])}]
    "..."])
 
@@ -86,17 +101,20 @@
   (let [work-id @(subscribe [:current-work])
         work @(subscribe [:work work-id]) ]
     [:div
+     [tabbar]
      [:div "TODO: Work history here"]
      [:h1 (:title work)]
      [:div "af " (:creator work)]
      [:img {:src (:cover-url work)}]
      "..."]))
 
+
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
 
 (defn library []
   [:div
+   [tabbar]
    [:h1 @(subscribe [:current-library])]
    "..."])
 
@@ -105,16 +123,17 @@
 
 (defn patron []
   [:div
+   [tabbar]
    [:h1 "Låner status"]
    "..."])
 
 ;; ### Main App entry point
 (defn app []
   (case (first @(subscribe [:route]))
-    "library" [library]
-    "patron" [patron]
-    "work" [work]
     "search" [search]
+    "work" [work]
+    "library" [library]
+    "status" [patron]
     [search]
     ))
 
