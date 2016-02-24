@@ -134,7 +134,9 @@
                  [:ul
                   [:li (str "Afhentes inden " (:until ra))]
                   [:li "Opstilling " [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
+                  ;;
                   ;; **TODO** Add unique creator ID
+                  ;;
                   [:li [:a {:href (str "#/creator/" "TODO-creator-id")} (:creator ra)]]]]))]
          [:div
           [:h2 "Hjemlån"]
@@ -145,7 +147,9 @@
            (for [b @borrowed]
                 [:li
                  [:a {:href (str "#/borrowed/item/" (:id b))}
+                  ;;
                   ;; **TODO** It would be nice with thumbnails
+                  ;;
                   [:img {:src "http://www.bogpriser.dk/Images/placeholder-cover.png"
                          :width "32" :height "32" :alt "TODO :cover-mini-url"}]
                   [:span { :style {:margin-left "1em"}} (:title b)]]

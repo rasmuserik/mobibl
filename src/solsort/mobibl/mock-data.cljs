@@ -7,11 +7,15 @@
 ;;
 (def sample-db
   {
+   ;
    ; :route ["work" "870970-basis:28934297"]
+   ;
    :route ["patron" "870970-basis:28934297"]
    :patron
+   ;;
    ;; There is redundancy in this only exists in data loaded in device memory.
    ;; See #36
+   ;;
    {:reservations
     [{:id "775100-katalog:28934572" :title "A momentary lapse of reason" :creator "Pink Floyd"}]
     :reservations-arrived
