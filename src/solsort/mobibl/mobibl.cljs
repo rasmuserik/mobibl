@@ -66,6 +66,8 @@
 
 ;; # Handlers
 
+;; When the application loads we set the data for use in the frontend by
+;; with the :reset-db handler.  See #36
 (register-handler :reset-db (fn [_ [_ db]] db))
 (register-handler :route (fn [db [_ route]] (assoc db :route route)))
 
@@ -119,36 +121,47 @@
         reservations         (subscribe [:reservations])]
     (fn []
         [:div
+         [:h1 "Låner status"]
          [:div {:class "menu"}
           [:button {:type "submit"} "Log Ud"]]
-         [:h1 "Låner status"]
          [:div
           [:h2 "Hjemkomne"]
           (into
            [:ul]
            (for [ra @reservations-arrived]
                 [:li
-                 [:a {:href (str "#/patron/arrived/" (:id ra))} (:title ra)]]))]
+                 [:a {:href (str "#/arrived/" (:id ra))} (:title ra)]
+                 [:ul
+                  [:li (str "Afhentes inden " (:until ra))]
+                  [:li "Opstilling " [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
+                  ;; **TODO** Add unique creator ID
+                  [:li [:a {:href (str "#/creator/" "TODO-creator-id")} (:creator ra)]]]]))]
          [:div
           [:h2 "Hjemlån"]
           [:div
-           [:a {:href (str "#/patron/borrowed/renew/all")} "Forny Alle"]]
+           [:a {:href (str "#/borrowed/renew/all")} "Forny Alle"]]
           (into
            [:ul]
            (for [b @borrowed]
                 [:li
-                 [:a {:href (str "#/patron/borrowed/" (:id b))} (:title b)]
-                 [:span {:style {:margin-left "1em"}}
-                  [:a {:href (str "#/patron/borrowed/renew/" (:id b))} "Forny"]]]))]
+                 [:a {:href (str "#/borrowed/item/" (:id b))}
+                  ;; **TODO** It would be nice with thumbnails
+                  [:img {:src "http://www.bogpriser.dk/Images/placeholder-cover.png"
+                         :width "32" :height "32" :alt "TODO :cover-mini-url"}]
+                  [:span { :style {:margin-left "1em"}} (:title b)]]
+                 [:ul
+                  [:li (str "Afleveres senest " (:due-date b))]
+                  [:li [:a {:href (str "#/borrowed/renew/" (:id b))} "Forny"]]]]))]
          [:div
           [:h2 "Bestillinger"]
           (into
            [:ul]
            (for [r @reservations]
                 [:li
-                 [:a {:href (str "#/patron/reservation/" (:id r))} (:title r)]
-                 [:span {:style {:margin-left "1em"}}
-                  [:a {:href (str "#/patron/reservation/remove/" (:id r))} "Slet"]]]))]])))
+                 [:a {:href (str "#/reservation/" (:id r))} (:title r)]
+                 [:ul
+                  [:li [:a {:href (str "#/creator/" (:id r))} (:creator r)]]
+                  [:li [:a {:href (str "#/reservation/remove/" (:id r))} "Slet"]]]]))]])))
 
 (defn app []
   (case (first @(subscribe [:route]))
@@ -156,8 +169,7 @@
     "patron" [patron]
     "work" [work]
     "search" [search]
-    [search]
-    ))
+    [search]))
 
 ;; ## Execute and events
 (render [app])

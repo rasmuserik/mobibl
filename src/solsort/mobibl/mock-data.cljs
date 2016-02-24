@@ -9,14 +9,18 @@
   {
    ; :route ["work" "870970-basis:28934297"]
    :route ["patron" "870970-basis:28934297"]
-   :patron 
+   :patron
+   ;; There is redundancy in this only exists in data loaded in device memory.
+   ;; See #36
    {:reservations
-    [{:id "775100-katalog:28934572" :title "A momentary lapse of reason"}]
+    [{:id "775100-katalog:28934572" :title "A momentary lapse of reason" :creator "Pink Floyd"}]
     :reservations-arrived
-    [{:id "775100-katalog:50643662" :title "Matematik i virkeligheden"}
-     {:id "775100-katalog:10260744" :title "Ummagumma"} ]
+    [{:id "775100-katalog:50643662" :title "Matematik i virkeligheden" :creator "Allan Baktoft"
+      :location "92.4.1" :until "2016-03-01"}
+     {:id "775100-katalog:10260744" :title "Ummagumma" :creator "Pink Floyd" :location "21.12" :until "2016-03-02"}]
     :borrowed
-    [{:id "870970-basis:28934297" :title "1Q84"}]}
+    [{:id "870970-basis:28934297" :title "1Q84" :creator "Haruki Murakami" :due-date "2016-03-24"}
+     {:id "123456-basis:12345678" :title "Mystery Book" :creator "Mystery Author" :due-date "1901-12-12"}]}
    :current
    {:search-query "Murakami"
     :work "870970-basis:28934297"
