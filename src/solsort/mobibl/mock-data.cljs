@@ -43,7 +43,7 @@
     "775100-katalog:50643662"
     {:title "Matematik i virkeligheden"
      :creator "Allan Baktoft"
-     :cover-url ""
+     :cover-url "http://www.bogpriser.dk/Images/placeholder-cover.png"
      :description "Regn den ud"
      :keywords ["Matematik" "Regne"]
      :location "Faglitteratur"
@@ -57,7 +57,7 @@
     "775100-katalog:28934572"
     {:title "A momentary lapse of reason"
      :creator "The Pink Floyd"
-     :cover-url ""
+     :cover-url "https://en.wikipedia.org/wiki/File:MLoRLP01.jpg"
      :description "Musik"
      :keywords ["Rock"]
      :location "Musik"
@@ -69,7 +69,7 @@
     "775100-katalog:10260744"
     {:title "Ummagumma"
      :creator "The Pink Floyd"
-     :cover-url ""
+     :cover-url "https://en.wikipedia.org/wiki/File:PinkFloyd-album-ummagummastudio-300.jpg"
      :description "Musik"
      :keywords ["Rock"]
      :location "Musik"
