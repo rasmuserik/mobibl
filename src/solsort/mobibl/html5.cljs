@@ -69,7 +69,7 @@
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
 
-(defn patron []
+(defn status []
   (let [reservations-arrived (subscribe [:reservations-arrived])
         borrowed             (subscribe [:borrowed])
         reservations         (subscribe [:reservations])]
@@ -128,7 +128,7 @@
     "search" [search]
     "work" [work]
     "library" [library]
-    "status" [patron]
+    "status" [status]
     [search]))
 
 ;; ## Execute and events

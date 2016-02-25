@@ -34,9 +34,9 @@
 (register-sub :current-query (fn [db] (reaction (get-in @db [:current :query]))))
 (register-sub :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
 (register-sub :reservations
-              (fn [db [_ ids]] (reaction (get-in @db [:patron :reservations]))))
+              (fn [db [_ ids]] (reaction (get-in @db [:status :reservations]))))
 (register-sub :reservations-arrived
-              (fn [db [_ ids]] (reaction (get-in @db [:patron :reservations-arrived]))))
+              (fn [db [_ ids]] (reaction (get-in @db [:status :reservations-arrived]))))
 (register-sub :borrowed
-              (fn [db [_ ids]] (reaction (get-in @db [:patron :borrowed]))))
+              (fn [db [_ ids]] (reaction (get-in @db [:status :borrowed]))))
 
