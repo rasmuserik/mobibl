@@ -17,6 +17,59 @@
 
 
 ;; ## Styling
+;;
+
+(load-style! normalize-css "style-reset")
+(defn styling []
+  ;; 
+  ;; We are designing for mobile-portrait-mode,
+  ;; which can be enforced in the packaged cordova-app.
+  ;; 
+  ;; Using a unit-size of 1/24 of the mobile portrait width,
+  ;; means that a clickable object should preferibly 
+  ;; be 4 units high/wide, though 3 units is also ok.
+  ;;
+  ;; It also allows for 1/2, 1/3, 1/4, and 1/6 division of the screen,
+  ;; and 5/8 vs 3/8 which approximately the golden ratio.
+  ;;
+  (let [unit (/ js/document.body.clientWidth 24)]
+    (load-style!
+      {:body 
+       {:background "#fff8f8"
+        }
+       "div,a,span,b,i,img"
+       {:box-sizing :border-box}}
+      "general styling"
+      )
+    ;; ### Styling for the 
+    (load-style!
+      {".tabbar" 
+       {:position :fixed
+        :box-sizing :border-box
+        :bottom 0
+        :left 0
+        :width "100%"
+        :background-color :white
+        :border-top "1px solid black"
+        }
+       ".tabbar a"
+       {:display :inline-block
+        :box-sizing :border-box
+        :width (* 6 unit)
+        :text-align :center}
+       ".tabbar img"
+       {:height (* 4 unit)
+        :width (* 4 unit)}
+       "body"
+       {:padding-bottom (* 4 unit)}
+       }
+      "topbar-styling")
+    ))
+
+;; ### Actually apply styling
+;;
+(styling)
+(js/window.addEventListener "resize" styling)
 
 ;; ## Components
 ;; ### Tab bar - menu in bottom of the screen
@@ -24,10 +77,10 @@
 (defn tabbar-button [id s]
    [:a {:href (str "#" id)} 
     [:img {:src (str "assets/" id "-icon.png")
-           :alt s}]]
-  )
+           :alt s}]])
+
 (defn tabbar []
-  [:div.tabbar
+   [:div.tabbar
    [tabbar-button "search" "Søg"]
    [tabbar-button "work" "Materiale"]
    [tabbar-button "library" "Bibliotek"]
@@ -49,7 +102,7 @@
   (let [work-id @(subscribe [:current-work])
         work @(subscribe [:work work-id]) ]
     [:div
-     [tabbar]
+     [tabbar]   
      [:div "TODO: Work history here"]
      [:h1 (:title work)]
      [:div "af " (:creator work)]
@@ -62,7 +115,7 @@
 
 (defn library []
   [:div
-   [tabbar]
+   [tabbar]  
    [:h1 @(subscribe [:current-library])]
    "..."])
 
@@ -75,7 +128,7 @@
         reservations         (subscribe [:reservations])]
     (fn []
         [:div
-         [tabbar]
+         [tabbar]    
          [:h1 "Låner status"]
          [:div {:class "menu"}
           [:button {:type "submit"} "Log Ud"]]
