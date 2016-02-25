@@ -12,50 +12,19 @@
     [reagent.core :as reagent :refer []]
     [re-frame.core :as re-frame :refer  [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
-    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
-
-;; # Utility functions
-;;
-;; To be extracted into utility library.
-
-; generic code here
-
-;; # DB
-;;
-;; As we are starting out implementing the views, we just have dummy data here so far.
-
-(def sample-db
-  {:route ["work" "870970-basis:28934297"]
-   :current
-   {:search-query "Murakami"
-    :work "870970-basis:28934297"
-    :library "Københavns Hovedbibliotek"}
-   :works
-   {"870970-basis:28934297"
-    {:title "1Q84"
-     :creator "Haruki Murakami"
-     :cover-url "http://www.bogpriser.dk/Covers/202/9788779559202.jpg"
-     :description "Aomame er en 30-årig smart pige, uddannet kampsportsinstruktør, men arbejder p.t. som lejemorder. Tengo er matematiklærer med forfatterdrømme. Han skal omskrive en sær 17-årig piges sære historie. Begge hovedfigurer oplever, at deres virkelighed forvrides let, hvad påvirker deres virkelighed?"
-     :keywords ["Kultur" "Kærlighed" "Magisk Realisme" "Magt" "Parallelle Verdener" "Skrivekunst" "Japan" "1980-1989"]
-     :location "Skønlitteratur"
-     :language "Dansk"
-     :editions
-     [{:name "Bog (bind 1)" :availability :available}
-      {:name "Bog (bind 2)" :availability :loaned}
-      {:name "Bog (bind 3)" :availability :available}
-      {:name "Lydbog (cd) (bind 1)" :availability :available}
-      {:name "Lydbog (cd) (bind 2)" :availability :available}
-      {:name "Lydbog (cd) (bind 3)" :availability :available}
-      {:name "Lydbog (online) (bind 1)" :availability :available}
-      {:name "Lydbog (online) (bind 2)" :availability :available}
-      {:name "Lydbog (online) (bind 3)" :availability :available}]}}
-   })
-(dispatch [:reset-db sample-db])
+    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
+    [solsort.mobibl.mock-data :refer [sample-db]]))
 
 ;; # Handlers
 
+;; When the application loads we set the data for use in the frontend by
+;; with the :reset-db handler.  See #36
 (register-handler :reset-db (fn [_ [_ db]] db))
 (register-handler :route (fn [db [_ route]] (assoc db :route route)))
+
+;; Initialise the database with sample data
+
+(dispatch [:reset-db sample-db])
 
 ;; # Subscriptions
 
@@ -64,13 +33,18 @@
 (register-sub :current-work (fn [db] (reaction (get-in @db [:current :work]))))
 (register-sub :current-query (fn [db] (reaction (get-in @db [:current :query]))))
 (register-sub :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
+(register-sub :reservations
+              (fn [db [_ ids]] (reaction (get-in @db [:patron :reservations]))))
+(register-sub :reservations-arrived
+              (fn [db [_ ids]] (reaction (get-in @db [:patron :reservations-arrived]))))
+(register-sub :borrowed
+              (fn [db [_ ids]] (reaction (get-in @db [:patron :borrowed]))))
 
 ;; # HTML5 view
 
 ;; ## Styling
 
 ;; ## Components
-
 ;; ### Tab bar - menu in bottom of the screen
 
 (defn tabbar-button [id s]
@@ -122,10 +96,56 @@
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
 
 (defn patron []
-  [:div
-   [tabbar]
-   [:h1 "Låner status"]
-   "..."])
+  (let [reservations-arrived (subscribe [:reservations-arrived])
+        borrowed             (subscribe [:borrowed])
+        reservations         (subscribe [:reservations])]
+    (fn []
+        [:div
+         [:h1 "Låner status"]
+         [:div {:class "menu"}
+          [:button {:type "submit"} "Log Ud"]]
+         [:div
+          [:h2 "Hjemkomne"]
+          (into
+           [:ul]
+           (for [ra @reservations-arrived]
+                [:li
+                 [:a {:href (str "#/arrived/" (:id ra))} (:title ra)]
+                 [:ul
+                  [:li (str "Afhentes inden " (:until ra))]
+                  [:li "Opstilling " [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
+                  ;;
+                  ;; **TODO** Add unique creator ID
+                  ;;
+                  [:li [:a {:href (str "#/creator/" "TODO-creator-id")} (:creator ra)]]]]))]
+         [:div
+          [:h2 "Hjemlån"]
+          [:div
+           [:a {:href (str "#/borrowed/renew/all")} "Forny Alle"]]
+          (into
+           [:ul]
+           (for [b @borrowed]
+                [:li
+                 [:a {:href (str "#/borrowed/item/" (:id b))}
+                  ;;
+                  ;; **TODO** It would be nice with thumbnails
+                  ;;
+                  [:img {:src "http://www.bogpriser.dk/Images/placeholder-cover.png"
+                         :width "32" :height "32" :alt "TODO :cover-mini-url"}]
+                  [:span { :style {:margin-left "1em"}} (:title b)]]
+                 [:ul
+                  [:li (str "Afleveres senest " (:due-date b))]
+                  [:li [:a {:href (str "#/borrowed/renew/" (:id b))} "Forny"]]]]))]
+         [:div
+          [:h2 "Bestillinger"]
+          (into
+           [:ul]
+           (for [r @reservations]
+                [:li
+                 [:a {:href (str "#/reservation/" (:id r))} (:title r)]
+                 [:ul
+                  [:li [:a {:href (str "#/creator/" (:id r))} (:creator r)]]
+                  [:li [:a {:href (str "#/reservation/remove/" (:id r))} "Slet"]]]]))]])))
 
 ;; ### Main App entry point
 (defn app []
@@ -134,8 +154,7 @@
     "work" [work]
     "library" [library]
     "status" [patron]
-    [search]
-    ))
+    [search]))
 
 ;; ## Execute and events
 (render [app])
