@@ -13,8 +13,7 @@
     [solsort.mobibl.mobibl]
     [re-frame.core :as re-frame :refer  [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
-    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
-    [solsort.mobibl.mock-data :refer [sample-db]]))
+    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
 
 ;; ## Styling
@@ -76,6 +75,7 @@
         reservations         (subscribe [:reservations])]
     (fn []
         [:div
+         [tabbar]
          [:h1 "Låner status"]
          [:div {:class "menu"}
           [:button {:type "submit"} "Log Ud"]]
@@ -132,4 +132,13 @@
     [search]))
 
 ;; ## Execute and events
+
 (render [app])
+
+;; ## Routing
+
+(defn handle-hash []
+  (dispatch [:open (string/split (.slice js/location.hash 1) "/")]))
+(defn open [& args] 
+  (aset js/location "hash" (string/join "/" args)))
+(js/window.addEventListener "hashchange" handle-hash)
