@@ -68,8 +68,13 @@
 
 ;; ### Actually apply styling
 ;;
-(styling)
+; re-layout on rotation etc.
 (js/window.addEventListener "resize" styling)
+; re-layout when everything has loaded, to account for 
+; possible change of width due to appearing scrollbar
+(js/window.addEventListener "load" #(js/setTimeout styling 0))
+; re-layout on load, and on figwheel reload
+(styling)
 
 ;; ## Components
 ;; ### Tab bar - menu in bottom of the screen
@@ -195,3 +200,4 @@
 (defn open [& args] 
   (aset js/location "hash" (string/join "/" args)))
 (js/window.addEventListener "hashchange" handle-hash)
+(handle-hash)
