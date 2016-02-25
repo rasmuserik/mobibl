@@ -53,7 +53,7 @@
      :figwheel {:websocket-host ~(.getHostAddress (java.net.InetAddress/getLocalHost))
                ; :on-jsload "" 
                 }
-     :compiler {:main solsort.mobibl.mobibl
+     :compiler {:main solsort.mobibl.html5
                 :asset-path "out"
                 :output-to "resources/public/index.js"
                 :output-dir "resources/public/out"
@@ -67,7 +67,7 @@
     {:id "dist"
      :source-paths ["src"]
      :compiler {:output-to "index.js"
-                :main solsort.mobibl.mobibl
+                :main solsort.mobibl.html5
                 :externs ["externs.js"]
                 :optimizations :advanced
                 :pretty-print false}}]}
