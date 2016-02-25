@@ -14,7 +14,7 @@
 
    ;; ## The user profile
    
-   :patron
+   :status
    ;;
    ;; There is redundancy in this only exists in data loaded in device memory.
    ;; See #36

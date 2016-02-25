@@ -61,7 +61,103 @@ If you are making major contributions to the project, please keep track of the h
 Current version is released under [Creative Commons BY-NC-ND](https://creativecommons.org/licenses/by-nc-nd/3.0/), and copyrighted by solsort.com ApS.
 
 The project will be released under a **proper MIT open source license** if the Danish Public Library Sector, or someone else, decides, that they want to use the app, and pays for the development cost. 
-# mobibl.cljs
+# Sample Application Database (`mock_data.cljs`)
+    (ns solsort.mobibl.mock-data)
+
+As we are starting out implementing the views, we just have dummy data here
+so far.  The precise format and content of this data has not yet been
+determined.
+
+    (def sample-db
+      {
+       ;
+       ; :route ["work" "870970-basis:28934297"]
+       ;
+       :route ["status"]
+
+## The user profile
+       
+       :status
+
+There is redundancy in this only exists in data loaded in device memory.
+See #36
+
+       {:reservations
+        [{:id "775100-katalog:28934572" :title "A momentary lapse of reason" :creator "Pink Floyd"}]
+        :reservations-arrived
+        [{:id "775100-katalog:50643662" :title "Matematik i virkeligheden" :creator "Allan Baktoft"
+          :location "92.4.1" :until "2016-03-01"}
+         {:id "775100-katalog:10260744" :title "Ummagumma" :creator "Pink Floyd" :location "21.12" :until "2016-03-02"}]
+        :borrowed
+        [{:id "870970-basis:28934297" :title "1Q84" :creator "Haruki Murakami" :due-date "2016-03-24"}
+         {:id "123456-basis:12345678" :title "Mystery Book" :creator "Mystery Author" :due-date "1901-12-12"}]}
+       :current
+       {:search-query "Murakami"
+        :work "870970-basis:28934297"
+        :library "Københavns Hovedbibliotek"}
+
+## Creative works
+This contains the metadata of the creative works,
+caching the webservices.
+       
+       :works
+       {"870970-basis:28934297"
+        {:title "1Q84"
+         :creator "Haruki Murakami"
+         :cover-url "http://www.bogpriser.dk/Covers/202/9788779559202.jpg"
+         :description "Aomame er en 30-årig smart pige, uddannet kampsportsinstruktør, men arbejder p.t. som lejemorder. Tengo er matematiklærer med forfatterdrømme. Han skal omskrive en sær 17-årig piges sære historie. Begge hovedfigurer oplever, at deres virkelighed forvrides let, hvad påvirker deres virkelighed?"
+         :keywords ["Kultur" "Kærlighed" "Magisk Realisme" "Magt" "Parallelle Verdener" "Skrivekunst" "Japan" "1980-1989"]
+         :location "Skønlitteratur"
+         :language "Dansk"
+         :editions
+         [{:name "Bog (bind 1)" :availability :available}
+          {:name "Bog (bind 2)" :availability :loaned}
+          {:name "Bog (bind 3)" :availability :available}
+          {:name "Lydbog (cd) (bind 1)" :availability :available}
+          {:name "Lydbog (cd) (bind 2)" :availability :available}
+          {:name "Lydbog (cd) (bind 3)" :availability :available}
+          {:name "Lydbog (online) (bind 1)" :availability :available}
+          {:name "Lydbog (online) (bind 2)" :availability :available}
+          {:name "Lydbog (online) (bind 3)" :availability :available}]}
+        "775100-katalog:50643662"
+        {:title "Matematik i virkeligheden"
+         :creator "Allan Baktoft"
+         :cover-url "http://www.bogpriser.dk/Images/placeholder-cover.png"
+         :description "Regn den ud"
+         :keywords ["Matematik" "Regne"]
+         :location "Faglitteratur"
+         :languages ["Dansk"]
+         :editions
+         [{:name "Bog (bind 3)" :availability :available}
+          {:name "Lydbog (cd) (bind 1)" :availability :available}
+          {:name "Lydbog (cd) (bind 2)" :availability :available}
+          {:name "Lydbog (cd) (bind 3)" :availability :available}
+          {:name "Lydbog (online) (bind 1)" :availability :available}]}
+        "775100-katalog:28934572"
+        {:title "A momentary lapse of reason"
+         :creator "The Pink Floyd"
+         :cover-url "https://en.wikipedia.org/wiki/File:MLoRLP01.jpg"
+         :description "Musik"
+         :keywords ["Rock"]
+         :location "Musik"
+         :languages ["Engelsk"]
+         :editions
+         [{:name "Lydbog (cd) (bind 1)" :availability :available}
+          {:name "Lydbog (cd) (bind 2)" :availability :loaned}
+          {:name "Lydbog (cd) (bind 3)" :availability :loaned}]}
+        "775100-katalog:10260744"
+        {:title "Ummagumma"
+         :creator "The Pink Floyd"
+         :cover-url "https://en.wikipedia.org/wiki/File:PinkFloyd-album-ummagummastudio-300.jpg"
+         :description "Musik"
+         :keywords ["Rock"]
+         :location "Musik"
+         :languages ["English"]
+         :editions
+         [{:name "Lydbog (cd) (bind 1)" :availability :loaned}
+          {:name "Lydbog (cd) (bind 2)" :availability :available}
+          {:name "Lydbog (cd) (bind 3)" :availability :available}]}}})
+# Actual application logic (`mobibl.cljs`)
 
     (ns solsort.mobibl.mobibl
       (:require-macros
@@ -78,18 +174,18 @@ The project will be released under a **proper MIT open source license** if the D
         [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
         [solsort.mobibl.mock-data :refer [sample-db]]))
 
-# Handlers
+## Handlers
 
 When the application loads we set the data for use in the frontend by
 with the :reset-db handler.  See #36
     (register-handler :reset-db (fn [_ [_ db]] db))
-    (register-handler :route (fn [db [_ route]] (assoc db :route route)))
+    (register-handler :open (fn [db [_ route]] (assoc db :route route)))
 
 Initialise the database with sample data
 
     (dispatch [:reset-db sample-db])
 
-# Subscriptions
+## Subscriptions
 
     (register-sub :route (fn [db] (reaction (get @db :route))))
     (register-sub :current-library (fn [db] (reaction (get-in @db [:current :library]))))
@@ -97,13 +193,29 @@ Initialise the database with sample data
     (register-sub :current-query (fn [db] (reaction (get-in @db [:current :query]))))
     (register-sub :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
     (register-sub :reservations
-                  (fn [db [_ ids]] (reaction (get-in @db [:patron :reservations]))))
+                  (fn [db [_ ids]] (reaction (get-in @db [:status :reservations]))))
     (register-sub :reservations-arrived
-                  (fn [db [_ ids]] (reaction (get-in @db [:patron :reservations-arrived]))))
+                  (fn [db [_ ids]] (reaction (get-in @db [:status :reservations-arrived]))))
     (register-sub :borrowed
-                  (fn [db [_ ids]] (reaction (get-in @db [:patron :borrowed]))))
+                  (fn [db [_ ids]] (reaction (get-in @db [:status :borrowed]))))
 
-# HTML5 view
+# HTML5 view (html5.cljs)
+
+    (ns solsort.mobibl.html5
+      (:require-macros
+        [cljs.core.async.macros :refer [go go-loop alt!]]
+        [reagent.ratom :as ratom :refer  [reaction]])
+      (:require
+        [solsort.util
+         :refer
+         [<ajax <seq<! js-seq normalize-css load-style! put!close! parse-json-or-nil log page-ready render
+          dom->clj]]
+        [reagent.core :as reagent :refer []]
+        [solsort.mobibl.mobibl]
+        [re-frame.core :as re-frame :refer  [register-sub subscribe register-handler dispatch dispatch-sync]]
+        [clojure.string :as string :refer [replace split blank?]]
+        [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
+
 
 ## Styling
 
@@ -158,12 +270,13 @@ Initialise the database with sample data
 ### Status
 <img width=20% align=top src=doc/wireframes/patron-status.jpg>
 
-    (defn patron []
+    (defn status []
       (let [reservations-arrived (subscribe [:reservations-arrived])
             borrowed             (subscribe [:borrowed])
             reservations         (subscribe [:reservations])]
         (fn []
             [:div
+             [tabbar]
              [:h1 "Låner status"]
              [:div {:class "menu"}
               [:button {:type "submit"} "Log Ud"]]
@@ -173,7 +286,7 @@ Initialise the database with sample data
                [:ul]
                (for [ra @reservations-arrived]
                     [:li
-                     [:a {:href (str "#/arrived/" (:id ra))} (:title ra)]
+                     [:a {:href (str "#work/" (:id ra))} (:title ra)]
                      [:ul
                       [:li (str "Afhentes inden " (:until ra))]
                       [:li "Opstilling " [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
@@ -216,8 +329,17 @@ Initialise the database with sample data
         "search" [search]
         "work" [work]
         "library" [library]
-        "status" [patron]
+        "status" [status]
         [search]))
 
 ## Execute and events
+
     (render [app])
+
+## Routing
+
+    (defn handle-hash []
+      (dispatch [:open (string/split (.slice js/location.hash 1) "/")]))
+    (defn open [& args] 
+      (aset js/location "hash" (string/join "/" args)))
+    (js/window.addEventListener "hashchange" handle-hash)
