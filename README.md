@@ -77,7 +77,7 @@ determined.
 
 ## The user profile
        
-       :patron
+       :status
 
 There is redundancy in this only exists in data loaded in device memory.
 See #36
@@ -179,7 +179,7 @@ caching the webservices.
 When the application loads we set the data for use in the frontend by
 with the :reset-db handler.  See #36
     (register-handler :reset-db (fn [_ [_ db]] db))
-    (register-handler :route (fn [db [_ route]] (assoc db :route route)))
+    (register-handler :open (fn [db [_ route]] (assoc db :route route)))
 
 Initialise the database with sample data
 
@@ -193,11 +193,11 @@ Initialise the database with sample data
     (register-sub :current-query (fn [db] (reaction (get-in @db [:current :query]))))
     (register-sub :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
     (register-sub :reservations
-                  (fn [db [_ ids]] (reaction (get-in @db [:patron :reservations]))))
+                  (fn [db [_ ids]] (reaction (get-in @db [:status :reservations]))))
     (register-sub :reservations-arrived
-                  (fn [db [_ ids]] (reaction (get-in @db [:patron :reservations-arrived]))))
+                  (fn [db [_ ids]] (reaction (get-in @db [:status :reservations-arrived]))))
     (register-sub :borrowed
-                  (fn [db [_ ids]] (reaction (get-in @db [:patron :borrowed]))))
+                  (fn [db [_ ids]] (reaction (get-in @db [:status :borrowed]))))
 
 # HTML5 view (html5.cljs)
 
@@ -214,8 +214,7 @@ Initialise the database with sample data
         [solsort.mobibl.mobibl]
         [re-frame.core :as re-frame :refer  [register-sub subscribe register-handler dispatch dispatch-sync]]
         [clojure.string :as string :refer [replace split blank?]]
-        [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
-        [solsort.mobibl.mock-data :refer [sample-db]]))
+        [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
 
 ## Styling
@@ -271,12 +270,13 @@ Initialise the database with sample data
 ### Status
 <img width=20% align=top src=doc/wireframes/patron-status.jpg>
 
-    (defn patron []
+    (defn status []
       (let [reservations-arrived (subscribe [:reservations-arrived])
             borrowed             (subscribe [:borrowed])
             reservations         (subscribe [:reservations])]
         (fn []
             [:div
+             [tabbar]
              [:h1 "Låner status"]
              [:div {:class "menu"}
               [:button {:type "submit"} "Log Ud"]]
@@ -329,8 +329,17 @@ Initialise the database with sample data
         "search" [search]
         "work" [work]
         "library" [library]
-        "status" [patron]
+        "status" [status]
         [search]))
 
 ## Execute and events
+
     (render [app])
+
+## Routing
+
+    (defn handle-hash []
+      (dispatch [:open (string/split (.slice js/location.hash 1) "/")]))
+    (defn open [& args] 
+      (aset js/location "hash" (string/join "/" args)))
+    (js/window.addEventListener "hashchange" handle-hash)
