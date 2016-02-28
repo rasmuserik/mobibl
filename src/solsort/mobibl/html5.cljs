@@ -21,12 +21,12 @@
 
 (load-style! normalize-css "style-reset")
 (defn styling []
-  ;; 
+  ;;
   ;; We are designing for mobile-portrait-mode,
   ;; which can be enforced in the packaged cordova-app.
-  ;; 
+  ;;
   ;; Using a unit-size of 1/24 of the mobile portrait width,
-  ;; means that a clickable object should preferibly 
+  ;; means that a clickable object should preferibly
   ;; be 4 units high/wide, though 3 units is also ok.
   ;;
   ;; It also allows for 1/2, 1/3, 1/4, and 1/6 division of the screen,
@@ -34,16 +34,16 @@
   ;;
   (let [unit (/ js/document.body.clientWidth 24)]
     (load-style!
-      {:body 
+      {:body
        {:background "#fff8f8"
         }
        "div,a,span,b,i,img"
        {:box-sizing :border-box}}
       "general styling"
       )
-    ;; ### Styling for the 
+    ;; ### Styling for the
     (load-style!
-      {".tabbar" 
+      {".tabbar"
        {:position :fixed
         :box-sizing :border-box
         :bottom 0
@@ -70,7 +70,7 @@
 ;;
 ; re-layout on rotation etc.
 (js/window.addEventListener "resize" styling)
-; re-layout when everything has loaded, to account for 
+; re-layout when everything has loaded, to account for
 ; possible change of width due to appearing scrollbar
 (js/window.addEventListener "load" #(js/setTimeout styling 0))
 ; re-layout on load, and on figwheel reload
@@ -80,7 +80,7 @@
 ;; ### Tab bar - menu in bottom of the screen
 
 (defn tabbar-button [id s]
-   [:a {:href (str "#" id)} 
+   [:a {:href (str "#" id)}
     [:img {:src (str "assets/" id "-icon.png")
            :alt s}]])
 
@@ -107,7 +107,7 @@
   (let [work-id @(subscribe [:current-work])
         work @(subscribe [:work work-id]) ]
     [:div
-     [tabbar]   
+     [tabbar]
      [:div "TODO: Work history here"]
      [:h1 (:title work)]
      [:div "af " (:creator work)]
@@ -120,7 +120,7 @@
 
 (defn library []
   [:div
-   [tabbar]  
+   [tabbar]
    [:h1 @(subscribe [:current-library])]
    "..."])
 
@@ -128,12 +128,12 @@
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
 
 (defn status []
-  (let [reservations-arrived (subscribe [:reservations-arrived])
+  (let [arrived (subscribe [:arrived])
         borrowed             (subscribe [:borrowed])
         reservations         (subscribe [:reservations])]
     (fn []
         [:div
-         [tabbar]    
+         [tabbar]
          [:h1 "Låner status"]
          [:div {:class "menu"}
           [:button {:type "submit"} "Log Ud"]]
@@ -141,7 +141,7 @@
           [:h2 "Hjemkomne"]
           (into
            [:ul]
-           (for [ra @reservations-arrived]
+           (for [ra @arrived]
                 [:li
                  [:a {:href (str "#work/" (:id ra))} (:title ra)]
                  [:ul
@@ -167,7 +167,7 @@
                          :width "32" :height "32" :alt "TODO :cover-mini-url"}]
                   [:span { :style {:margin-left "1em"}} (:title b)]]
                  [:ul
-                  [:li (str "Afleveres senest " (:due-date b))]
+                  [:li (str "Afleveres senest " (:until b))]
                   [:li [:a {:href (str "#/borrowed/renew/" (:id b))} "Forny"]]]]))]
          [:div
           [:h2 "Bestillinger"]
@@ -197,7 +197,7 @@
 
 (defn handle-hash []
   (dispatch [:open (string/split (.slice js/location.hash 1) "/")]))
-(defn open [& args] 
+(defn open [& args]
   (aset js/location "hash" (string/join "/" args)))
 (js/window.addEventListener "hashchange" handle-hash)
 (handle-hash)

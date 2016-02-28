@@ -33,10 +33,27 @@
 (register-sub :current-work (fn [db] (reaction (get-in @db [:current :work]))))
 (register-sub :current-query (fn [db] (reaction (get-in @db [:current :query]))))
 (register-sub :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
+
+;;
+;; This work will serve as a default if we ever run into something not existing
+;;
+(def unknown-work {:title "Unknown Title"
+                   :creator "Unknown Creator"
+                   :id "Unknown-id"})
+
+;;
+;; Helper function to query the db for the full info about works
+;;
+(defn get-status-works [db prop]
+  (let [status-obj (get-in db [:status prop])
+        res (for [so status-obj]
+                 (merge so (get-in db [:works (:id so)] unknown-work)))]
+    res))
+
 (register-sub :reservations
-              (fn [db [_ ids]] (reaction (get-in @db [:status :reservations]))))
-(register-sub :reservations-arrived
-              (fn [db [_ ids]] (reaction (get-in @db [:status :reservations-arrived]))))
+              (fn [db _] (reaction (get-status-works @db :reservations))))
+(register-sub :arrived
+              (fn [db _] (reaction (get-status-works @db :arrived))))
 (register-sub :borrowed
-              (fn [db [_ ids]] (reaction (get-in @db [:status :borrowed]))))
+              (fn [db _] (reaction (get-status-works @db :borrowed))))
 
