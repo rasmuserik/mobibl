@@ -75,31 +75,30 @@ determined.
        ;
        :route ["status"]
 
-## The user profile
-       
+## User loan status
+
+Info under `:status` refers with ids to complete descriptions in the
+`:works` section
+
        :status
-
-There is redundancy in this only exists in data loaded in device memory.
-See #36
-
        {:reservations
-        [{:id "775100-katalog:28934572" :title "A momentary lapse of reason" :creator "Pink Floyd"}]
-        :reservations-arrived
-        [{:id "775100-katalog:50643662" :title "Matematik i virkeligheden" :creator "Allan Baktoft"
-          :location "92.4.1" :until "2016-03-01"}
-         {:id "775100-katalog:10260744" :title "Ummagumma" :creator "Pink Floyd" :location "21.12" :until "2016-03-02"}]
+        [{:id "775100-katalog:28934572" :until "2016-03-12"}]
+        :arrived
+        [{:id "775100-katalog:50643662" :until "2016-03-01"}
+         {:id "775100-katalog:10260744" :until "2016-03-02"}]
         :borrowed
-        [{:id "870970-basis:28934297" :title "1Q84" :creator "Haruki Murakami" :due-date "2016-03-24"}
-         {:id "123456-basis:12345678" :title "Mystery Book" :creator "Mystery Author" :due-date "1901-12-12"}]}
+        [{:id "870970-basis:28934297" :until "2016-03-24"}
+         {:id "123456-basis:12345678" :until "1901-12-12"}]}
        :current
        {:search-query "Murakami"
         :work "870970-basis:28934297"
         :library "Københavns Hovedbibliotek"}
 
 ## Creative works
+
 This contains the metadata of the creative works,
 caching the webservices.
-       
+
        :works
        {"870970-basis:28934297"
         {:title "1Q84"
@@ -192,12 +191,29 @@ Initialise the database with sample data
     (register-sub :current-work (fn [db] (reaction (get-in @db [:current :work]))))
     (register-sub :current-query (fn [db] (reaction (get-in @db [:current :query]))))
     (register-sub :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
+
+
+This work will serve as a default if we ever run into something not existing
+
+    (def unknown-work {:title "Unknown Title"
+                       :creator "Unknown Creator"
+                       :id "Unknown-id"})
+
+
+Helper function to query the db for the full info about works
+
+    (defn get-status-works [db prop]
+      (let [status-obj (get-in db [:status prop])
+            res (for [so status-obj]
+                     (merge so (get-in db [:works (:id so)] unknown-work)))]
+        res))
+
     (register-sub :reservations
-                  (fn [db [_ ids]] (reaction (get-in @db [:status :reservations]))))
-    (register-sub :reservations-arrived
-                  (fn [db [_ ids]] (reaction (get-in @db [:status :reservations-arrived]))))
+                  (fn [db _] (reaction (get-status-works @db :reservations))))
+    (register-sub :arrived
+                  (fn [db _] (reaction (get-status-works @db :arrived))))
     (register-sub :borrowed
-                  (fn [db [_ ids]] (reaction (get-in @db [:status :borrowed]))))
+                  (fn [db _] (reaction (get-status-works @db :borrowed))))
 
 # HTML5 view (html5.cljs)
 
@@ -219,16 +235,74 @@ Initialise the database with sample data
 
 ## Styling
 
+
+    (load-style! normalize-css "style-reset")
+    (defn styling []
+
+We are designing for mobile-portrait-mode,
+which can be enforced in the packaged cordova-app.
+
+Using a unit-size of 1/24 of the mobile portrait width,
+means that a clickable object should preferibly
+be 4 units high/wide, though 3 units is also ok.
+
+It also allows for 1/2, 1/3, 1/4, and 1/6 division of the screen,
+and 5/8 vs 3/8 which approximately the golden ratio.
+
+      (let [unit (/ js/document.body.clientWidth 24)]
+        (load-style!
+          {:body
+           {:background "#fff8f8"
+            }
+           "div,a,span,b,i,img"
+           {:box-sizing :border-box}}
+          "general styling"
+          )
+### Styling for the
+        (load-style!
+          {".tabbar"
+           {:position :fixed
+            :box-sizing :border-box
+            :bottom 0
+            :left 0
+            :width "100%"
+            :background-color :white
+            :border-top "1px solid black"
+            }
+           ".tabbar a"
+           {:display :inline-block
+            :box-sizing :border-box
+            :width (* 6 unit)
+            :text-align :center}
+           ".tabbar img"
+           {:height (* 4 unit)
+            :width (* 4 unit)}
+           "body"
+           {:padding-bottom (* 4 unit)}
+           }
+          "topbar-styling")
+        ))
+
+### Actually apply styling
+
+    ; re-layout on rotation etc.
+    (js/window.addEventListener "resize" styling)
+    ; re-layout when everything has loaded, to account for
+    ; possible change of width due to appearing scrollbar
+    (js/window.addEventListener "load" #(js/setTimeout styling 0))
+    ; re-layout on load, and on figwheel reload
+    (styling)
+
 ## Components
 ### Tab bar - menu in bottom of the screen
 
     (defn tabbar-button [id s]
-       [:a {:href (str "#" id)} 
+       [:a {:href (str "#" id)}
         [:img {:src (str "assets/" id "-icon.png")
-               :alt s}]]
-      )
+               :alt s}]])
+
     (defn tabbar []
-      [:div.tabbar
+       [:div.tabbar
        [tabbar-button "search" "Søg"]
        [tabbar-button "work" "Materiale"]
        [tabbar-button "library" "Bibliotek"]
@@ -271,7 +345,7 @@ Initialise the database with sample data
 <img width=20% align=top src=doc/wireframes/patron-status.jpg>
 
     (defn status []
-      (let [reservations-arrived (subscribe [:reservations-arrived])
+      (let [arrived (subscribe [:arrived])
             borrowed             (subscribe [:borrowed])
             reservations         (subscribe [:reservations])]
         (fn []
@@ -284,7 +358,7 @@ Initialise the database with sample data
               [:h2 "Hjemkomne"]
               (into
                [:ul]
-               (for [ra @reservations-arrived]
+               (for [ra @arrived]
                     [:li
                      [:a {:href (str "#work/" (:id ra))} (:title ra)]
                      [:ul
@@ -310,7 +384,7 @@ Initialise the database with sample data
                              :width "32" :height "32" :alt "TODO :cover-mini-url"}]
                       [:span { :style {:margin-left "1em"}} (:title b)]]
                      [:ul
-                      [:li (str "Afleveres senest " (:due-date b))]
+                      [:li (str "Afleveres senest " (:until b))]
                       [:li [:a {:href (str "#/borrowed/renew/" (:id b))} "Forny"]]]]))]
              [:div
               [:h2 "Bestillinger"]
@@ -340,6 +414,7 @@ Initialise the database with sample data
 
     (defn handle-hash []
       (dispatch [:open (string/split (.slice js/location.hash 1) "/")]))
-    (defn open [& args] 
+    (defn open [& args]
       (aset js/location "hash" (string/join "/" args)))
     (js/window.addEventListener "hashchange" handle-hash)
+    (handle-hash)
