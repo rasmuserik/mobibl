@@ -7,10 +7,11 @@
   (:require
     [solsort.util
      :refer
-     [<ajax <seq<! js-seq normalize-css load-style! put!close! parse-json-or-nil log page-ready render
-      dom->clj]]
+     [<ajax <seq<! js-seq normalize-css load-style! put!close!
+      parse-json-or-nil log page-ready render dom->clj]]
     [reagent.core :as reagent :refer []]
-    [re-frame.core :as re-frame :refer  [register-sub subscribe register-handler dispatch dispatch-sync]]
+    [re-frame.core :as re-frame
+     :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
     [solsort.mobibl.mock-data :refer [sample-db]]))
@@ -28,11 +29,16 @@
 
 ;; ## Subscriptions
 
-(register-sub :route (fn [db] (reaction (get @db :route))))
-(register-sub :current-library (fn [db] (reaction (get-in @db [:current :library]))))
-(register-sub :current-work (fn [db] (reaction (get-in @db [:current :work]))))
-(register-sub :current-query (fn [db] (reaction (get-in @db [:current :query]))))
-(register-sub :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
+(register-sub
+  :route (fn [db] (reaction (get @db :route))))
+(register-sub
+  :current-library (fn [db] (reaction (get-in @db [:current :library]))))
+(register-sub
+  :current-work (fn [db] (reaction (get-in @db [:current :work]))))
+(register-sub
+  :current-query (fn [db] (reaction (get-in @db [:current :query]))))
+(register-sub
+  :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
 
 ;;
 ;; This work will serve as a default if we ever run into something not existing
@@ -47,7 +53,7 @@
 (defn get-status-works [db prop]
   (let [status-obj (get-in db [:status prop])
         res (for [so status-obj]
-                 (merge so (get-in db [:works (:id so)] unknown-work)))]
+              (merge so (get-in db [:works (:id so)] unknown-work)))]
     res))
 
 (register-sub :reservations
@@ -56,4 +62,3 @@
               (fn [db _] (reaction (get-status-works @db :arrived))))
 (register-sub :borrowed
               (fn [db _] (reaction (get-status-works @db :borrowed))))
-

@@ -3,7 +3,8 @@
               [solsort.mobibl.mobibl :as mobibl]))
 
 ;; Report test status
-;; https://github.com/clojure/clojurescript/wiki/Testing#detecting-test-completion--success
+;; https://github.com/clojure/clojurescript/wiki
+;; /Testing#detecting-test-completion--success
 (defmethod test/report  [:cljs.test/default :end-run-tests]  [m]
   (if  (cljs.test/successful? m)
     (println "Success!")

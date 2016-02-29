@@ -7,11 +7,12 @@
   (:require
     [solsort.util
      :refer
-     [<ajax <seq<! js-seq normalize-css load-style! put!close! parse-json-or-nil log page-ready render
-      dom->clj]]
+     [<ajax <seq<! js-seq normalize-css load-style! put!close!
+      parse-json-or-nil log page-ready render dom->clj]]
     [reagent.core :as reagent :refer []]
     [solsort.mobibl.mobibl]
-    [re-frame.core :as re-frame :refer  [register-sub subscribe register-handler dispatch dispatch-sync]]
+    [re-frame.core :as re-frame
+     :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
@@ -80,12 +81,12 @@
 ;; ### Tab bar - menu in bottom of the screen
 
 (defn tabbar-button [id s]
-   [:a {:href (str "#" id)}
-    [:img {:src (str "assets/" id "-icon.png")
-           :alt s}]])
+  [:a {:href (str "#" id)}
+   [:img {:src (str "assets/" id "-icon.png")
+          :alt s}]])
 
 (defn tabbar []
-   [:div.tabbar
+  [:div.tabbar
    [tabbar-button "search" "Søg"]
    [tabbar-button "work" "Materiale"]
    [tabbar-button "library" "Bibliotek"]
@@ -132,53 +133,59 @@
         borrowed             (subscribe [:borrowed])
         reservations         (subscribe [:reservations])]
     (fn []
+      [:div
+       [tabbar]
+       [:h1 "Låner status"]
+       [:div {:class "menu"}
+        [:button {:type "submit"} "Log Ud"]]
+       [:div
+        [:h2 "Hjemkomne"]
+        (into
+          [:ul]
+          (for
+            [ra @arrived]
+            [:li
+             [:a {:href (str "#work/" (:id ra))} (:title ra)]
+             [:ul
+              [:li (str "Afhentes inden " (:until ra))]
+              [:li "Opstilling "
+               [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
+              ;;
+              ;; **TODO** Add unique creator ID
+              ;;
+              [:li
+               [:a
+                {:href (str "#/creator/" "TODO-creator-id")} (:creator ra)]]
+              ]]))]
+       [:div
+        [:h2 "Hjemlån"]
         [:div
-         [tabbar]
-         [:h1 "Låner status"]
-         [:div {:class "menu"}
-          [:button {:type "submit"} "Log Ud"]]
-         [:div
-          [:h2 "Hjemkomne"]
-          (into
-           [:ul]
-           (for [ra @arrived]
-                [:li
-                 [:a {:href (str "#work/" (:id ra))} (:title ra)]
-                 [:ul
-                  [:li (str "Afhentes inden " (:until ra))]
-                  [:li "Opstilling " [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
-                  ;;
-                  ;; **TODO** Add unique creator ID
-                  ;;
-                  [:li [:a {:href (str "#/creator/" "TODO-creator-id")} (:creator ra)]]]]))]
-         [:div
-          [:h2 "Hjemlån"]
-          [:div
-           [:a {:href (str "#/borrowed/renew/all")} "Forny Alle"]]
-          (into
-           [:ul]
-           (for [b @borrowed]
-                [:li
-                 [:a {:href (str "#/borrowed/item/" (:id b))}
-                  ;;
-                  ;; **TODO** It would be nice with thumbnails
-                  ;;
-                  [:img {:src "http://www.bogpriser.dk/Images/placeholder-cover.png"
-                         :width "32" :height "32" :alt "TODO :cover-mini-url"}]
-                  [:span { :style {:margin-left "1em"}} (:title b)]]
-                 [:ul
-                  [:li (str "Afleveres senest " (:until b))]
-                  [:li [:a {:href (str "#/borrowed/renew/" (:id b))} "Forny"]]]]))]
-         [:div
-          [:h2 "Bestillinger"]
-          (into
-           [:ul]
-           (for [r @reservations]
-                [:li
-                 [:a {:href (str "#/reservation/" (:id r))} (:title r)]
-                 [:ul
-                  [:li [:a {:href (str "#/creator/" (:id r))} (:creator r)]]
-                  [:li [:a {:href (str "#/reservation/remove/" (:id r))} "Slet"]]]]))]])))
+         [:a {:href (str "#/borrowed/renew/all")} "Forny Alle"]]
+        (into
+          [:ul]
+          (for [b @borrowed]
+            [:li
+             [:a {:href (str "#/borrowed/item/" (:id b))}
+              ;;
+              ;; **TODO** It would be nice with thumbnails
+              ;;
+              [:img {:src "http://www.bogpriser.dk/Images/placeholder-cover.png"
+                     :width "32" :height "32" :alt "TODO :cover-mini-url"}]
+              [:span { :style {:margin-left "1em"}} (:title b)]]
+             [:ul
+              [:li (str "Afleveres senest " (:until b))]
+              [:li [:a {:href (str "#/borrowed/renew/" (:id b))} "Forny"]]]]))]
+       [:div
+        [:h2 "Bestillinger"]
+        (into
+          [:ul]
+          (for [r @reservations]
+            [:li
+             [:a {:href (str "#/reservation/" (:id r))} (:title r)]
+             [:ul
+              [:li [:a {:href (str "#/creator/" (:id r))} (:creator r)]]
+              [:li [:a {:href (str "#/reservation/remove/" (:id r))} "Slet"]]
+              ]]))]])))
 
 ;; ### Main App entry point
 (defn app []
