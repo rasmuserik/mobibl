@@ -99,4 +99,31 @@
      :editions
      [{:name "Lydbog (cd) (bind 1)" :availability :loaned}
       {:name "Lydbog (cd) (bind 2)" :availability :available}
-      {:name "Lydbog (cd) (bind 3)" :availability :available}]}}})
+      {:name "Lydbog (cd) (bind 3)" :availability :available}]}}
+   :libraries {"Københavns Hovedbibliotek"
+               {:address {
+                          :road "Krystalgade"
+                          :number 15
+                          :post 1172
+                          :city "København K"
+                          :country "Danmark"
+                          }}
+               {:access {
+                         :week 9
+                         :period [2016 2 28 2016 3 6]
+                         :open [
+                                [8 22]
+                                [8 20]
+                                [8 20]
+                                [8 20]
+                                [8 19]
+                                [8 17]]
+                         :service [[12 17]
+                                   [12 17]
+                                   [12 17]
+                                   [12 17]
+                                   [12 17]
+                                   [12 15]]}
+                }
+               }
+})
