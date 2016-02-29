@@ -64,6 +64,18 @@
        {:padding-bottom (* 4 unit)}
        }
       "topbar-styling")
+    (load-style!
+     {"ul"
+      {:list-style-type :none
+       }
+      ;; "ul > li > ul > li"
+      ;; {:display :inline-table
+       ;; :width (* 6 unit)}
+      }
+     "ul.foo li" {:border "10px solid red"}
+     "img.vert"
+     {:vertical-align "middle"}
+     "status list style")
     ))
 
 ;; ### Actually apply styling
@@ -140,10 +152,16 @@
          [:div
           [:h2 "Hjemkomne"]
           (into
-           [:ul]
+           [:ul {:class "foo"}]
            (for [ra @arrived]
                 [:li
-                 [:a {:href (str "#work/" (:id ra))} (:title ra)]
+                 [:a {:href (str "#work/" (:id ra))} 
+                  [:img {:src (:cover-url ra)
+                         :width "32" :height "32" :alt "TODO :cover-mini-url"
+                         :class "vert"
+                         }] 
+                  [:span {:style {:padding-left "1em"}} (:title ra)]
+                  ]
                  [:ul
                   [:li (str "Afhentes inden " (:until ra))]
                   [:li "Opstilling " [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
