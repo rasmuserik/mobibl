@@ -21,8 +21,8 @@
 ;; When the application loads we set the data for use in the frontend by
 ;; with the :reset-db handler.  See #36
 (register-handler :reset-db (fn [_ [_ db]] db))
-(register-handler 
-  :open (fn [db [_ [page id]]] 
+(register-handler
+  :open (fn [db [_ [page id]]]
           (let [id (or id (get-in db [:current page]))]
             (log [page id])
             (-> db

@@ -101,7 +101,7 @@
     "775100-katalog:10260744"
     {:title "Ummagumma"
      :creator "The Pink Floyd"
-     :cover-url 
+     :cover-url
      (str "https://upload.wikimedia.org/wikipedia/en/1/16/"
           "PinkFloyd-album-ummagummastudio-300.jpg")
      :description "Musik"

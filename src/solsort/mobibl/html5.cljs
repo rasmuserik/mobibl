@@ -74,7 +74,6 @@
        :margin-left unit
        :margin-right unit
        :width (* unit 9)}}
-      
       "work-style"
       )
     ))
