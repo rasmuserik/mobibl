@@ -41,8 +41,14 @@
     {:title "1Q84"
      :creator "Haruki Murakami"
      :cover-url "http://www.bogpriser.dk/Covers/202/9788779559202.jpg"
-     :description "Aomame er en 30-årig smart pige, uddannet kampsportsinstruktør, men arbejder p.t. som lejemorder. Tengo er matematiklærer med forfatterdrømme. Han skal omskrive en sær 17-årig piges sære historie. Begge hovedfigurer oplever, at deres virkelighed forvrides let, hvad påvirker deres virkelighed?"
-     :keywords ["Kultur" "Kærlighed" "Magisk Realisme" "Magt" "Parallelle Verdener" "Skrivekunst" "Japan" "1980-1989"]
+     :description
+     "Aomame er en 30-årig smart pige, uddannet kampsportsinstruktør, men
+     arbejder p.t. som lejemorder. Tengo er matematiklærer med
+     forfatterdrømme.  Han skal omskrive en sær 17-årig piges sære historie.
+     Begge hovedfigurer oplever, at deres virkelighed forvrides let, hvad
+     påvirker deres virkelighed?"
+     :keywords ["Kultur" "Kærlighed" "Magisk Realisme" "Magt"
+                "Parallelle Verdener" "Skrivekunst" "Japan" "1980-1989"]
      :location "Skønlitteratur"
      :language "Dansk"
      :editions
@@ -84,7 +90,8 @@
     "775100-katalog:10260744"
     {:title "Ummagumma"
      :creator "The Pink Floyd"
-     :cover-url "https://en.wikipedia.org/wiki/File:PinkFloyd-album-ummagummastudio-300.jpg"
+     :cover-url (str "https://en.wikipedia.org/wiki/"
+                     "File:PinkFloyd-album-ummagummastudio-300.jpg")
      :description "Musik"
      :keywords ["Rock"]
      :location "Musik"

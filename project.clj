@@ -1,10 +1,5 @@
-
-(def server-port
-  (read-string (or (System/getenv "FIGWHEEL_SERVER_PORT") "3449")))
-
-(def nrepl-port
-  (read-string (or (System/getenv "FIGWHEEL_NREPL_PORT") "7888")))
-
+(def server-port (read-string (or (System/getenv "FIGWHEEL_SERVER_PORT") "3449")))
+(def nrepl-port (read-string (or (System/getenv "FIGWHEEL_NREPL_PORT") "7888")))
 (defproject solsort.mobibl/mobibl "0.0.1-SNAPSHOT"
   :license "Creative Commons BY-NC-ND"
 
@@ -12,7 +7,7 @@
   [[org.clojure/clojure "1.8.0"]
    [org.clojure/clojurescript "1.7.170"]
    [org.clojure/core.async "0.2.374"]
-   [cljsjs/pouchdb "5.2.0-1"]
+   [cljsjs/pouchdb "5.2.1-0"]
    [cljsjs/showdown "0.4.0-1"]
    [solsort/util "0.1.2-SNAPSHOT"]
    [reagent "0.5.1"]
@@ -23,8 +18,8 @@
   [[lein-cljsbuild "1.1.1"]
    [lein-ancient "0.6.8"]
    [lein-figwheel "0.5.0-2"]
+   [lein-bikeshed "0.2.0"]
    [lein-kibit "0.1.2"]
-  ; [lein-doo "0.1.6"]
    ]
 
   :source-paths ["src/" "test/"]
