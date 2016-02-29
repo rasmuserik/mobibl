@@ -227,11 +227,14 @@
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
 
-(defn library [library]
-  [:div
-   [tabbar]
-   [:h1 library]
-   "..."])
+(defn library []
+  (let [current-library (subscribe [:current-library])]
+    (fn []
+        [:div
+         [tabbar]
+         [:h1 @(subscribe [:current-library])]
+         [:div "MAP"]
+         ])))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
