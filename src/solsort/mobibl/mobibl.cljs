@@ -21,7 +21,13 @@
 ;; When the application loads we set the data for use in the frontend by
 ;; with the :reset-db handler.  See #36
 (register-handler :reset-db (fn [_ [_ db]] db))
-(register-handler :open (fn [db [_ route]] (assoc db :route route)))
+(register-handler 
+  :open (fn [db [_ [page id]]] 
+          (let [id (or id (get-in db [:current page]))]
+            (log [page id])
+            (-> db
+                (assoc-in [:current page] id)
+                (assoc :route [page id])))))
 
 ;; Initialise the database with sample data
 

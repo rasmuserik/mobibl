@@ -42,7 +42,7 @@
        {:box-sizing :border-box}}
       "general styling"
       )
-    ;; ### Styling for the
+    ;; ### Tabbar
     (load-style!
       {".tabbar"
        {:position :fixed
@@ -64,9 +64,20 @@
        "body"
        {:padding-bottom (* 4 unit)}
        }
-      "topbar-styling")
+      "tabbar-styling")
+    ;; ### Book
+    (load-style!
+      {".work"
+       {:margin-left unit}
+       ".work-img"
+      {:float :right
+       :margin-left unit
+       :margin-right unit
+       :width (* unit 9)}}
+      
+      "work-style"
+      )
     ))
-
 ;; ### Actually apply styling
 ;;
 ; re-layout on rotation etc.
@@ -104,15 +115,16 @@
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
 
-(defn work [id]
-  (let [work-id @(subscribe [:current-work])
-        work @(subscribe [:work work-id]) ]
-    [:div
+(defn work [work-id]
+  (let [work @(subscribe [:work work-id])]
+    [:div.work
      [tabbar]
      [:div "TODO: Work history here"]
-     [:h1 (:title work)]
+     [:img {:class "work-img"
+            :src (:cover-url work)}]
+     [:h1.blah (:title work)]
      [:div "af " (:creator work)]
-     [:img {:src (:cover-url work)}]
+     [:p (:description work)]
      "..."]))
 
 
@@ -189,12 +201,13 @@
 
 ;; ### Main App entry point
 (defn app []
-  (case (first @(subscribe [:route]))
-    "search" [search]
-    "work" [work]
-    "library" [library]
+  (let [[page id] @(subscribe [:route])]
+   (case page
+    "search" [search id]
+    "work" [work id]
+    "library" [library id]
     "status" [status]
-    [search]))
+    [search ""])))
 
 ;; ## Execute and events
 

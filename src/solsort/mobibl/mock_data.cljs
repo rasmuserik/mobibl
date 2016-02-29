@@ -26,10 +26,21 @@
     :borrowed
     [{:id "870970-basis:28934297" :until "2016-03-24"}
      {:id "123456-basis:12345678" :until "1901-12-12"}]}
+
+   ;; ## Current items on pages
+   ;;
    :current
-   {:search-query "Murakami"
-    :work "870970-basis:28934297"
-    :library "Københavns Hovedbibliotek"}
+   {"status" "Murakami"
+    "work" "870970-basis:28934297"}
+
+   ;; ## Search history
+   ;;
+   :searches
+   [{:query "test"
+     :results ["870970-basis:28934297"
+               "775100-katalog:50643662"
+               "775100-katalog:28934572"
+               "775100-katalog:10260744"]}]
 
    ;; ## Creative works
    ;;
@@ -64,7 +75,7 @@
     "775100-katalog:50643662"
     {:title "Matematik i virkeligheden"
      :creator "Allan Baktoft"
-     :cover-url "http://www.bogpriser.dk/Images/placeholder-cover.png"
+     :cover-url ""
      :description "Regn den ud"
      :keywords ["Matematik" "Regne"]
      :location "Faglitteratur"
@@ -90,8 +101,9 @@
     "775100-katalog:10260744"
     {:title "Ummagumma"
      :creator "The Pink Floyd"
-     :cover-url (str "https://en.wikipedia.org/wiki/"
-                     "File:PinkFloyd-album-ummagummastudio-300.jpg")
+     :cover-url 
+     (str "https://upload.wikimedia.org/wikipedia/en/1/16/"
+          "PinkFloyd-album-ummagummastudio-300.jpg")
      :description "Musik"
      :keywords ["Rock"]
      :location "Musik"
