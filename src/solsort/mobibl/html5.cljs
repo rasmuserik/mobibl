@@ -15,7 +15,6 @@
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
-
 ;; ## Styling
 ;;
 
@@ -35,7 +34,8 @@
   (let [unit (/ js/document.body.clientWidth 24)]
     (load-style!
       {:body
-       {:background "#ffffff"}
+       {:background "url(assets/background.jpg)"
+        :background-color "#fbf8f4"}
        "div,a,span,b,i,img,button"
        {:box-sizing :border-box}
        ".button"
@@ -159,7 +159,7 @@
                " "
                (for [word keywords]
                  [:a.work-keyword {:href
-                      (str "#search/" word)} word]))))
+                                   (str "#search/" word)} word]))))
      [:div.work-desc (:description work)]
      (if language [:p [:em "Sprog: "] language] "")
      (if location [:p [:em "Opstilling: "] location] "")]))
