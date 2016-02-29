@@ -36,12 +36,20 @@
   (let [unit (/ js/document.body.clientWidth 24)]
     (load-style!
       {:body
-       {:background "#fff8f8"
-        }
-       "div,a,span,b,i,img"
-       {:box-sizing :border-box}}
-      "general styling"
-      )
+       {:background "#ffffff"}
+       "div,a,span,b,i,img,button"
+       {:box-sizing :border-box}
+       ".button"
+       {:display :inline-block
+        :min-height (* 2.5 unit)
+        :border-radius (* 0.5 unit)
+        :border (str (* 0.15 unit) "px solid black")
+        :padding-top (* 0.5 unit)
+        :padding-left (* 0.3 unit)
+        :padding-right (* 0.3 unit)
+        :text-align :center
+        :vertical-align :middle}}
+      "general styling")
     ;; ### Tabbar
     (load-style!
       {".tabbar"
@@ -68,12 +76,30 @@
     ;; ### Book
     (load-style!
       {".work"
-       {:margin-left unit}
+       {:margin-left unit
+        :margin-right unit
+        }
+       ".work .title"
+       {:text-align :center
+        :font-size "200%"
+        :margin-top unit }
+       ".work .author"
+       {:text-align :center
+        :margin-bottom unit}
+       ".work-keyword"
+       {:display :inline-block
+        :vertical-align :middle
+        :clear :none
+        :padding-top (* 0.5 unit)
+        :min-height (* 2 unit)
+        ;:outline "1px solid black"
+        :width (* unit 7.3)
+        }
        ".work-img"
-      {:float :right
-       :margin-left unit
-       :margin-right unit
-       :width (* unit 9)}}
+       {:float :right
+        :margin-left 0
+        :margin-right 0
+        :width (* unit 14)}}
       "work-style"
       )
     ))
@@ -115,16 +141,29 @@
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
 
 (defn work [work-id]
-  (let [work @(subscribe [:work work-id])]
+  (let [work @(subscribe [:work work-id])
+        language (:language work)
+        keywords (:keywords work)
+        location (:location work)
+        creator (:creator work)]
     [:div.work
      [tabbar]
      [:div "TODO: Work history here"]
+     [:div.title (:title work)]
+     [:div.author "af " [:a {:href (str "#search/" creator)} creator]]
      [:img {:class "work-img"
             :src (:cover-url work)}]
-     [:h1.blah (:title work)]
-     [:div "af " (:creator work)]
-     [:p (:description work)]
-     "..."]))
+     [:div [:a.button "Bestil"]]
+     (if-not keywords ""
+       (into [:p #_[:em "Emne: "]]
+             (interpose
+               " "
+               (for [word keywords]
+                 [:a.work-keyword {:href
+                      (str "#search/" word)} word]))))
+     [:div.work-desc (:description work)]
+     (if language [:p [:em "Sprog: "] language] "")
+     (if location [:p [:em "Opstilling: "] location] "")]))
 
 
 ;; ### Library
@@ -201,12 +240,12 @@
 ;; ### Main App entry point
 (defn app []
   (let [[page id] @(subscribe [:route])]
-   (case page
-    "search" [search id]
-    "work" [work id]
-    "library" [library id]
-    "status" [status]
-    [search ""])))
+    (case page
+      "search" [search id]
+      "work" [work id]
+      "library" [library id]
+      "status" [status]
+      [search ""])))
 
 ;; ## Execute and events
 
