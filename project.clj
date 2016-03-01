@@ -50,7 +50,7 @@
       ; :on-jsload ""
       }
      :compiler
-     {:main solsort.mobibl.html5
+     {:main solsort.mobibl.main
       :asset-path "out"
       :output-to "resources/public/index.js"
       :output-dir "resources/public/out"
@@ -66,10 +66,10 @@
      :source-paths ["src"]
      :compiler
      {:output-to "index.js"
-      :main solsort.mobibl.html5
+      :main solsort.mobibl.main
       :externs ["externs.js"]
       :optimizations :advanced
       :pretty-print false}}]}
   :figwheel
-  {:nrepl-port ~(read-string (or (System/getenv "FIGWHEEL_SERVER_PORT") "3449"))
-   :server-port ~(read-string (or (System/getenv "FIGWHEEL_NREPL_PORT") "7888"))  })
+  {:nrepl-port ~(read-string (or (System/getenv "FIGWHEEL_NREPL_PORT") "7888"))
+   :server-port ~(read-string (or (System/getenv "FIGWHEEL_SERVER_PORT") "3449"))})
