@@ -6,11 +6,7 @@
 ;; determined.
 ;;
 (def sample-db
-  {
-   ;
-   ; :route ["work" "870970-basis:28934297"]
-   ;
-   :route ["status"]
+  {:route ["search"]
 
    ;; ## User loan status
    ;;

@@ -131,10 +131,10 @@
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
-(defn search []
+(defn search [query]
   [:div
    [tabbar]
-   [:input {:value @(subscribe [:current-query])}]
+   [:input {:value query}]
    "..."])
 
 ;; ### Work
@@ -169,10 +169,10 @@
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
 
-(defn library []
+(defn library [library]
   [:div
    [tabbar]
-   [:h1 @(subscribe [:current-library])]
+   [:h1 library]
    "..."])
 
 ;; ### Status
