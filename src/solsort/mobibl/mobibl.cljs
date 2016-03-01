@@ -29,29 +29,29 @@
                 (assoc-in [:current page] id)
                 (assoc :route [page id])))))
 
-;; Initialise the database with sample data
+(register-handler
+  :request-work
+  (fn [db [_ id]]
+    (assoc-in db [:works id :status :requested] true)))
 
+;; Initialise the database with sample data
 (dispatch [:reset-db sample-db])
 
 ;; ## Subscriptions
 
-(register-sub
-  :route (fn [db] (reaction (get @db :route))))
-(register-sub
-  :current-library (fn [db] (reaction (get-in @db [:current :library]))))
-(register-sub
-  :current-work (fn [db] (reaction (get-in @db [:current :work]))))
-(register-sub
-  :current-query (fn [db] (reaction (get-in @db [:current :query]))))
-(register-sub
-  :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
 
-;;
-;; This work will serve as a default if we ever run into something not existing
-;;
-(def unknown-work {:title "Unknown Title"
-                   :creator "Unknown Creator"
-                   :id "Unknown-id"})
+(def default-work
+  {:title "Unknown Title"
+   :creator "Unknown Creator"})
+
+(defn get-work [db id]
+  (let [work (get-in db [:works id])]
+  (when-not work (dispatch [:request-work id]))
+  (merge default-work {:id id} work)))
+
+(register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
+(register-sub :works (fn [db _] (reaction (:works @db))))
+(register-sub :route (fn [db] (reaction (get @db :route))))
 
 ;;
 ;; Helper function to query the db for the full info about works
@@ -59,7 +59,7 @@
 (defn get-status-works [db prop]
   (let [status-obj (get-in db [:status prop])
         res (for [so status-obj]
-              (merge so (get-in db [:works (:id so)] unknown-work)))]
+              (merge so (get-work db (:id so))))]
     res))
 
 (register-sub :reservations
