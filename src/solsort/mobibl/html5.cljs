@@ -57,8 +57,9 @@
         :bottom 0
         :left 0
         :width "100%"
-        :background-color :white
-        :border-top "1px solid black"
+        :background "url(assets/background.jpg)"
+        :background-color "#fbf8f4"
+        :box-shadow "-1px 0px 5px rgba(0,0,0,1);"
         }
        ".tabbar a"
        {:display :inline-block
@@ -66,7 +67,8 @@
         :width (* 6 unit)
         :text-align :center}
        ".tabbar img"
-       {:height (* 4 unit)
+       {:padding (* 0.5 unit)
+        :height (* 4 unit)
         :width (* 4 unit)}
        "body"
        {:padding-bottom (* 4 unit)}
@@ -117,7 +119,7 @@
 
 (defn tabbar-button [id s]
   [:a {:href (str "#" id)}
-   [:img {:src (str "assets/" id "-icon.png")
+   [:img {:src (str "assets/" id "-icon.svg")
           :alt s}]])
 
 (defn tabbar []
