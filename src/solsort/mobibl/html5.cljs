@@ -10,7 +10,6 @@
      [<ajax <seq<! js-seq normalize-css load-style! put!close!
       parse-json-or-nil log page-ready render dom->clj]]
     [reagent.core :as reagent :refer []]
-    [solsort.mobibl.mobibl]
     [re-frame.core :as re-frame
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
