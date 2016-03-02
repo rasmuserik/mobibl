@@ -16,7 +16,6 @@
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
-
 ;; ## Styling
 ;;
 
@@ -36,13 +35,22 @@
   (let [unit (/ js/document.body.clientWidth 24)]
     (load-style!
       {:body
-       {:background "#fff8f8"
-        }
-       "div,a,span,b,i,img"
-       {:box-sizing :border-box}}
-      "general styling"
-      )
-    ;; ### Styling for the
+       {:background "url(assets/background.jpg)"
+        :background-color "#fbf8f4"}
+       "div,a,span,b,i,img,button"
+       {:box-sizing :border-box}
+       ".button"
+       {:display :inline-block
+        :min-height (* 2.5 unit)
+        :border-radius (* 0.5 unit)
+        :border (str (* 0.15 unit) "px solid black")
+        :padding-top (* 0.5 unit)
+        :padding-left (* 0.3 unit)
+        :padding-right (* 0.3 unit)
+        :text-align :center
+        :vertical-align :middle}}
+      "general styling")
+    ;; ### Tabbar
     (load-style!
       {".tabbar"
        {:position :fixed
@@ -50,8 +58,9 @@
         :bottom 0
         :left 0
         :width "100%"
-        :background-color :white
-        :border-top "1px solid black"
+        :background "url(assets/background.jpg)"
+        :background-color "#fbf8f4"
+        :box-shadow "-1px 0px 5px rgba(0,0,0,1);"
         }
        ".tabbar a"
        {:display :inline-block
@@ -59,14 +68,43 @@
         :width (* 6 unit)
         :text-align :center}
        ".tabbar img"
-       {:height (* 4 unit)
+       {:padding (* 0.5 unit)
+        :height (* 4 unit)
         :width (* 4 unit)}
        "body"
        {:padding-bottom (* 4 unit)}
        }
-      "topbar-styling")
+      "tabbar-styling")
+    ;; ### Book
+    (load-style!
+      {".work"
+       {:margin-left unit
+        :margin-right unit
+        }
+       ".work .title"
+       {:text-align :center
+        :font-size "200%"
+        :margin-top unit }
+       ".work .author"
+       {:text-align :center
+        :margin-bottom unit}
+       ".work-keyword"
+       {:display :inline-block
+        :vertical-align :middle
+        :clear :none
+        :padding-top (* 0.5 unit)
+        :min-height (* 2 unit)
+        ;:outline "1px solid black"
+        :width (* unit 7.3)
+        }
+       ".work-img"
+       {:float :right
+        :margin-left 0
+        :margin-right 0
+        :width (* unit 14)}}
+      "work-style"
+      )
     ))
-
 ;; ### Actually apply styling
 ;;
 ; re-layout on rotation etc.
@@ -82,7 +120,7 @@
 
 (defn tabbar-button [id s]
   [:a {:href (str "#" id)}
-   [:img {:src (str "assets/" id "-icon.png")
+   [:img {:src (str "assets/" id "-icon.svg")
           :alt s}]])
 
 (defn tabbar []
@@ -104,16 +142,30 @@
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
 
-(defn work [id]
-  (let [work-id @(subscribe [:current-work])
-        work @(subscribe [:work work-id]) ]
-    [:div
+(defn work [work-id]
+  (let [work @(subscribe [:work work-id])
+        language (:language work)
+        keywords (:keywords work)
+        location (:location work)
+        creator (:creator work)]
+    [:div.work
      [tabbar]
      [:div "TODO: Work history here"]
-     [:h1 (:title work)]
-     [:div "af " (:creator work)]
-     [:img {:src (:cover-url work)}]
-     "..."]))
+     [:div.title (:title work)]
+     [:div.author "af " [:a {:href (str "#search/" creator)} creator]]
+     [:img {:class "work-img"
+            :src (:cover-url work)}]
+     [:div [:a.button "Bestil"]]
+     (if-not keywords ""
+       (into [:p #_[:em "Emne: "]]
+             (interpose
+               " "
+               (for [word keywords]
+                 [:a.work-keyword {:href
+                                   (str "#search/" word)} word]))))
+     [:div.work-desc (:description work)]
+     (if language [:p [:em "Sprog: "] language] "")
+     (if location [:p [:em "Opstilling: "] location] "")]))
 
 
 ;; ### Library
@@ -189,12 +241,13 @@
 
 ;; ### Main App entry point
 (defn app []
-  (case (first @(subscribe [:route]))
-    "search" [search]
-    "work" [work]
-    "library" [library]
-    "status" [status]
-    [search]))
+  (let [[page id] @(subscribe [:route])]
+    (case page
+      "search" [search id]
+      "work" [work id]
+      "library" [library id]
+      "status" [status]
+      [search ""])))
 
 ;; ## Execute and events
 
