@@ -43,10 +43,10 @@
      :cover-url "http://www.bogpriser.dk/Covers/202/9788779559202.jpg"
      :description
      "Aomame er en 30-årig smart pige, uddannet kampsportsinstruktør, men
-     arbejder p.t. som lejemorder. Tengo er matematiklærer med
-     forfatterdrømme.  Han skal omskrive en sær 17-årig piges sære historie.
-     Begge hovedfigurer oplever, at deres virkelighed forvrides let, hvad
-     påvirker deres virkelighed?"
+      arbejder p.t. som lejemorder. Tengo er matematiklærer med
+      forfatterdrømme.  Han skal omskrive en sær 17-årig piges sære historie.
+      Begge hovedfigurer oplever, at deres virkelighed forvrides let, hvad
+      påvirker deres virkelighed?"
      :keywords ["Kultur" "Kærlighed" "Magisk Realisme" "Magt"
                 "Parallelle Verdener" "Skrivekunst" "Japan" "1980-1989"]
      :location "Skønlitteratur"
@@ -100,30 +100,48 @@
      [{:name "Lydbog (cd) (bind 1)" :availability :loaned}
       {:name "Lydbog (cd) (bind 2)" :availability :available}
       {:name "Lydbog (cd) (bind 3)" :availability :available}]}}
-   :libraries {"Københavns Hovedbibliotek"
-               {:address {
-                          :road "Krystalgade"
-                          :number 15
-                          :post 1172
+
+   ;; info for this period of time
+    ;  :week 
+    ;  {:number 9
+    ;         :dates "28/2 - 6/3"}
+   :libraries {"710100"
+               {:name "Københavns Hovedbibliotek"
+                :address {
+                 :road "Krystalgade 15"
+                 :post "1172"
+                 :city "København K"
+                 :country "Danmark"}
+                :email "bibliotek@kff.kk.dk"
+                :phone {
+                        :number "33663000"
+                        :time "man-fre 10-17"}
+                :visit {
+                        :open [
+                               [8 22]
+                               [8 20]
+                               [8 20]
+                               [8 20]
+                               [8 19]
+                               [8 17]]
+                        :service [[12 17]
+                                  [12 17]
+                                  [12 17]
+                                  [12 17]
+                                  [12 17]
+                                  [12 15]]}}
+               "810010"
+               {:name "Det Kongelige Bibliotek, Diamanten"
+                :type "Forskningsbibliotek"
+                :address { 
+                          :road "Søren Kierkegaards Plads 1"
+                          :post "1221"
                           :city "København K"
-                          :country "Danmark"
-                          }}
-               {:access {
-                         :week 9
-                         :period [2016 2 28 2016 3 6]
-                         :open [
-                                [8 22]
-                                [8 20]
-                                [8 20]
-                                [8 20]
-                                [8 19]
-                                [8 17]]
-                         :service [[12 17]
-                                   [12 17]
-                                   [12 17]
-                                   [12 17]
-                                   [12 17]
-                                   [12 15]]}
-                }
-               }
-})
+                          :country "Danmark"}
+                ;; FIXME No email, but a contact form instead for this library
+                :phone {
+                        :number "33 47 47 47"
+                        :time "man - fre 9-16"}
+                :visit {:week }
+
+               }})

@@ -125,7 +125,7 @@
         [:div
          [tabbar]
          [:h1 @(subscribe [:current-library])]
-         [:div "MAP"]
+         [:div "MAP"] ;; Leaflet
          ])))
 
 ;; ### Status
