@@ -63,8 +63,7 @@
                           [:div {:id id
                                  :on-wheel #(log "scroll")
                                  :style {:height "200px"
-                                         :width "300px"
-                                         :z-index 10}}])
+                                         :width "300px"}}])
       :component-did-mount (fn []
                                (let [map-handle (.map js/L id)]
                                  (reset! bib-map map-handle)
