@@ -9,18 +9,17 @@
    [org.clojure/core.async "0.2.374"]
    [cljsjs/pouchdb "5.2.1-0"]
    [cljsjs/showdown "0.4.0-1"]
+   [cljsjs/leaflet "0.7.3-6"]
    [solsort/util "0.1.2-SNAPSHOT"]
    [reagent "0.5.1"]
-   [re-frame "0.6.0"]
-   [soda-ash "0.1.0-beta"]]
+   [re-frame "0.6.0"]]
 
   :plugins
   [[lein-cljsbuild "1.1.1"]
    [lein-ancient "0.6.8"]
    [lein-figwheel "0.5.0-2"]
    [lein-bikeshed "0.2.0"]
-   [lein-kibit "0.1.2"]
-   ]
+   [lein-kibit "0.1.2"]]
 
   :source-paths ["src/" "test/"]
 
