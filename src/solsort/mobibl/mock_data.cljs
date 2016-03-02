@@ -101,47 +101,69 @@
       {:name "Lydbog (cd) (bind 2)" :availability :available}
       {:name "Lydbog (cd) (bind 3)" :availability :available}]}}
 
-   ;; info for this period of time
-    ;  :week 
-    ;  {:number 9
-    ;         :dates "28/2 - 6/3"}
+   ;; Simplified representation of libraries identified by library id.
+   ;;
+   ;; The `:hours` section may need to be expanded as some libraries have
+   ;; different sections with differing opening hours. The "Sorte Diamant" for
+   ;; example, has 9 different sections with differing hours, see
+   ;;
+   ;;    http://www.kb.dk/da/kb/aabningstider/index.html#diamant
+   ;;
+   ;; FIXME The above books in the works section are from different libraries,
+   ;; ie. 775100 is Aarhus hovedbibliotek.
+   ;;
    :libraries {"710100"
                {:name "Københavns Hovedbibliotek"
-                :address {
-                 :road "Krystalgade 15"
+                :type "Folkebibliotek"
+                :address
+                {:road "Krystalgade 15"
                  :post "1172"
                  :city "København K"
                  :country "Danmark"}
                 :email "bibliotek@kff.kk.dk"
-                :phone {
-                        :number "33663000"
+                :phone {:number "33663000"
                         :time "man-fre 10-17"}
-                :visit {
-                        :open [
-                               [8 22]
-                               [8 20]
-                               [8 20]
-                               [8 20]
-                               [8 19]
-                               [8 17]]
-                        :service [[12 17]
-                                  [12 17]
-                                  [12 17]
-                                  [12 17]
-                                  [12 17]
-                                  [12 15]]}}
+                :position
+                {:lat 55.680887 :long 12.573619}
+                :hours
+                {:open
+                 [[8 22]
+                  [8 20]
+                  [8 20]
+                  [8 20]
+                  [8 19]
+                  [8 17]]
+                 :service
+                 [[12 17]
+                  [12 17]
+                  [12 17]
+                  [12 17]
+                  [12 17]
+                  [12 15]]}}
                "810010"
                {:name "Det Kongelige Bibliotek, Diamanten"
                 :type "Forskningsbibliotek"
-                :address { 
+                :address {
                           :road "Søren Kierkegaards Plads 1"
                           :post "1221"
                           :city "København K"
                           :country "Danmark"}
-                ;; FIXME No email, but a contact form instead for this library
-                :phone {
-                        :number "33 47 47 47"
+                :email "kb@kb.dk"
+                :phone {:number "33 47 47 47"
                         :time "man - fre 9-16"}
-                :visit {:week }
-
-               }})
+                :position
+                {:lat 55.67321579999999 :long 12.5821264}
+                :hours
+                {:open
+                 [[8 22]
+                  [8 22]
+                  [8 22]
+                  [8 22]
+                  [8 22]
+                  [8 22]]
+                 :service
+                 [[10 16]
+                  [10 16]
+                  [10 16]
+                  [10 16]
+                  [10 16]]}}}})
