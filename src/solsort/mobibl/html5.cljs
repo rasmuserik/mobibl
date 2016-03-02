@@ -53,7 +53,6 @@
         :width "100%"
         :background-color :white
         :border-top "1px solid black"
-        :z-index 1000
         }
        ".tabbar a"
        {:display :inline-block
@@ -126,12 +125,12 @@
     (fn []
         (log "Cur Lib" @current-library)
         [:div
-         {:style {:z-index 1000}}
          [tabbar]
          [:h1 (:name @current-library)]
          [bib-map
           :id "bib-map"
-          :pos (:position @current-library)]])))
+          :pos (:position @current-library)]
+         ])))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
