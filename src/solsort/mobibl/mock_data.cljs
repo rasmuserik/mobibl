@@ -29,7 +29,7 @@
    :current
    {:search-query "Murakami"
     :work "870970-basis:28934297"
-    :library "Københavns Hovedbibliotek"}
+    :library "710100"}
 
    ;; ## Creative works
    ;;
@@ -112,58 +112,59 @@
    ;; FIXME The above books in the works section are from different libraries,
    ;; ie. 775100 is Aarhus hovedbibliotek.
    ;;
-   :libraries {"710100"
-               {:name "Københavns Hovedbibliotek"
-                :type "Folkebibliotek"
-                :address
-                {:road "Krystalgade 15"
-                 :post "1172"
-                 :city "København K"
-                 :country "Danmark"}
-                :email "bibliotek@kff.kk.dk"
-                :phone {:number "33663000"
-                        :time "man-fre 10-17"}
-                :position
-                {:lat 55.680887 :long 12.573619}
-                :hours
-                {:open
-                 [[8 22]
-                  [8 20]
-                  [8 20]
-                  [8 20]
-                  [8 19]
-                  [8 17]]
-                 :service
-                 [[12 17]
-                  [12 17]
-                  [12 17]
-                  [12 17]
-                  [12 17]
-                  [12 15]]}}
-               "810010"
-               {:name "Det Kongelige Bibliotek, Diamanten"
-                :type "Forskningsbibliotek"
-                :address {
-                          :road "Søren Kierkegaards Plads 1"
-                          :post "1221"
-                          :city "København K"
-                          :country "Danmark"}
-                :email "kb@kb.dk"
-                :phone {:number "33 47 47 47"
-                        :time "man - fre 9-16"}
-                :position
-                {:lat 55.67321579999999 :long 12.5821264}
-                :hours
-                {:open
-                 [[8 22]
-                  [8 22]
-                  [8 22]
-                  [8 22]
-                  [8 22]
-                  [8 22]]
-                 :service
-                 [[10 16]
-                  [10 16]
-                  [10 16]
-                  [10 16]
-                  [10 16]]}}}})
+    :library
+    {"710100"
+    {:name "Københavns Hovedbibliotek"
+      :type "Folkebibliotek"
+      :address
+      {:road "Krystalgade 15"
+      :post "1172"
+      :city "København K"
+      :country "Danmark"}
+      :email "bibliotek@kff.kk.dk"
+      :phone {:number "33663000"
+              :time "man-fre 10-17"}
+      :position
+      [55.680887 12.573619]
+      :hours
+      {:open
+      [[8 22]
+        [8 20]
+        [8 20]
+        [8 20]
+        [8 19]
+        [8 17]]
+      :service
+      [[12 17]
+        [12 17]
+        [12 17]
+        [12 17]
+        [12 17]
+        [12 15]]}}
+    "810010"
+    {:name "Det Kongelige Bibliotek, Diamanten"
+      :type "Forskningsbibliotek"
+      :address {
+                :road "Søren Kierkegaards Plads 1"
+                :post "1221"
+                :city "København K"
+                :country "Danmark"}
+      :email "kb@kb.dk"
+      :phone {:number "33 47 47 47"
+              :time "man - fre 9-16"}
+      :position
+      [55.67321579999999 12.5821264]
+      :hours
+      {:open
+      [[8 22]
+        [8 22]
+        [8 22]
+        [8 22]
+        [8 22]
+        [8 22]]
+      :service
+      [[10 16]
+        [10 16]
+        [10 16]
+        [10 16]
+        [10 16]]}}}})

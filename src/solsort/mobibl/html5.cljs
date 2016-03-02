@@ -14,7 +14,8 @@
     [re-frame.core :as re-frame
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
-    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
+    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
+    [solsort.mobibl.bib-map :refer [bib-map]]))
 
 
 ;; ## Styling
@@ -52,6 +53,7 @@
         :width "100%"
         :background-color :white
         :border-top "1px solid black"
+        :z-index 1000
         }
        ".tabbar a"
        {:display :inline-block
@@ -122,11 +124,14 @@
 (defn library []
   (let [current-library (subscribe [:current-library])]
     (fn []
+        (log "Cur Lib" @current-library)
         [:div
+         {:style {:z-index 1000}}
          [tabbar]
-         [:h1 @(subscribe [:current-library])]
-         [:div "MAP"] ;; Leaflet
-         ])))
+         [:h1 (:name @current-library)]
+         [bib-map
+          :id "bib-map"
+          :pos (:position @current-library)]])))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>

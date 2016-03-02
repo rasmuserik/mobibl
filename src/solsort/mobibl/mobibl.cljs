@@ -32,7 +32,9 @@
 (register-sub
   :route (fn [db] (reaction (get @db :route))))
 (register-sub
-  :current-library (fn [db] (reaction (get-in @db [:current :library]))))
+  :current-library (fn [db] (reaction
+                             (get-in @db [:library 
+                                          (get-in @db [:current :library])]))))
 (register-sub
   :current-work (fn [db] (reaction (get-in @db [:current :work]))))
 (register-sub
