@@ -50,8 +50,9 @@
   (merge default-work {:id id} work)))
 
 (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
-(register-sub :works (fn [db _] (reaction (:works @db))))
+(register-sub :works (fn [db] (reaction (:works @db))))
 (register-sub :route (fn [db] (reaction (get @db :route))))
+(register-sub :db (fn [db] (reaction @db)))
 
 ;;
 ;; Helper function to query the db for the full info about works
