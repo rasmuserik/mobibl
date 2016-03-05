@@ -18,10 +18,8 @@
    [solsort.mobibl.bib-map :refer [bib-map]]
    [goog.string :refer [unescapeEntities]]))
 
-
 ;; ## Styling
 ;;
-
 (load-style! normalize-css "style-reset")
 (defn styling []
   ;;
@@ -35,16 +33,17 @@
   ;; It also allows for 1/2, 1/3, 1/4, and 1/6 division of the screen,
   ;; and 5/8 vs 3/8 which approximately the golden ratio.
   ;;
-  (let [unit (/ js/document.body.clientWidth 24)]
+  (let [unit   (/ js/document.body.clientWidth 24)
+        unit-height (/ js/document.body.clientHeight 24)]
     (load-style!
       {:body
        {:background "#fff8f8"
         }
        "div,a,span,b,i,img"
        {:box-sizing :border-box}}
-      "general styling"
+      "general-styling"
       )
-    ;; ### Styling for the
+    ;; ### Styling for the tabbar
     (load-style!
       {".tabbar"
        {:position :fixed
@@ -68,6 +67,13 @@
        }
       "topbar-styling")
     ;; ### Styling for the library view
+    ;;
+    ;; FIXME Not so nice to have the style for bib-map defined here
+    ;;
+    (load-style!
+     {"#bib-map"
+      {:height (* unit-height 6)}}
+     "bib-map-style")
     (load-style!
      {"table.openhours th"
       {:text-align "left"
@@ -77,10 +83,10 @@
      "open-hours-styling")
     (load-style!
      {".contact"
-      {:padding "0em 0em 1em 0em"
-       ".contact div span"
-        {:margin "0em 1em 0em 0em"
-         :border "1px solid blue"}}})))
+      {:padding "0em 0em 1em 0em"}
+      ".contact div span"
+      {:padding "0em 1em 0em 0em"}}
+     "contact-styling")))
 
 ;; ### Actually apply styling
 ;;
@@ -181,7 +187,7 @@
             [:div
              [:span "Email"] [:span (:email @current-library)]]
             [:div
-             [:span "Telefon"] [:span (:number phone)] ", " [:span (:time phone)]]]]))))
+             [:span "Telefon"] [:span (:number phone)] [:span (:time phone)]]]]))))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
