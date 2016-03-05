@@ -19,7 +19,6 @@
 
 ;; ## Styling
 ;;
-
 (load-style! normalize-css "style-reset")
 (def highlight "#326bc5")
 ;(def background fade from "#eaeaea" to "#ffffff")
@@ -40,7 +39,8 @@
   ;;
   (let [unit (/ (js/Math.min js/document.body.clientHeight
                              js/document.body.clientWidth)
-                24)]
+                24)
+        unit-height (/ js/document.body.clientHeight 24)]
     (load-style!
       {:body
        {:background "url(assets/background.jpg)"
@@ -123,6 +123,13 @@
         :width (* unit 14)}}
       "work-style")
     ;; ### Library view
+    ;;
+    ;; FIXME Not so nice to have the style for bib-map defined here
+    ;;
+    (load-style!
+     {"#bib-map"
+      {:height (* unit-height 6)}}
+     "bib-map-style")
     (load-style!
      {"table.openhours th"
       {:text-align "left"
@@ -135,8 +142,8 @@
       {:padding "0em 0em 1em 0em"
        ".contact div span"
         {:margin "0em 1em 0em 0em"
-         :border "1px solid blue"}}})  
-    ))
+         :border "1px solid blue"}}}
+     "contact-styling")))
 
 ;; ### Actually apply styling
 ;;
@@ -291,7 +298,7 @@
             [:div
              [:span "Email"] [:span (:email @current-library)]]
             [:div
-             [:span "Telefon"] [:span (:number phone)] ", " [:span (:time phone)]]]]))))
+             [:span "Telefon"] [:span (:number phone)] [:span (:time phone)]]]]))))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>

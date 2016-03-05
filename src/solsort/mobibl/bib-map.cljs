@@ -60,9 +60,7 @@
     (create-class
      {:display-name (str "bib-map-" id)
       :reagent-render (fn []
-                          [:div {:id id
-                                 :style {:height "200px"
-                                         :width "300px"}}])
+                          [:div {:id id}])
       :component-did-mount (fn []
                                (let [map-handle (.map js/L id)]
                                  (reset! bib-map map-handle)
