@@ -14,7 +14,8 @@
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
-    [solsort.mobibl.bib-map :refer [bib-map]]))
+    [solsort.mobibl.bib-map :refer [bib-map]]
+    [goog.string :refer [unescapeEntities]]))
 
 ;; ## Styling
 ;;
@@ -120,9 +121,23 @@
         :margin-left 0
         :margin-right 0
         :width (* unit 14)}}
-      "work-style"
-      )
+      "work-style")
+    ;; ### Library view
+    (load-style!
+     {"table.openhours th"
+      {:text-align "left"
+       :padding "0em 0.8em 0em 0em"}
+      "table.openhours tbody td"
+      {:text-align "center"}}
+     "open-hours-styling")
+    (load-style!
+     {".contact"
+      {:padding "0em 0em 1em 0em"
+       ".contact div span"
+        {:margin "0em 1em 0em 0em"
+         :border "1px solid blue"}}})  
     ))
+
 ;; ### Actually apply styling
 ;;
 ; re-layout on rotation etc.
@@ -229,17 +244,54 @@
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
 
+(def daynames ["Man" "Tir" "Ons" "Tor" "Fre" "Lør" "Søn"])
+
 (defn library []
   (let [current-library (subscribe [:current-library])]
     (fn []
-        (log "Cur Lib" @current-library)
-        [:div
-         [tabbar]
-         [:h1 (:name @current-library)]
-         [bib-map
-          :id "bib-map"
-          :pos (:position @current-library)]
-         ])))
+        (let [address (:address @current-library)
+              hours   (:hours @current-library)
+              phone   (:phone @current-library)]
+          [:div
+           [tabbar]
+           [:h1 (:name @current-library)]
+           [bib-map
+            :id "bib-map"
+            :pos (:position @current-library)]
+           [:div.address
+            [:h2 "Adresse"]
+            [:div (:road address)]
+            [:div (:city address)]
+            [:div (:country address)]]
+           [:div.open
+            [:h2 "Åbningstider"]
+            [:table.openhours
+             [:thead
+              (into
+               [:tr [:th]]
+               (for [title (map :title hours)]
+                    [:th title]))]
+             (into [:tbody]
+                   (for [day (range 7)]
+                        (into [:tr
+                               [:th (get daynames day)]]
+                              (for [area (map :weekdays hours)
+                                    :let [time (get area day)]]
+                                   (into [:td]
+                                         [(if (nil? time)
+                                            "Lukket"
+                                            (let [t0 (get time 0)
+                                                  t1 (get time 1)]
+                                              (str (if (< t0 10)
+                                                     (unescapeEntities "&nbsp;")
+                                                     "")
+                                                   t0 " - " t1)))])))))]]
+           [:div.contact
+            [:h2 "Kontakt"]
+            [:div
+             [:span "Email"] [:span (:email @current-library)]]
+            [:div
+             [:span "Telefon"] [:span (:number phone)] ", " [:span (:time phone)]]]]))))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
