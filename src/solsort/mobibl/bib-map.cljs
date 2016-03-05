@@ -61,7 +61,6 @@
      {:display-name (str "bib-map-" id)
       :reagent-render (fn []
                           [:div {:id id
-                                 :on-wheel #(log "scroll")
                                  :style {:height "200px"
                                          :width "300px"}}])
       :component-did-mount (fn []
