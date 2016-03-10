@@ -43,8 +43,8 @@
    ;; This contains the metadata of the creative works,
    ;; caching the webservices.
    ;;
-   :works
-   {"870970-basis:28934297"
+   :works {}
+   #_{"870970-basis:28934297"
     {:title "1Q84"
      :creator "Haruki Murakami"
      :cover-url "http://www.bogpriser.dk/Covers/202/9788779559202.jpg"
