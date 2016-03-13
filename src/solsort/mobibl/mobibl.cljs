@@ -24,15 +24,14 @@
 (register-handler
   :open (fn [db [_ [page id]]]
           (let [id (or id (get-in db [:current page]))]
-            (log [page id])
             (-> db
                 (assoc-in [:current page] id)
                 (assoc :route [page id])))))
-
 (register-handler
-  :request-work
-  (fn [db [_ id]]
-    (assoc-in db [:works id :status :requested] true)))
+  :work (fn [db [_ id content]]
+          (assoc-in db [:works id]
+                    (merge (get-in db [:work id] {})
+                           content))))
 
 ;; Initialise the database with sample data
 (dispatch [:reset-db sample-db])
@@ -46,8 +45,8 @@
 
 (defn get-work [db id]
   (let [work (get-in db [:works id])]
-  (when-not work (dispatch [:request-work id]))
-  (merge default-work {:id id} work)))
+    (when-not work (dispatch [:request-work id]))
+    (merge default-work {:id id} work)))
 
 (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
 (register-sub :works (fn [db] (reaction (:works @db))))

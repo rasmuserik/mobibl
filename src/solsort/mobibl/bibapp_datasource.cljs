@@ -9,6 +9,7 @@
      :refer
      [<ajax <seq<! js-seq normalize-css load-style! put!close!
       parse-json-or-nil log page-ready render dom->clj]]
+    [clojure.walk :refer [keywordize-keys]]
     [reagent.core :as reagent :refer []]
     [clojure.data]
     [re-frame.core :as re-frame
@@ -17,20 +18,26 @@
 
 ; http://solsort.com/es/bibapp/ting/_search?q=ost
 ; http://solsort.com/db/bib/870970-basis:44751143
-(defn handle-change [works]
-  (let [[id work] (->> works
-                       (seq)
-                       (filter
-                         (fn [[id {status :status}]]
-                           (and (:requested status) (not (:sent status)))))
-                       (first))]
-
-    (when id
-      (dispatch-sync [:work-request-in-progress id])
-      (go 
-        (log 'req
-             (<! (<ajax (str "https://solsort.com/db/bib/" id))))
-        ))
-    )
-  (js/console.log (clj->js works)))
-(defonce start (run! (handle-change @(subscribe [:works]))))
+(register-handler
+  :request-work
+  (fn [db [_ id]]
+    (when-not (get-in db [:requested id] false)
+      (go
+        (let
+          [o (<! (<ajax (str "https://solsort.com/db/bib/" id)))
+           isbn (str (first (o "isbn")))
+           result
+           {:title (first (o "title"))
+            :creator (first (o "creator"))
+            :cover-url (str
+                         "http://www.bogpriser.dk/Covers/"
+                         (.slice isbn -3) "/" isbn ".jpg")
+            :keywords (get o "subject" [])
+            :description (first (o "description"))
+            :location nil
+            :language (first (o "language"))
+            }]
+          ;(log 'loaded id o result)
+          (dispatch [:work id result])
+          )))
+    (assoc-in db  [:requested id] true)))
