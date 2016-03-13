@@ -124,8 +124,8 @@ Info under `:status` refers with ids to complete descriptions in the
 This contains the metadata of the creative works,
 caching the webservices.
 
-       :works
-       {"870970-basis:28934297"
+       :works {}
+       #_{"870970-basis:28934297"
         {:title "1Q84"
          :creator "Haruki Murakami"
          :cover-url "http://www.bogpriser.dk/Covers/202/9788779559202.jpg"
@@ -215,15 +215,14 @@ with the :reset-db handler.  See #36
     (register-handler
       :open (fn [db [_ [page id]]]
               (let [id (or id (get-in db [:current page]))]
-                (log [page id])
                 (-> db
                     (assoc-in [:current page] id)
                     (assoc :route [page id])))))
-
     (register-handler
-      :request-work
-      (fn [db [_ id]]
-        (assoc-in db [:works id :status :requested] true)))
+      :work (fn [db [_ id content]]
+              (assoc-in db [:works id]
+                        (merge (get-in db [:work id] {})
+                               content))))
 
 Initialise the database with sample data
     (dispatch [:reset-db sample-db])
@@ -237,12 +236,13 @@ Initialise the database with sample data
 
     (defn get-work [db id]
       (let [work (get-in db [:works id])]
-      (when-not work (dispatch [:request-work id]))
-      (merge default-work {:id id} work)))
+        (when-not work (dispatch [:request-work id]))
+        (merge default-work {:id id} work)))
 
     (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
-    (register-sub :works (fn [db _] (reaction (:works @db))))
+    (register-sub :works (fn [db] (reaction (:works @db))))
     (register-sub :route (fn [db] (reaction (get @db :route))))
+    (register-sub :db (fn [db] (reaction @db)))
 
 
 Helper function to query the db for the full info about works
@@ -276,7 +276,6 @@ Helper function to query the db for the full info about works
         [clojure.string :as string :refer [replace split blank?]]
         [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
-
 ## Styling
 
 
@@ -296,7 +295,8 @@ and 5/8 vs 3/8 which approximately the golden ratio.
       (let [unit (/ js/document.body.clientWidth 24)]
         (load-style!
           {:body
-           {:background "#ffffff"}
+           {:background "url(assets/background.jpg)"
+            :background-color "#fbf8f4"}
            "div,a,span,b,i,img,button"
            {:box-sizing :border-box}
            ".button"
@@ -318,8 +318,9 @@ and 5/8 vs 3/8 which approximately the golden ratio.
             :bottom 0
             :left 0
             :width "100%"
-            :background-color :white
-            :border-top "1px solid black"
+            :background "url(assets/background.jpg)"
+            :background-color "#fbf8f4"
+            :box-shadow "-1px 0px 5px rgba(0,0,0,1);"
             }
            ".tabbar a"
            {:display :inline-block
@@ -327,7 +328,8 @@ and 5/8 vs 3/8 which approximately the golden ratio.
             :width (* 6 unit)
             :text-align :center}
            ".tabbar img"
-           {:height (* 4 unit)
+           {:padding (* 0.5 unit)
+            :height (* 4 unit)
             :width (* 4 unit)}
            "body"
            {:padding-bottom (* 4 unit)}
@@ -378,7 +380,7 @@ and 5/8 vs 3/8 which approximately the golden ratio.
 
     (defn tabbar-button [id s]
       [:a {:href (str "#" id)}
-       [:img {:src (str "assets/" id "-icon.png")
+       [:img {:src (str "assets/" id "-icon.svg")
               :alt s}]])
 
     (defn tabbar []
@@ -420,7 +422,7 @@ and 5/8 vs 3/8 which approximately the golden ratio.
                    " "
                    (for [word keywords]
                      [:a.work-keyword {:href
-                          (str "#search/" word)} word]))))
+                                       (str "#search/" word)} word]))))
          [:div.work-desc (:description work)]
          (if language [:p [:em "Sprog: "] language] "")
          (if location [:p [:em "Opstilling: "] location] "")]))
@@ -524,13 +526,41 @@ and 5/8 vs 3/8 which approximately the golden ratio.
     (ns solsort.mobibl.bibapp-datasource
       (:require-macros
         [cljs.core.async.macros :refer [go go-loop alt!]]
-        [reagent.ratom :as ratom :refer  [reaction]])
+        [reagent.ratom :as ratom :refer  [reaction run!]])
       (:require
         [solsort.util
          :refer
          [<ajax <seq<! js-seq normalize-css load-style! put!close!
           parse-json-or-nil log page-ready render dom->clj]]
+        [clojure.walk :refer [keywordize-keys]]
         [reagent.core :as reagent :refer []]
+        [clojure.data]
         [re-frame.core :as re-frame
          :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
         [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
+
+    ; http://solsort.com/es/bibapp/ting/_search?q=ost
+    ; http://solsort.com/db/bib/870970-basis:44751143
+    (register-handler
+      :request-work
+      (fn [db [_ id]]
+        (when-not (get-in db [:requested id] false)
+          (go
+            (let
+              [o (<! (<ajax (str "https://solsort.com/db/bib/" id)))
+               isbn (str (first (o "isbn")))
+               result
+               {:title (first (o "title"))
+                :creator (first (o "creator"))
+                :cover-url (str
+                             "http://www.bogpriser.dk/Covers/"
+                             (.slice isbn -3) "/" isbn ".jpg")
+                :keywords (get o "subject" [])
+                :description (first (o "description"))
+                :location nil
+                :language (first (o "language"))
+                }]
+              ;(log 'loaded id o result)
+              (dispatch [:work id result])
+              )))
+        (assoc-in db  [:requested id] true)))
