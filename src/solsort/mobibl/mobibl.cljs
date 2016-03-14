@@ -13,14 +13,10 @@
     [re-frame.core :as re-frame
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
-    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
-    [solsort.mobibl.mock-data :refer [sample-db]]))
+    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
 ;; ## Handlers
 
-;; When the application loads we set the data for use in the frontend by
-;; with the :reset-db handler.  See #36
-(register-handler :reset-db (fn [_ [_ db]] db))
 (register-handler
   :open (fn [db [_ [page id]]]
           (let [id (or id (get-in db [:current page]))]
@@ -32,9 +28,6 @@
           (assoc-in db [:works id]
                     (merge (get-in db [:work id] {})
                            content))))
-
-;; Initialise the database with sample data
-(dispatch [:reset-db sample-db])
 
 ;; ## Subscriptions
 
@@ -68,3 +61,12 @@
               (fn [db _] (reaction (get-status-works @db :arrived))))
 (register-sub :borrowed
               (fn [db _] (reaction (get-status-works @db :borrowed))))
+
+;; ## Data initialisation
+;;
+;; TODO: also run on network reconnect, and after a while
+;;
+(dispatch [:request-status])
+
+
+;; TODO: sync database to disk, and restore on load
