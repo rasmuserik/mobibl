@@ -10,7 +10,6 @@
      [<ajax <seq<! js-seq normalize-css load-style! put!close!
       parse-json-or-nil log page-ready render dom->clj]]
     [reagent.core :as reagent :refer []]
-    [solsort.mobibl.mobibl]
     [re-frame.core :as re-frame
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
@@ -133,10 +132,10 @@
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
-(defn search []
+(defn search [query]
   [:div
    [tabbar]
-   [:input {:value @(subscribe [:current-query])}]
+   [:input {:value query}]
    "..."])
 
 ;; ### Work
@@ -171,10 +170,10 @@
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
 
-(defn library []
+(defn library [library]
   [:div
    [tabbar]
-   [:h1 @(subscribe [:current-library])]
+   [:h1 library]
    "..."])
 
 ;; ### Status

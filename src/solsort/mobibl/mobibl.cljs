@@ -13,45 +13,38 @@
     [re-frame.core :as re-frame
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
-    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
-    [solsort.mobibl.mock-data :refer [sample-db]]))
+    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
 ;; ## Handlers
 
-;; When the application loads we set the data for use in the frontend by
-;; with the :reset-db handler.  See #36
-(register-handler :reset-db (fn [_ [_ db]] db))
 (register-handler
   :open (fn [db [_ [page id]]]
           (let [id (or id (get-in db [:current page]))]
-            (log [page id])
             (-> db
                 (assoc-in [:current page] id)
                 (assoc :route [page id])))))
-
-;; Initialise the database with sample data
-
-(dispatch [:reset-db sample-db])
+(register-handler
+  :work (fn [db [_ id content]]
+          (assoc-in db [:works id]
+                    (merge (get-in db [:work id] {})
+                           content))))
 
 ;; ## Subscriptions
 
-(register-sub
-  :route (fn [db] (reaction (get @db :route))))
-(register-sub
-  :current-library (fn [db] (reaction (get-in @db [:current :library]))))
-(register-sub
-  :current-work (fn [db] (reaction (get-in @db [:current :work]))))
-(register-sub
-  :current-query (fn [db] (reaction (get-in @db [:current :query]))))
-(register-sub
-  :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
 
-;;
-;; This work will serve as a default if we ever run into something not existing
-;;
-(def unknown-work {:title "Unknown Title"
-                   :creator "Unknown Creator"
-                   :id "Unknown-id"})
+(def default-work
+  {:title "Unknown Title"
+   :creator "Unknown Creator"})
+
+(defn get-work [db id]
+  (let [work (get-in db [:works id])]
+    (when-not work (dispatch [:request-work id]))
+    (merge default-work {:id id} work)))
+
+(register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
+(register-sub :works (fn [db] (reaction (:works @db))))
+(register-sub :route (fn [db] (reaction (get @db :route))))
+(register-sub :db (fn [db] (reaction @db)))
 
 ;;
 ;; Helper function to query the db for the full info about works
@@ -59,7 +52,7 @@
 (defn get-status-works [db prop]
   (let [status-obj (get-in db [:status prop])
         res (for [so status-obj]
-              (merge so (get-in db [:works (:id so)] unknown-work)))]
+              (merge so (get-work db (:id so))))]
     res))
 
 (register-sub :reservations
@@ -68,3 +61,12 @@
               (fn [db _] (reaction (get-status-works @db :arrived))))
 (register-sub :borrowed
               (fn [db _] (reaction (get-status-works @db :borrowed))))
+
+;; ## Data initialisation
+;;
+;; TODO: also run on network reconnect, and after a while
+;;
+(dispatch [:request-status])
+
+
+;; TODO: sync database to disk, and restore on load

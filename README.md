@@ -61,6 +61,24 @@ If you are making major contributions to the project, please keep track of the h
 Current version is released under [Creative Commons BY-NC-ND](https://creativecommons.org/licenses/by-nc-nd/3.0/), and copyrighted by solsort.com ApS.
 
 The project will be released under a **proper MIT open source license** if the Danish Public Library Sector, or someone else, decides, that they want to use the app, and pays for the development cost. 
+# Main entry point (main.cljs)
+
+The application consist of three parts.
+
+    (ns solsort.mobibl.main
+      (:require
+
+The application database subscriptions and handlers.
+
+        [solsort.mobibl.mobibl]
+
+The UI/views.
+
+        [solsort.mobibl.html5]
+
+The data source / connection to the server.
+
+        [solsort.mobibl.bibapp-datasource]))
 # Sample Application Database (`mock_data.cljs`)
     (ns solsort.mobibl.mock-data)
 
@@ -69,11 +87,7 @@ so far.  The precise format and content of this data has not yet been
 determined.
 
     (def sample-db
-      {
-       ;
-       ; :route ["work" "870970-basis:28934297"]
-       ;
-       :route ["status"]
+      {:route ["search"]
 
 ## User loan status
 
@@ -89,23 +103,40 @@ Info under `:status` refers with ids to complete descriptions in the
         :borrowed
         [{:id "870970-basis:28934297" :until "2016-03-24"}
          {:id "123456-basis:12345678" :until "1901-12-12"}]}
+
+## Current items on pages
+
        :current
-       {:search-query "Murakami"
-        :work "870970-basis:28934297"
-        :library "Københavns Hovedbibliotek"}
+       {"status" "Murakami"
+        "work" "870970-basis:28934297"}
+
+## Search history
+
+       :searches
+       [{:query "test"
+         :results ["870970-basis:28934297"
+                   "775100-katalog:50643662"
+                   "775100-katalog:28934572"
+                   "775100-katalog:10260744"]}]
 
 ## Creative works
 
 This contains the metadata of the creative works,
 caching the webservices.
 
-       :works
-       {"870970-basis:28934297"
+       :works {}
+       #_{"870970-basis:28934297"
         {:title "1Q84"
          :creator "Haruki Murakami"
          :cover-url "http://www.bogpriser.dk/Covers/202/9788779559202.jpg"
-         :description "Aomame er en 30-årig smart pige, uddannet kampsportsinstruktør, men arbejder p.t. som lejemorder. Tengo er matematiklærer med forfatterdrømme. Han skal omskrive en sær 17-årig piges sære historie. Begge hovedfigurer oplever, at deres virkelighed forvrides let, hvad påvirker deres virkelighed?"
-         :keywords ["Kultur" "Kærlighed" "Magisk Realisme" "Magt" "Parallelle Verdener" "Skrivekunst" "Japan" "1980-1989"]
+         :description
+         "Aomame er en 30-årig smart pige, uddannet kampsportsinstruktør, men
+         arbejder p.t. som lejemorder. Tengo er matematiklærer med
+         forfatterdrømme.  Han skal omskrive en sær 17-årig piges sære historie.
+         Begge hovedfigurer oplever, at deres virkelighed forvrides let, hvad
+         påvirker deres virkelighed?"
+         :keywords ["Kultur" "Kærlighed" "Magisk Realisme" "Magt"
+                    "Parallelle Verdener" "Skrivekunst" "Japan" "1980-1989"]
          :location "Skønlitteratur"
          :language "Dansk"
          :editions
@@ -121,7 +152,7 @@ caching the webservices.
         "775100-katalog:50643662"
         {:title "Matematik i virkeligheden"
          :creator "Allan Baktoft"
-         :cover-url "http://www.bogpriser.dk/Images/placeholder-cover.png"
+         :cover-url ""
          :description "Regn den ud"
          :keywords ["Matematik" "Regne"]
          :location "Faglitteratur"
@@ -147,7 +178,9 @@ caching the webservices.
         "775100-katalog:10260744"
         {:title "Ummagumma"
          :creator "The Pink Floyd"
-         :cover-url "https://en.wikipedia.org/wiki/File:PinkFloyd-album-ummagummastudio-300.jpg"
+         :cover-url
+         (str "https://upload.wikimedia.org/wikipedia/en/1/16/"
+              "PinkFloyd-album-ummagummastudio-300.jpg")
          :description "Musik"
          :keywords ["Rock"]
          :location "Musik"
@@ -165,10 +198,11 @@ caching the webservices.
       (:require
         [solsort.util
          :refer
-         [<ajax <seq<! js-seq normalize-css load-style! put!close! parse-json-or-nil log page-ready render
-          dom->clj]]
+         [<ajax <seq<! js-seq normalize-css load-style! put!close!
+          parse-json-or-nil log page-ready render dom->clj]]
         [reagent.core :as reagent :refer []]
-        [re-frame.core :as re-frame :refer  [register-sub subscribe register-handler dispatch dispatch-sync]]
+        [re-frame.core :as re-frame
+         :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
         [clojure.string :as string :refer [replace split blank?]]
         [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
         [solsort.mobibl.mock-data :refer [sample-db]]))
@@ -178,26 +212,37 @@ caching the webservices.
 When the application loads we set the data for use in the frontend by
 with the :reset-db handler.  See #36
     (register-handler :reset-db (fn [_ [_ db]] db))
-    (register-handler :open (fn [db [_ route]] (assoc db :route route)))
+    (register-handler
+      :open (fn [db [_ [page id]]]
+              (let [id (or id (get-in db [:current page]))]
+                (-> db
+                    (assoc-in [:current page] id)
+                    (assoc :route [page id])))))
+    (register-handler
+      :work (fn [db [_ id content]]
+              (assoc-in db [:works id]
+                        (merge (get-in db [:work id] {})
+                               content))))
 
 Initialise the database with sample data
-
     (dispatch [:reset-db sample-db])
 
 ## Subscriptions
 
+
+    (def default-work
+      {:title "Unknown Title"
+       :creator "Unknown Creator"})
+
+    (defn get-work [db id]
+      (let [work (get-in db [:works id])]
+        (when-not work (dispatch [:request-work id]))
+        (merge default-work {:id id} work)))
+
+    (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
+    (register-sub :works (fn [db] (reaction (:works @db))))
     (register-sub :route (fn [db] (reaction (get @db :route))))
-    (register-sub :current-library (fn [db] (reaction (get-in @db [:current :library]))))
-    (register-sub :current-work (fn [db] (reaction (get-in @db [:current :work]))))
-    (register-sub :current-query (fn [db] (reaction (get-in @db [:current :query]))))
-    (register-sub :work (fn [db [_ ting-id]] (reaction (get-in @db [:works ting-id] {}))))
-
-
-This work will serve as a default if we ever run into something not existing
-
-    (def unknown-work {:title "Unknown Title"
-                       :creator "Unknown Creator"
-                       :id "Unknown-id"})
+    (register-sub :db (fn [db] (reaction @db)))
 
 
 Helper function to query the db for the full info about works
@@ -205,7 +250,7 @@ Helper function to query the db for the full info about works
     (defn get-status-works [db prop]
       (let [status-obj (get-in db [:status prop])
             res (for [so status-obj]
-                     (merge so (get-in db [:works (:id so)] unknown-work)))]
+                  (merge so (get-work db (:id so))))]
         res))
 
     (register-sub :reservations
@@ -214,7 +259,6 @@ Helper function to query the db for the full info about works
                   (fn [db _] (reaction (get-status-works @db :arrived))))
     (register-sub :borrowed
                   (fn [db _] (reaction (get-status-works @db :borrowed))))
-
 # HTML5 view (html5.cljs)
 
     (ns solsort.mobibl.html5
@@ -224,14 +268,13 @@ Helper function to query the db for the full info about works
       (:require
         [solsort.util
          :refer
-         [<ajax <seq<! js-seq normalize-css load-style! put!close! parse-json-or-nil log page-ready render
-          dom->clj]]
+         [<ajax <seq<! js-seq normalize-css load-style! put!close!
+          parse-json-or-nil log page-ready render dom->clj]]
         [reagent.core :as reagent :refer []]
-        [solsort.mobibl.mobibl]
-        [re-frame.core :as re-frame :refer  [register-sub subscribe register-handler dispatch dispatch-sync]]
+        [re-frame.core :as re-frame
+         :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
         [clojure.string :as string :refer [replace split blank?]]
         [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
-
 
 ## Styling
 
@@ -252,13 +295,22 @@ and 5/8 vs 3/8 which approximately the golden ratio.
       (let [unit (/ js/document.body.clientWidth 24)]
         (load-style!
           {:body
-           {:background "#fff8f8"
-            }
-           "div,a,span,b,i,img"
-           {:box-sizing :border-box}}
-          "general styling"
-          )
-### Styling for the
+           {:background "url(assets/background.jpg)"
+            :background-color "#fbf8f4"}
+           "div,a,span,b,i,img,button"
+           {:box-sizing :border-box}
+           ".button"
+           {:display :inline-block
+            :min-height (* 2.5 unit)
+            :border-radius (* 0.5 unit)
+            :border (str (* 0.15 unit) "px solid black")
+            :padding-top (* 0.5 unit)
+            :padding-left (* 0.3 unit)
+            :padding-right (* 0.3 unit)
+            :text-align :center
+            :vertical-align :middle}}
+          "general styling")
+### Tabbar
         (load-style!
           {".tabbar"
            {:position :fixed
@@ -266,8 +318,9 @@ and 5/8 vs 3/8 which approximately the golden ratio.
             :bottom 0
             :left 0
             :width "100%"
-            :background-color :white
-            :border-top "1px solid black"
+            :background "url(assets/background.jpg)"
+            :background-color "#fbf8f4"
+            :box-shadow "-1px 0px 5px rgba(0,0,0,1);"
             }
            ".tabbar a"
            {:display :inline-block
@@ -275,14 +328,43 @@ and 5/8 vs 3/8 which approximately the golden ratio.
             :width (* 6 unit)
             :text-align :center}
            ".tabbar img"
-           {:height (* 4 unit)
+           {:padding (* 0.5 unit)
+            :height (* 4 unit)
             :width (* 4 unit)}
            "body"
            {:padding-bottom (* 4 unit)}
            }
-          "topbar-styling")
+          "tabbar-styling")
+### Book
+        (load-style!
+          {".work"
+           {:margin-left unit
+            :margin-right unit
+            }
+           ".work .title"
+           {:text-align :center
+            :font-size "200%"
+            :margin-top unit }
+           ".work .author"
+           {:text-align :center
+            :margin-bottom unit}
+           ".work-keyword"
+           {:display :inline-block
+            :vertical-align :middle
+            :clear :none
+            :padding-top (* 0.5 unit)
+            :min-height (* 2 unit)
+            ;:outline "1px solid black"
+            :width (* unit 7.3)
+            }
+           ".work-img"
+           {:float :right
+            :margin-left 0
+            :margin-right 0
+            :width (* unit 14)}}
+          "work-style"
+          )
         ))
-
 ### Actually apply styling
 
     ; re-layout on rotation etc.
@@ -297,12 +379,12 @@ and 5/8 vs 3/8 which approximately the golden ratio.
 ### Tab bar - menu in bottom of the screen
 
     (defn tabbar-button [id s]
-       [:a {:href (str "#" id)}
-        [:img {:src (str "assets/" id "-icon.png")
-               :alt s}]])
+      [:a {:href (str "#" id)}
+       [:img {:src (str "assets/" id "-icon.svg")
+              :alt s}]])
 
     (defn tabbar []
-       [:div.tabbar
+      [:div.tabbar
        [tabbar-button "search" "Søg"]
        [tabbar-button "work" "Materiale"]
        [tabbar-button "library" "Bibliotek"]
@@ -311,34 +393,48 @@ and 5/8 vs 3/8 which approximately the golden ratio.
 ### Search
 <img width=20% align=top src=doc/wireframes/search.jpg>
 
-    (defn search []
+    (defn search [query]
       [:div
        [tabbar]
-       [:input {:value @(subscribe [:current-query])}]
+       [:input {:value query}]
        "..."])
 
 ### Work
 <img width=20% align=top src=doc/wireframes/work.jpg>
 
-    (defn work [id]
-      (let [work-id @(subscribe [:current-work])
-            work @(subscribe [:work work-id]) ]
-        [:div
+    (defn work [work-id]
+      (let [work @(subscribe [:work work-id])
+            language (:language work)
+            keywords (:keywords work)
+            location (:location work)
+            creator (:creator work)]
+        [:div.work
          [tabbar]
          [:div "TODO: Work history here"]
-         [:h1 (:title work)]
-         [:div "af " (:creator work)]
-         [:img {:src (:cover-url work)}]
-         "..."]))
+         [:div.title (:title work)]
+         [:div.author "af " [:a {:href (str "#search/" creator)} creator]]
+         [:img {:class "work-img"
+                :src (:cover-url work)}]
+         [:div [:a.button "Bestil"]]
+         (if-not keywords ""
+           (into [:p #_[:em "Emne: "]]
+                 (interpose
+                   " "
+                   (for [word keywords]
+                     [:a.work-keyword {:href
+                                       (str "#search/" word)} word]))))
+         [:div.work-desc (:description work)]
+         (if language [:p [:em "Sprog: "] language] "")
+         (if location [:p [:em "Opstilling: "] location] "")]))
 
 
 ### Library
 <img width=20% align=top src=doc/wireframes/library.jpg>
 
-    (defn library []
+    (defn library [library]
       [:div
        [tabbar]
-       [:h1 @(subscribe [:current-library])]
+       [:h1 library]
        "..."])
 
 ### Status
@@ -349,62 +445,69 @@ and 5/8 vs 3/8 which approximately the golden ratio.
             borrowed             (subscribe [:borrowed])
             reservations         (subscribe [:reservations])]
         (fn []
-            [:div
-             [tabbar]
-             [:h1 "Låner status"]
-             [:div {:class "menu"}
-              [:button {:type "submit"} "Log Ud"]]
-             [:div
-              [:h2 "Hjemkomne"]
-              (into
-               [:ul]
-               (for [ra @arrived]
-                    [:li
-                     [:a {:href (str "#work/" (:id ra))} (:title ra)]
-                     [:ul
-                      [:li (str "Afhentes inden " (:until ra))]
-                      [:li "Opstilling " [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
+          [:div
+           [tabbar]
+           [:h1 "Låner status"]
+           [:div {:class "menu"}
+            [:button {:type "submit"} "Log Ud"]]
+           [:div
+            [:h2 "Hjemkomne"]
+            (into
+              [:ul]
+              (for
+                [ra @arrived]
+                [:li
+                 [:a {:href (str "#work/" (:id ra))} (:title ra)]
+                 [:ul
+                  [:li (str "Afhentes inden " (:until ra))]
+                  [:li "Opstilling "
+                   [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
 
 **TODO** Add unique creator ID
 
-                      [:li [:a {:href (str "#/creator/" "TODO-creator-id")} (:creator ra)]]]]))]
-             [:div
-              [:h2 "Hjemlån"]
-              [:div
-               [:a {:href (str "#/borrowed/renew/all")} "Forny Alle"]]
-              (into
-               [:ul]
-               (for [b @borrowed]
-                    [:li
-                     [:a {:href (str "#/borrowed/item/" (:id b))}
+                  [:li
+                   [:a
+                    {:href (str "#/creator/" "TODO-creator-id")} (:creator ra)]]
+                  ]]))]
+           [:div
+            [:h2 "Hjemlån"]
+            [:div
+             [:a {:href (str "#/borrowed/renew/all")} "Forny Alle"]]
+            (into
+              [:ul]
+              (for [b @borrowed]
+                [:li
+                 [:a {:href (str "#/borrowed/item/" (:id b))}
 
 **TODO** It would be nice with thumbnails
 
-                      [:img {:src "http://www.bogpriser.dk/Images/placeholder-cover.png"
-                             :width "32" :height "32" :alt "TODO :cover-mini-url"}]
-                      [:span { :style {:margin-left "1em"}} (:title b)]]
-                     [:ul
-                      [:li (str "Afleveres senest " (:until b))]
-                      [:li [:a {:href (str "#/borrowed/renew/" (:id b))} "Forny"]]]]))]
-             [:div
-              [:h2 "Bestillinger"]
-              (into
-               [:ul]
-               (for [r @reservations]
-                    [:li
-                     [:a {:href (str "#/reservation/" (:id r))} (:title r)]
-                     [:ul
-                      [:li [:a {:href (str "#/creator/" (:id r))} (:creator r)]]
-                      [:li [:a {:href (str "#/reservation/remove/" (:id r))} "Slet"]]]]))]])))
+                  [:img {:src "http://www.bogpriser.dk/Images/placeholder-cover.png"
+                         :width "32" :height "32" :alt "TODO :cover-mini-url"}]
+                  [:span { :style {:margin-left "1em"}} (:title b)]]
+                 [:ul
+                  [:li (str "Afleveres senest " (:until b))]
+                  [:li [:a {:href (str "#/borrowed/renew/" (:id b))} "Forny"]]]]))]
+           [:div
+            [:h2 "Bestillinger"]
+            (into
+              [:ul]
+              (for [r @reservations]
+                [:li
+                 [:a {:href (str "#/reservation/" (:id r))} (:title r)]
+                 [:ul
+                  [:li [:a {:href (str "#/creator/" (:id r))} (:creator r)]]
+                  [:li [:a {:href (str "#/reservation/remove/" (:id r))} "Slet"]]
+                  ]]))]])))
 
 ### Main App entry point
     (defn app []
-      (case (first @(subscribe [:route]))
-        "search" [search]
-        "work" [work]
-        "library" [library]
-        "status" [status]
-        [search]))
+      (let [[page id] @(subscribe [:route])]
+        (case page
+          "search" [search id]
+          "work" [work id]
+          "library" [library id]
+          "status" [status]
+          [search ""])))
 
 ## Execute and events
 
@@ -418,3 +521,46 @@ and 5/8 vs 3/8 which approximately the golden ratio.
       (aset js/location "hash" (string/join "/" args)))
     (js/window.addEventListener "hashchange" handle-hash)
     (handle-hash)
+# BibApp Data Source (bibapp_datasource.cljs)
+
+    (ns solsort.mobibl.bibapp-datasource
+      (:require-macros
+        [cljs.core.async.macros :refer [go go-loop alt!]]
+        [reagent.ratom :as ratom :refer  [reaction run!]])
+      (:require
+        [solsort.util
+         :refer
+         [<ajax <seq<! js-seq normalize-css load-style! put!close!
+          parse-json-or-nil log page-ready render dom->clj]]
+        [clojure.walk :refer [keywordize-keys]]
+        [reagent.core :as reagent :refer []]
+        [clojure.data]
+        [re-frame.core :as re-frame
+         :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
+        [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
+
+    ; http://solsort.com/es/bibapp/ting/_search?q=ost
+    ; http://solsort.com/db/bib/870970-basis:44751143
+    (register-handler
+      :request-work
+      (fn [db [_ id]]
+        (when-not (get-in db [:requested id] false)
+          (go
+            (let
+              [o (<! (<ajax (str "https://solsort.com/db/bib/" id)))
+               isbn (str (first (o "isbn")))
+               result
+               {:title (first (o "title"))
+                :creator (first (o "creator"))
+                :cover-url (str
+                             "http://www.bogpriser.dk/Covers/"
+                             (.slice isbn -3) "/" isbn ".jpg")
+                :keywords (get o "subject" [])
+                :description (first (o "description"))
+                :location nil
+                :language (first (o "language"))
+                }]
+              ;(log 'loaded id o result)
+              (dispatch [:work id result])
+              )))
+        (assoc-in db  [:requested id] true)))
