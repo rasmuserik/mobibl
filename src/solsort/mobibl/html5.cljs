@@ -19,6 +19,11 @@
 ;;
 
 (load-style! normalize-css "style-reset")
+(def highlight "#326bc5")
+;(def background fade from "#eaeaea" to "#ffffff")
+(def dark "#262626")
+(def light "#e5e5e5")
+(def medium "#d8d8d8")
 (defn styling []
   ;;
   ;; We are designing for mobile-portrait-mode,
@@ -37,7 +42,9 @@
     (load-style!
       {:body
        {:background "url(assets/background.jpg)"
-        :background-color "#fbf8f4"}
+        :background-color "#fbf8f4"
+        :font-family "\"Open Sans\", sans-serif"
+        :font-weight "300"}
        "div,a,span,b,i,img,button"
        {:box-sizing :border-box}
        ".button"
@@ -57,6 +64,7 @@
        {:position :fixed
         :box-sizing :border-box
         :bottom 0
+        :text-align :center
         :left 0
         :width "100%"
         :background "url(assets/background.jpg)"
