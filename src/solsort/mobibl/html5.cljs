@@ -31,7 +31,9 @@
   ;; It also allows for 1/2, 1/3, 1/4, and 1/6 division of the screen,
   ;; and 5/8 vs 3/8 which approximately the golden ratio.
   ;;
-  (let [unit (/ js/document.body.clientWidth 24)]
+  (let [unit (/ (js/Math.min js/document.body.clientHeight
+                             js/document.body.clientWidth)
+                24)]
     (load-style!
       {:body
        {:background "url(assets/background.jpg)"
