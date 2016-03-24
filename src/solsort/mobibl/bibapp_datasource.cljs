@@ -16,7 +16,25 @@
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
-;; ## Dummy ids of books etc. with metadata
+;; ## Convert data from datasource to internal format
+;;
+
+(defn convert-bibentry [o]
+  (let [isbn (str (first (o "isbn")))]
+    {:title (first (o "title"))
+     :creator (first (o "creator"))
+     :cover-url (str
+                  "http://www.bogpriser.dk/Covers/"
+                  (.slice isbn -3) "/" isbn ".jpg")
+     :keywords (get o "subject" [])
+     :description (first (o "description"))
+     :location nil
+     :language (first (o "language"))
+     }))
+
+
+;; ## Mock data
+;; ### Dummy ids of books etc. with metadata
 
 (def dummy-ids
   ["870970-basis:29820031" "870970-basis:45231402" "870970-basis:29146004"
@@ -55,6 +73,14 @@
    "870970-basis:28009011" "870970-basis:45076261" "870970-basis:27165435"
    "870970-basis:24232123" "870970-basis:45164683" "870970-basis:44529807"])
 
+;; ### Load mock bibliographic data if available
+(go
+  (let [mockdata (<! (<ajax "mockdata.json"))]
+    (when mockdata
+      (doall
+        (for [o mockdata]
+          (dispatch [:work (o "_id") (convert-bibentry o)]))))))
+
 ;; ## Get work metadata from database
 ;;
 ;; Use data from http://solsort.com/db/bib
@@ -64,23 +90,10 @@
   (fn [db [_ id]]
     (when-not (get-in db [:requested id] false)
       (go
-        (let
-          [o (<! (<ajax (str "https://solsort.com/db/bib/" id)))
-           isbn (str (first (o "isbn")))
-           result
-           {:title (first (o "title"))
-            :creator (first (o "creator"))
-            :cover-url (str
-                         "http://www.bogpriser.dk/Covers/"
-                         (.slice isbn -3) "/" isbn ".jpg")
-            :keywords (get o "subject" [])
-            :description (first (o "description"))
-            :location nil
-            :language (first (o "language"))
-            }]
-          ;(log 'loaded id o result)
-          (dispatch [:work id result])
-          )))
+        (dispatch
+          [:work id
+           (convert-bibentry
+             (<! (<ajax (str "https://solsort.com/db/bib/" id))))])))
     (assoc-in db  [:requested id] true)))
 
 ;; ## Dummy data for status
