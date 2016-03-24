@@ -29,8 +29,11 @@
                     (merge (get-in db [:work id] {})
                            content))))
 
-;; ## Subscriptions
+(register-handler
+  :search-query
+  (fn [db [_ q]] (assoc-in db [:forms :search-query] q)))
 
+;; ## Subscriptions
 
 (def default-work
   {:title "Unknown Title"
@@ -45,6 +48,10 @@
 (register-sub :works (fn [db] (reaction (:works @db))))
 (register-sub :route (fn [db] (reaction (get @db :route))))
 (register-sub :db (fn [db] (reaction @db)))
+
+(register-sub
+  :search-query
+  (fn [db [_ id]] (reaction (get-in @db [:forms :search-query]))))
 
 ;;
 ;; Helper function to query the db for the full info about works

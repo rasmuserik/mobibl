@@ -45,9 +45,7 @@
         :background-color "#fbf8f4"
         :font-family "\"Open Sans\", sans-serif"
         :font-weight "300"}
-       "div,a,span,b,i,img,button"
-       {:box-sizing :border-box}
-       ".button"
+       ".ssbutton"
        {:display :inline-block
         :min-height (* 2.5 unit)
         :border-radius (* 0.5 unit)
@@ -143,10 +141,13 @@
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
 (defn search [query]
-  [:div
-   [tabbar]
-   [:input {:value query}]
-   "..."])
+  [:div.row
+   [:div.small-12.columns [tabbar] 
+   [:input {:value @(subscribe [:search-query])
+            :on-change 
+            #(dispatch-sync [:search-query (-> % .-target .-value)])}]
+   [:div.button "hello"]
+   "..."]])
 
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
@@ -164,7 +165,7 @@
      [:div.author "af " [:a {:href (str "#search/" creator)} creator]]
      [:img {:class "work-img"
             :src (:cover-url work)}]
-     [:div [:a.button "Bestil"]]
+     [:div [:a.ssbutton "Bestil"]]
      (if-not keywords ""
        (into [:p #_[:em "Emne: "]]
              (interpose
