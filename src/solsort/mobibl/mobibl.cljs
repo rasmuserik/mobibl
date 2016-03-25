@@ -45,7 +45,7 @@
   (fn [db [_ q page]]
     (reaction
       (let [results (get-in @db [:search q page])]
-        (or results 
+        (or results
            (do
             (dispatch [:request-search q page])
             []))))))

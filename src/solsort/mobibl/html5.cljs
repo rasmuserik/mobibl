@@ -142,10 +142,10 @@
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
-(defn work-line [pid] 
+(defn work-line [pid]
   (let [o @(subscribe [:work pid])
-        keywords 
-        (interpose 
+        keywords
+        (interpose
           " "
           (map
             (fn [kw] [:span.condensed.button kw])
@@ -165,7 +165,7 @@
     )
   )
 (defn search [query]
-  (let 
+  (let
     [results @(subscribe [:search query 0])
      results (map work-line results)
      search-form
@@ -175,14 +175,14 @@
         [:input.input-group-field
          {:type :text
           :value query
-          :on-change 
+          :on-change
           #(dispatch-sync [:route "search" (-> % .-target .-value)])}]
         [:a.input-group-button.button "søg"]]]]
      ]
     (log 'search-results query results)
     (merge
-      [:div 
-       [tabbar]  
+      [:div
+       [tabbar]
        search-form]
       results
       )))
