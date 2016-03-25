@@ -43,7 +43,7 @@
        {:background "url(assets/background.jpg)"
         :background-color "#fbf8f4"
         :font-family "\"Open Sans\", sans-serif"
-        :font-weight "400"}
+        :font-weight "300"}
        ".condensed"
        {:font-family "\"Open Sans Condensed\""}
        ".ssbutton"
@@ -59,7 +59,11 @@
       "general styling")
     ;; ### Tabbar
     (load-style!
-      {".tabbar"
+      {".tabbar-spacer"
+       {:display :inline-block
+        :height (* 4 unit)
+        }
+       ".tabbar"
        {:position :fixed
         :box-sizing :border-box
         :bottom 0
@@ -133,11 +137,13 @@
           :alt s}]])
 
 (defn tabbar []
-  [:div.tabbar
+  [:div
+   [:div.tabbar-spacer " "]
+   [:div.tabbar
    [tabbar-button "search" "Søg"]
    [tabbar-button "work" "Materiale"]
    [tabbar-button "library" "Bibliotek"]
-   [tabbar-button "status" "Status"]])
+   [tabbar-button "status" "Status"]]])
 
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
@@ -148,22 +154,21 @@
         (interpose
           " "
           (map
-            (fn [kw] [:span.condensed.button kw])
+            (fn [kw] [:a.condensed.button {:href (str "#search/" kw)} kw])
             (:keywords o)
             ))]
     [:a
-     {:href (str "#work/" pid)}
+     {:key pid
+      :href (str "#work/" pid)}
      [:div.row.callout
       [:div.large-1.medium-2.small-3.columns
        [:img {:src (:cover-url o)}]
        ]
       [:div.large-11.medium-10.small-9.columns
-       [:div [:strong (:title o)]]
-       [:div [:em "af "(:creator o)]]
-       (into [:div] keywords)
-       ]]]
-    )
-  )
+       [:h4 (:title o)]
+       [:div.expanded.hollow.button (:creator o)]
+       (into [:div] keywords)]]]))
+
 (defn search [query]
   (let
     [results @(subscribe [:search query 0])
@@ -180,12 +185,12 @@
         [:a.input-group-button.button "søg"]]]]
      ]
     (log 'search-results query results)
-    (merge
-      [:div
-       [tabbar]
-       search-form]
-      results
-      )))
+    [:div 
+     [:p]
+     (merge [:div search-form]
+      results)
+     [tabbar]
+     ]))
 
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
@@ -197,23 +202,23 @@
         location (:location work)
         creator (:creator work)]
     [:div.work
-     [tabbar]
      [:div "TODO: Work history here"]
-     [:div.title (:title work)]
-     [:div.author "af " [:a {:href (str "#search/" creator)} creator]]
-     [:img {:class "work-img"
-            :src (:cover-url work)}]
-     [:div [:a.ssbutton "Bestil"]]
+     [:h1.text-center (:title work)]
+     [:div.text-center "af " [:a {:href (str "#search/" creator)} creator]]
+     [:img.small-8.float-right{:src (:cover-url work)}]
+     [:div [:a.button "Bestil"]]
      (if-not keywords ""
        (into [:p #_[:em "Emne: "]]
              (interpose
                " "
                (for [word keywords]
-                 [:a.work-keyword {:href
+                 [:a.hollow.condensed.button {:href
                                    (str "#search/" word)} word]))))
      [:div.work-desc (:description work)]
      (if language [:p [:em "Sprog: "] language] "")
-     (if location [:p [:em "Opstilling: "] location] "")]))
+     (if location [:p [:em "Opstilling: "] location] "")
+     [tabbar]
+     ]))
 
 
 ;; ### Library
