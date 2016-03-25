@@ -92,8 +92,11 @@
     (load-style!
       {".work"
        {:margin-left unit
-        :margin-right unit
-        }
+        :margin-right unit }
+       ".work-cover-img"
+       {:float :right
+        :max-width "62%"
+        :max-height (- js/window.innerHeight (* 4 unit)) }
        ".work .title"
        {:text-align :center
         :font-size "200%"
@@ -205,7 +208,7 @@
      [:div "TODO: Work history here"]
      [:h1.text-center (:title work)]
      [:div.text-center "af " [:a {:href (str "#search/" creator)} creator]]
-     [:img.small-8.float-right{:src (:cover-url work)}]
+     [:img.work-cover-img.float-right {:src (:cover-url work)}]
      [:div [:a.button "Bestil"]]
      (if-not keywords ""
        (into [:p #_[:em "Emne: "]]
