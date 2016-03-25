@@ -188,7 +188,7 @@
         [:a.input-group-button.button "søg"]]]]
      ]
     (log 'search-results query results)
-    [:div 
+    [:div
      [:p]
      (merge [:div search-form]
       results)
