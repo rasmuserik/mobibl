@@ -18,21 +18,17 @@
 ;; ## Handlers
 
 (register-handler
-  :open (fn [db [_ [page id]]]
-          (let [id (or id (get-in db [:current page]))]
-            (-> db
-                (assoc-in [:current page] id)
-                (assoc :route [page id])))))
+  :route (fn [db [_ page id]]
+           (let [id (or id (get-in db [:current page]))]
+             (-> db
+                 (assoc-in [:current page] id)
+                 (assoc :route [page id])))))
+
 (register-handler
   :work (fn [db [_ id content]]
           (assoc-in db [:works id]
                     (merge (get-in db [:work id] {})
                            content))))
-
-(register-handler
-  :search-query
-  (fn [db [_ q]] (assoc-in db [:forms :search-query] q)))
-
 ;; ## Subscriptions
 
 (def default-work
@@ -44,14 +40,20 @@
     (when-not work (dispatch [:request-work id]))
     (merge default-work {:id id} work)))
 
+(register-sub
+  :search
+  (fn [db [_ q page]]
+    (reaction
+      (let [results (get-in @db [:search q page])]
+        (or results 
+           (do
+            (dispatch [:request-search q page])
+            []))))))
+
 (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
 (register-sub :works (fn [db] (reaction (:works @db))))
 (register-sub :route (fn [db] (reaction (get @db :route))))
 (register-sub :db (fn [db] (reaction @db)))
-
-(register-sub
-  :search-query
-  (fn [db [_ id]] (reaction (get-in @db [:forms :search-query]))))
 
 ;;
 ;; Helper function to query the db for the full info about works
@@ -74,6 +76,5 @@
 ;; TODO: also run on network reconnect, and after a while
 ;;
 (dispatch [:request-status])
-
 
 ;; TODO: sync database to disk, and restore on load

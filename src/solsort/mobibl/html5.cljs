@@ -14,7 +14,6 @@
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
-
 ;; ## Styling
 ;;
 
@@ -44,7 +43,9 @@
        {:background "url(assets/background.jpg)"
         :background-color "#fbf8f4"
         :font-family "\"Open Sans\", sans-serif"
-        :font-weight "300"}
+        :font-weight "400"}
+       ".condensed"
+       {:font-family "\"Open Sans Condensed\""}
        ".ssbutton"
        {:display :inline-block
         :min-height (* 2.5 unit)
@@ -68,6 +69,7 @@
         :background "url(assets/background.jpg)"
         :background-color "#fbf8f4"
         :box-shadow "-1px 0px 5px rgba(0,0,0,1);"
+        :z-index "100"
         }
        ".tabbar a"
        {:display :inline-block
@@ -140,14 +142,50 @@
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
+(defn work-line [pid] 
+  (let [o @(subscribe [:work pid])
+        keywords 
+        (interpose 
+          " "
+          (map
+            (fn [kw] [:span.condensed.button kw])
+            (:keywords o)
+            ))]
+    [:a
+     {:href (str "#work/" pid)}
+     [:div.row.callout
+      [:div.large-1.medium-2.small-3.columns
+       [:img {:src (:cover-url o)}]
+       ]
+      [:div.large-11.medium-10.small-9.columns
+       [:div [:strong (:title o)]]
+       [:div [:em "af "(:creator o)]]
+       (into [:div] keywords)
+       ]]]
+    )
+  )
 (defn search [query]
-  [:div.row
-   [:div.small-12.columns [tabbar] 
-   [:input {:value @(subscribe [:search-query])
-            :on-change 
-            #(dispatch-sync [:search-query (-> % .-target .-value)])}]
-   [:div.button "hello"]
-   "..."]])
+  (let 
+    [results @(subscribe [:search query 0])
+     results (map work-line results)
+     search-form
+     [:div.row
+      [:div.small-12.columns
+       [:div.input-group
+        [:input.input-group-field
+         {:type :text
+          :value query
+          :on-change 
+          #(dispatch-sync [:route "search" (-> % .-target .-value)])}]
+        [:a.input-group-button.button "søg"]]]]
+     ]
+    (log 'search-results query results)
+    (merge
+      [:div 
+       [tabbar]  
+       search-form]
+      results
+      )))
 
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
@@ -266,8 +304,6 @@
 ;; ## Routing
 
 (defn handle-hash []
-  (dispatch [:open (string/split (.slice js/location.hash 1) "/")]))
-(defn open [& args]
-  (aset js/location "hash" (string/join "/" args)))
+  (dispatch (into [:route] (string/split (.slice js/location.hash 1) "/"))))
 (js/window.addEventListener "hashchange" handle-hash)
 (handle-hash)
