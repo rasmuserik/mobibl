@@ -26,7 +26,7 @@ cp -a platforms/browser/www/cordova* resources/public/
 #echo "index.js" >> index.appcache
 #find */config.xml >> index.appcache
 
-cat doc/intro.md CONTRIBUTING.md LICENSE.md > README.md
+cat doc/intro.md doc/roadmap.md CONTRIBUTING.md LICENSE.md > README.md
 for SRC in main mock_data mobibl html5 bibapp_datasource
 do
 cat src/solsort/mobibl/${SRC}.cljs | 

@@ -9,6 +9,21 @@ Feel free to use the issue tracker (https://github.com/solsort/mobibl/issues), f
 ## Status
 
 The work on the project has started. No public demo is available yet.
+# Roadmap
+
+- very first prototype, v0.1.0
+    - views
+        - search-page - list of books with cover, open book on click
+        - book - metadata, bestil link, link til bibliotek hvor hjemme
+        - library - map with single library + dummy text
+        - user list of arrived, loans, orders
+    - on top of dummy data
+    - dummy-user-data no order-flow
+    - no suggest
+    - no facets
+    - no recommendations
+
+## Notes: overview of functionality of ddb-cms, med henblik på hvilke dele der giver mening i app...
 # Contributing
 
 We use [github issues](https://github.com/solsort/mobibl/issues) to keep track of the project. 
@@ -79,116 +94,6 @@ The UI/views.
 The data source / connection to the server.
 
         [solsort.mobibl.bibapp-datasource]))
-# Sample Application Database (`mock_data.cljs`)
-    (ns solsort.mobibl.mock-data)
-
-As we are starting out implementing the views, we just have dummy data here
-so far.  The precise format and content of this data has not yet been
-determined.
-
-    (def sample-db
-      {:route ["search"]
-
-## User loan status
-
-Info under `:status` refers with ids to complete descriptions in the
-`:works` section
-
-       :status
-       {:reservations
-        [{:id "775100-katalog:28934572" :until "2016-03-12"}]
-        :arrived
-        [{:id "775100-katalog:50643662" :until "2016-03-01"}
-         {:id "775100-katalog:10260744" :until "2016-03-02"}]
-        :borrowed
-        [{:id "870970-basis:28934297" :until "2016-03-24"}
-         {:id "123456-basis:12345678" :until "1901-12-12"}]}
-
-## Current items on pages
-
-       :current
-       {"status" "Murakami"
-        "work" "870970-basis:28934297"}
-
-## Search history
-
-       :searches
-       [{:query "test"
-         :results ["870970-basis:28934297"
-                   "775100-katalog:50643662"
-                   "775100-katalog:28934572"
-                   "775100-katalog:10260744"]}]
-
-## Creative works
-
-This contains the metadata of the creative works,
-caching the webservices.
-
-       :works {}
-       #_{"870970-basis:28934297"
-        {:title "1Q84"
-         :creator "Haruki Murakami"
-         :cover-url "http://www.bogpriser.dk/Covers/202/9788779559202.jpg"
-         :description
-         "Aomame er en 30-årig smart pige, uddannet kampsportsinstruktør, men
-         arbejder p.t. som lejemorder. Tengo er matematiklærer med
-         forfatterdrømme.  Han skal omskrive en sær 17-årig piges sære historie.
-         Begge hovedfigurer oplever, at deres virkelighed forvrides let, hvad
-         påvirker deres virkelighed?"
-         :keywords ["Kultur" "Kærlighed" "Magisk Realisme" "Magt"
-                    "Parallelle Verdener" "Skrivekunst" "Japan" "1980-1989"]
-         :location "Skønlitteratur"
-         :language "Dansk"
-         :editions
-         [{:name "Bog (bind 1)" :availability :available}
-          {:name "Bog (bind 2)" :availability :loaned}
-          {:name "Bog (bind 3)" :availability :available}
-          {:name "Lydbog (cd) (bind 1)" :availability :available}
-          {:name "Lydbog (cd) (bind 2)" :availability :available}
-          {:name "Lydbog (cd) (bind 3)" :availability :available}
-          {:name "Lydbog (online) (bind 1)" :availability :available}
-          {:name "Lydbog (online) (bind 2)" :availability :available}
-          {:name "Lydbog (online) (bind 3)" :availability :available}]}
-        "775100-katalog:50643662"
-        {:title "Matematik i virkeligheden"
-         :creator "Allan Baktoft"
-         :cover-url ""
-         :description "Regn den ud"
-         :keywords ["Matematik" "Regne"]
-         :location "Faglitteratur"
-         :languages ["Dansk"]
-         :editions
-         [{:name "Bog (bind 3)" :availability :available}
-          {:name "Lydbog (cd) (bind 1)" :availability :available}
-          {:name "Lydbog (cd) (bind 2)" :availability :available}
-          {:name "Lydbog (cd) (bind 3)" :availability :available}
-          {:name "Lydbog (online) (bind 1)" :availability :available}]}
-        "775100-katalog:28934572"
-        {:title "A momentary lapse of reason"
-         :creator "The Pink Floyd"
-         :cover-url "https://en.wikipedia.org/wiki/File:MLoRLP01.jpg"
-         :description "Musik"
-         :keywords ["Rock"]
-         :location "Musik"
-         :languages ["Engelsk"]
-         :editions
-         [{:name "Lydbog (cd) (bind 1)" :availability :available}
-          {:name "Lydbog (cd) (bind 2)" :availability :loaned}
-          {:name "Lydbog (cd) (bind 3)" :availability :loaned}]}
-        "775100-katalog:10260744"
-        {:title "Ummagumma"
-         :creator "The Pink Floyd"
-         :cover-url
-         (str "https://upload.wikimedia.org/wikipedia/en/1/16/"
-              "PinkFloyd-album-ummagummastudio-300.jpg")
-         :description "Musik"
-         :keywords ["Rock"]
-         :location "Musik"
-         :languages ["English"]
-         :editions
-         [{:name "Lydbog (cd) (bind 1)" :availability :loaned}
-          {:name "Lydbog (cd) (bind 2)" :availability :available}
-          {:name "Lydbog (cd) (bind 3)" :availability :available}]}}})
 # Actual application logic (`mobibl.cljs`)
 
     (ns solsort.mobibl.mobibl
@@ -204,31 +109,23 @@ caching the webservices.
         [re-frame.core :as re-frame
          :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
         [clojure.string :as string :refer [replace split blank?]]
-        [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
-        [solsort.mobibl.mock-data :refer [sample-db]]))
+        [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
 ## Handlers
 
-When the application loads we set the data for use in the frontend by
-with the :reset-db handler.  See #36
-    (register-handler :reset-db (fn [_ [_ db]] db))
     (register-handler
-      :open (fn [db [_ [page id]]]
-              (let [id (or id (get-in db [:current page]))]
-                (-> db
-                    (assoc-in [:current page] id)
-                    (assoc :route [page id])))))
+      :route (fn [db [_ page id]]
+               (let [id (or id (get-in db [:current page]))]
+                 (-> db
+                     (assoc-in [:current page] id)
+                     (assoc :route [page id])))))
+
     (register-handler
       :work (fn [db [_ id content]]
               (assoc-in db [:works id]
                         (merge (get-in db [:work id] {})
                                content))))
-
-Initialise the database with sample data
-    (dispatch [:reset-db sample-db])
-
 ## Subscriptions
-
 
     (def default-work
       {:title "Unknown Title"
@@ -238,6 +135,16 @@ Initialise the database with sample data
       (let [work (get-in db [:works id])]
         (when-not work (dispatch [:request-work id]))
         (merge default-work {:id id} work)))
+
+    (register-sub
+      :search
+      (fn [db [_ q page]]
+        (reaction
+          (let [results (get-in @db [:search q page])]
+            (or results
+               (do
+                (dispatch [:request-search q page])
+                []))))))
 
     (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
     (register-sub :works (fn [db] (reaction (:works @db))))
@@ -259,6 +166,14 @@ Helper function to query the db for the full info about works
                   (fn [db _] (reaction (get-status-works @db :arrived))))
     (register-sub :borrowed
                   (fn [db _] (reaction (get-status-works @db :borrowed))))
+
+## Data initialisation
+
+TODO: also run on network reconnect, and after a while
+
+    (dispatch [:request-status])
+
+TODO: sync database to disk, and restore on load
 # HTML5 view (html5.cljs)
 
     (ns solsort.mobibl.html5
@@ -275,11 +190,15 @@ Helper function to query the db for the full info about works
          :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
         [clojure.string :as string :refer [replace split blank?]]
         [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
-
 ## Styling
 
 
     (load-style! normalize-css "style-reset")
+    (def highlight "#326bc5")
+    ;(def background fade from "#eaeaea" to "#ffffff")
+    (def dark "#262626")
+    (def light "#e5e5e5")
+    (def medium "#d8d8d8")
     (defn styling []
 
 We are designing for mobile-portrait-mode,
@@ -292,14 +211,18 @@ be 4 units high/wide, though 3 units is also ok.
 It also allows for 1/2, 1/3, 1/4, and 1/6 division of the screen,
 and 5/8 vs 3/8 which approximately the golden ratio.
 
-      (let [unit (/ js/document.body.clientWidth 24)]
+      (let [unit (/ (js/Math.min js/document.body.clientHeight
+                                 js/document.body.clientWidth)
+                    24)]
         (load-style!
           {:body
            {:background "url(assets/background.jpg)"
-            :background-color "#fbf8f4"}
-           "div,a,span,b,i,img,button"
-           {:box-sizing :border-box}
-           ".button"
+            :background-color "#fbf8f4"
+            :font-family "\"Open Sans\", sans-serif"
+            :font-weight "300"}
+           ".condensed"
+           {:font-family "\"Open Sans Condensed\""}
+           ".ssbutton"
            {:display :inline-block
             :min-height (* 2.5 unit)
             :border-radius (* 0.5 unit)
@@ -312,15 +235,21 @@ and 5/8 vs 3/8 which approximately the golden ratio.
           "general styling")
 ### Tabbar
         (load-style!
-          {".tabbar"
+          {".tabbar-spacer"
+           {:display :inline-block
+            :height (* 4 unit)
+            }
+           ".tabbar"
            {:position :fixed
             :box-sizing :border-box
             :bottom 0
+            :text-align :center
             :left 0
             :width "100%"
             :background "url(assets/background.jpg)"
             :background-color "#fbf8f4"
             :box-shadow "-1px 0px 5px rgba(0,0,0,1);"
+            :z-index "100"
             }
            ".tabbar a"
            {:display :inline-block
@@ -339,8 +268,11 @@ and 5/8 vs 3/8 which approximately the golden ratio.
         (load-style!
           {".work"
            {:margin-left unit
-            :margin-right unit
-            }
+            :margin-right unit }
+           ".work-cover-img"
+           {:float :right
+            :max-width "62%"
+            :max-height (- js/window.innerHeight (* 4 unit)) }
            ".work .title"
            {:text-align :center
             :font-size "200%"
@@ -384,20 +316,60 @@ and 5/8 vs 3/8 which approximately the golden ratio.
               :alt s}]])
 
     (defn tabbar []
-      [:div.tabbar
+      [:div
+       [:div.tabbar-spacer " "]
+       [:div.tabbar
        [tabbar-button "search" "Søg"]
        [tabbar-button "work" "Materiale"]
        [tabbar-button "library" "Bibliotek"]
-       [tabbar-button "status" "Status"]])
+       [tabbar-button "status" "Status"]]])
 
 ### Search
 <img width=20% align=top src=doc/wireframes/search.jpg>
 
+    (defn work-line [pid]
+      (let [o @(subscribe [:work pid])
+            keywords
+            (interpose
+              " "
+              (map
+                (fn [kw] [:a.condensed.button {:href (str "#search/" kw)} kw])
+                (:keywords o)
+                ))]
+        [:a
+         {:key pid
+          :href (str "#work/" pid)}
+         [:div.row.callout
+          [:div.large-1.medium-2.small-3.columns
+           [:img {:src (:cover-url o)}]
+           ]
+          [:div.large-11.medium-10.small-9.columns
+           [:h4 (:title o)]
+           [:div.expanded.hollow.button (:creator o)]
+           (into [:div] keywords)]]]))
+
     (defn search [query]
-      [:div
-       [tabbar]
-       [:input {:value query}]
-       "..."])
+      (let
+        [results @(subscribe [:search query 0])
+         results (map work-line results)
+         search-form
+         [:div.row
+          [:div.small-12.columns
+           [:div.input-group
+            [:input.input-group-field
+             {:type :text
+              :value query
+              :on-change
+              #(dispatch-sync [:route "search" (-> % .-target .-value)])}]
+            [:a.input-group-button.button "søg"]]]]
+         ]
+        (log 'search-results query results)
+        [:div
+         [:p]
+         (merge [:div search-form]
+          results)
+         [tabbar]
+         ]))
 
 ### Work
 <img width=20% align=top src=doc/wireframes/work.jpg>
@@ -409,23 +381,23 @@ and 5/8 vs 3/8 which approximately the golden ratio.
             location (:location work)
             creator (:creator work)]
         [:div.work
-         [tabbar]
          [:div "TODO: Work history here"]
-         [:div.title (:title work)]
-         [:div.author "af " [:a {:href (str "#search/" creator)} creator]]
-         [:img {:class "work-img"
-                :src (:cover-url work)}]
+         [:h1.text-center (:title work)]
+         [:div.text-center "af " [:a {:href (str "#search/" creator)} creator]]
+         [:img.work-cover-img.float-right {:src (:cover-url work)}]
          [:div [:a.button "Bestil"]]
          (if-not keywords ""
            (into [:p #_[:em "Emne: "]]
                  (interpose
                    " "
                    (for [word keywords]
-                     [:a.work-keyword {:href
+                     [:a.hollow.condensed.button {:href
                                        (str "#search/" word)} word]))))
          [:div.work-desc (:description work)]
          (if language [:p [:em "Sprog: "] language] "")
-         (if location [:p [:em "Opstilling: "] location] "")]))
+         (if location [:p [:em "Opstilling: "] location] "")
+         [tabbar]
+         ]))
 
 
 ### Library
@@ -516,9 +488,7 @@ and 5/8 vs 3/8 which approximately the golden ratio.
 ## Routing
 
     (defn handle-hash []
-      (dispatch [:open (string/split (.slice js/location.hash 1) "/")]))
-    (defn open [& args]
-      (aset js/location "hash" (string/join "/" args)))
+      (dispatch (into [:route] (string/split (.slice js/location.hash 1) "/"))))
     (js/window.addEventListener "hashchange" handle-hash)
     (handle-hash)
 # BibApp Data Source (bibapp_datasource.cljs)
@@ -539,8 +509,49 @@ and 5/8 vs 3/8 which approximately the golden ratio.
          :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
         [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
-    ; http://solsort.com/es/bibapp/ting/_search?q=ost
-    ; http://solsort.com/db/bib/870970-basis:44751143
+## Dummy ids of books etc. with metadata
+
+    (def dummy-ids
+      ["870970-basis:29820031" "870970-basis:45231402" "870970-basis:29146004"
+       "870970-basis:28794630" "870970-basis:28904061" "870970-basis:45574881"
+       "870970-basis:51604288" "870970-basis:44351641" "870970-basis:45470075"
+       "870970-basis:27697917" "870970-basis:22324284" "870970-basis:28452551"
+       "810010-katalog:008471560" "870970-basis:44741830" "870970-basis:28534698"
+       "870970-basis:45583457" "870970-basis:45386864" "870970-basis:45421716"
+       "870970-basis:28052472" "870970-basis:45493016" "870970-basis:44291738"
+       "870970-basis:23060132" "810010-katalog:007071351" "870970-basis:45554813"
+       "870970-basis:45237648" "870970-basis:28407513" "870970-basis:44950723"
+       "830380-katalog:93161505" "870970-basis:27006434" "870970-basis:45618765"
+       "870970-basis:26666074" "870970-basis:44695634" "870970-basis:27455344"
+       "870970-basis:50914968" "870970-basis:45170306" "870970-basis:45233758"
+       "870970-basis:29706328" "870970-basis:51582772" "870970-basis:45199088"
+       "870970-basis:27880436" "870970-basis:29991537" "870970-basis:44313235"
+       "870970-basis:23116642" "870970-basis:45233332" "870970-basis:44547759"
+       "870970-basis:44910888" "870970-basis:51313380" "870970-basis:44887509"
+       "870970-basis:26829798" "870970-basis:45005801" "870970-basis:25893018"
+       "870970-basis:44364999" "870970-basis:44331225" "870970-basis:50625656"
+       "870970-basis:45534952" "870970-basis:44591413" "870970-basis:44592045"
+       "870970-basis:28522517" "870970-basis:29100160" "870970-basis:26396417"
+       "870970-basis:50565858" "870970-basis:28930240" "870970-basis:28108990"
+       "870970-basis:27195105" "870970-basis:28372531" "870970-basis:44831562"
+       "870970-basis:50520846" "870970-basis:45182266" "870970-basis:29158746"
+       "870970-basis:43917579" "870970-basis:45217345" "870970-basis:45263762"
+       "870970-basis:50909794" "810010-katalog:007144163" "870970-basis:26952425"
+       "870970-basis:27873251" "870970-basis:45350568" "870970-basis:44850001"
+       "870970-basis:44520028" "870970-basis:44150484" "870970-basis:27561527"
+       "870970-basis:27867138" "870970-basis:28539290" "870970-basis:45153843"
+       "870970-basis:29287341" "870970-basis:26681316" "870970-basis:45281434"
+       "870970-basis:28715730" "870970-basis:45300439" "870970-basis:45575969"
+       "870970-basis:27374859" "820010-katalog:3096314" "870970-basis:26509904"
+       "870970-basis:44406365" "870970-basis:44623234" "870970-basis:44973650"
+       "870970-basis:44537052" "870970-basis:51283708" "870970-basis:45377458"
+       "870970-basis:28009011" "870970-basis:45076261" "870970-basis:27165435"
+       "870970-basis:24232123" "870970-basis:45164683" "870970-basis:44529807"])
+
+## Get work metadata from database
+
+Use data from http://solsort.com/db/bib
+
     (register-handler
       :request-work
       (fn [db [_ id]]
@@ -564,3 +575,39 @@ and 5/8 vs 3/8 which approximately the golden ratio.
               (dispatch [:work id result])
               )))
         (assoc-in db  [:requested id] true)))
+
+    (register-handler
+      :request-search
+      (fn [db [_ query page]]
+        (if (get-in db [:search query page])
+          db
+          (assoc-in db [:search query page]
+                    (take (js/Math.round (* (js/Math.random)
+                                            (js/Math.random)
+                                            100))
+                          (shuffle dummy-ids))))))
+
+## Dummy data for status
+
+    (defn reservation [id]
+      {:id id
+       :until "2016-03-12" })
+    (defn arrived [id]
+      {:id id
+       :until "2016-03-12" })
+    (defn borrowed [id]
+      {:id id
+       :until "2016-03-25" })
+
+    (register-handler
+      :request-status
+      (fn [db _]
+        (assoc db :status
+               {:reservations
+                (map reservation (take 5 (shuffle dummy-ids)))
+                :arrived
+                (map arrived (take 5 (shuffle dummy-ids)))
+                :borrowed
+                (map borrowed (take 5 (shuffle dummy-ids)))
+
+                })))
