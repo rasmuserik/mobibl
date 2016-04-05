@@ -83,6 +83,17 @@
           )))
     (assoc-in db  [:requested id] true)))
 
+(register-handler
+  :request-search
+  (fn [db [_ query page]]
+    (if (get-in db [:search query page])
+      db
+      (assoc-in db [:search query page]
+                (take (js/Math.round (* (js/Math.random)
+                                        (js/Math.random)
+                                        100))
+                      (shuffle dummy-ids))))))
+
 ;; ## Dummy data for status
 
 (defn reservation [id]

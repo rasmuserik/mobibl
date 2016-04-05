@@ -14,11 +14,15 @@
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
-
 ;; ## Styling
 ;;
 
 (load-style! normalize-css "style-reset")
+(def highlight "#326bc5")
+;(def background fade from "#eaeaea" to "#ffffff")
+(def dark "#262626")
+(def light "#e5e5e5")
+(def medium "#d8d8d8")
 (defn styling []
   ;;
   ;; We are designing for mobile-portrait-mode,
@@ -31,14 +35,18 @@
   ;; It also allows for 1/2, 1/3, 1/4, and 1/6 division of the screen,
   ;; and 5/8 vs 3/8 which approximately the golden ratio.
   ;;
-  (let [unit (/ js/document.body.clientWidth 24)]
+  (let [unit (/ (js/Math.min js/document.body.clientHeight
+                             js/document.body.clientWidth)
+                24)]
     (load-style!
       {:body
        {:background "url(assets/background.jpg)"
-        :background-color "#fbf8f4"}
-       "div,a,span,b,i,img,button"
-       {:box-sizing :border-box}
-       ".button"
+        :background-color "#fbf8f4"
+        :font-family "\"Open Sans\", sans-serif"
+        :font-weight "300"}
+       ".condensed"
+       {:font-family "\"Open Sans Condensed\""}
+       ".ssbutton"
        {:display :inline-block
         :min-height (* 2.5 unit)
         :border-radius (* 0.5 unit)
@@ -51,15 +59,21 @@
       "general styling")
     ;; ### Tabbar
     (load-style!
-      {".tabbar"
+      {".tabbar-spacer"
+       {:display :inline-block
+        :height (* 4 unit)
+        }
+       ".tabbar"
        {:position :fixed
         :box-sizing :border-box
         :bottom 0
+        :text-align :center
         :left 0
         :width "100%"
         :background "url(assets/background.jpg)"
         :background-color "#fbf8f4"
         :box-shadow "-1px 0px 5px rgba(0,0,0,1);"
+        :z-index "100"
         }
        ".tabbar a"
        {:display :inline-block
@@ -78,8 +92,11 @@
     (load-style!
       {".work"
        {:margin-left unit
-        :margin-right unit
-        }
+        :margin-right unit }
+       ".work-cover-img"
+       {:float :right
+        :max-width "62%"
+        :max-height (- js/window.innerHeight (* 4 unit)) }
        ".work .title"
        {:text-align :center
         :font-size "200%"
@@ -123,20 +140,60 @@
           :alt s}]])
 
 (defn tabbar []
-  [:div.tabbar
+  [:div
+   [:div.tabbar-spacer " "]
+   [:div.tabbar
    [tabbar-button "search" "Søg"]
    [tabbar-button "work" "Materiale"]
    [tabbar-button "library" "Bibliotek"]
-   [tabbar-button "status" "Status"]])
+   [tabbar-button "status" "Status"]]])
 
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
+(defn work-line [pid]
+  (let [o @(subscribe [:work pid])
+        keywords
+        (interpose
+          " "
+          (map
+            (fn [kw] [:a.condensed.button {:href (str "#search/" kw)} kw])
+            (:keywords o)
+            ))]
+    [:a
+     {:key pid
+      :href (str "#work/" pid)}
+     [:div.row.callout
+      [:div.large-1.medium-2.small-3.columns
+       [:img {:src (:cover-url o)}]
+       ]
+      [:div.large-11.medium-10.small-9.columns
+       [:h4 (:title o)]
+       [:div.expanded.hollow.button (:creator o)]
+       (into [:div] keywords)]]]))
+
 (defn search [query]
-  [:div
-   [tabbar]
-   [:input {:value query}]
-   "..."])
+  (let
+    [results @(subscribe [:search query 0])
+     results (map work-line results)
+     search-form
+     [:div.row
+      [:div.small-12.columns
+       [:div.input-group
+        [:input.input-group-field
+         {:type :text
+          :value query
+          :on-change
+          #(dispatch-sync [:route "search" (-> % .-target .-value)])}]
+        [:a.input-group-button.button "søg"]]]]
+     ]
+    (log 'search-results query results)
+    [:div
+     [:p]
+     (merge [:div search-form]
+      results)
+     [tabbar]
+     ]))
 
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
@@ -148,23 +205,23 @@
         location (:location work)
         creator (:creator work)]
     [:div.work
-     [tabbar]
      [:div "TODO: Work history here"]
-     [:div.title (:title work)]
-     [:div.author "af " [:a {:href (str "#search/" creator)} creator]]
-     [:img {:class "work-img"
-            :src (:cover-url work)}]
+     [:h1.text-center (:title work)]
+     [:div.text-center "af " [:a {:href (str "#search/" creator)} creator]]
+     [:img.work-cover-img.float-right {:src (:cover-url work)}]
      [:div [:a.button "Bestil"]]
      (if-not keywords ""
        (into [:p #_[:em "Emne: "]]
              (interpose
                " "
                (for [word keywords]
-                 [:a.work-keyword {:href
+                 [:a.hollow.condensed.button {:href
                                    (str "#search/" word)} word]))))
      [:div.work-desc (:description work)]
      (if language [:p [:em "Sprog: "] language] "")
-     (if location [:p [:em "Opstilling: "] location] "")]))
+     (if location [:p [:em "Opstilling: "] location] "")
+     [tabbar]
+     ]))
 
 
 ;; ### Library
@@ -255,8 +312,6 @@
 ;; ## Routing
 
 (defn handle-hash []
-  (dispatch [:open (string/split (.slice js/location.hash 1) "/")]))
-(defn open [& args]
-  (aset js/location "hash" (string/join "/" args)))
+  (dispatch (into [:route] (string/split (.slice js/location.hash 1) "/"))))
 (js/window.addEventListener "hashchange" handle-hash)
 (handle-hash)
