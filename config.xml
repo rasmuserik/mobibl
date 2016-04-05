@@ -5,6 +5,8 @@
     <date>2016-02</date>
     <shortdescription>Public Library App</shortdescription>
     <description>
+      Very early version, not ready in any way yet...
+
       This is intended to become an app for the danish public libraries.
     </description>
     <author email="app@solsort.com" href="http://solsort.com">solsort.com</author>
@@ -15,7 +17,7 @@
     <plugin name="cordova-plugin-whitelist" spec="1" />
     <access origin="*" />
 
-    <preference name="orientation" value="default" />
+    <preference name="orientation" value="portrait" />
     <preference name="permissions" value="none" /> 
     <preference name="auto-hide-splash-screen" value="true" />
     <preference name="fullscreen" value="false" />
