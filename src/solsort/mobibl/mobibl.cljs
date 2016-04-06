@@ -50,6 +50,139 @@
             (dispatch [:request-search q page])
             []))))))
 
+(def sample-lib
+  {
+   ;; ## Known libraries
+   ;;
+   ;; Simple representation of the libraries that are interesting for the user
+   ;; including position on a map, opening hours and contact information.
+   ;;
+   ;; FIXME The above books in the works section are from different libraries,
+   ;; ie. 775100 is Aarhus hovedbibliotek.
+   ;;
+   :library
+   {"710100"
+    {:name "Københavns Hovedbibliotek"
+     :type "Folkebibliotek"
+     :address
+     {:road "Krystalgade 15"
+      :city "1172 København K"
+      :country "Danmark"}
+     :email "bibliotek@kff.kk.dk"
+     :phone {:number "33663000"
+             :time "man-fre 10-17"}
+     :position
+     [55.680887 12.573619]
+     :hours
+     [{:title "Åbningstider"
+       :weekdays
+       [[8 22]
+        [8 20]
+        [8 20]
+        [8 20]
+        [8 19]
+        [8 17]]}
+      {:title "Betjening"
+       :weekdays
+       [[12 17]
+        [12 17]
+        [12 17]
+        [12 17]
+        [12 17]
+        [12 15]]}]}
+    "810010"
+    {:name "Det Kongelige Bibliotek, Diamanten"
+     :type "Forskningsbibliotek"
+     :address {
+               :road "Søren Kierkegaards Plads 1"
+               :city "1221 København K"
+               :country "Danmark"}
+     :email "kb@kb.dk"
+     :phone {:number "33 47 47 47"
+             :time "man - fre 9-16"}
+     :position
+     [55.67321579999999 12.5821264]
+     ;;
+     ;; FIXME How to represent many opening hours for departments of a library
+     ;;
+     ;; At the Diamanten library there are a lot of possible access times, so
+     ;; many are included here to see if it is possible to represent them in a
+     ;; manageable way on a mobile app.
+     ;;
+     ;; The user could also be presented for a way to selecting which department
+     ;; of the library to view opening hours for.
+     ;;
+     :hours
+     [{:title "Adgang til Diamanten"
+       :weekdays
+       [[8 22]
+        [8 22]
+        [8 22]
+        [8 22]
+        [8 22]
+        [8 22]]}
+      {:title "Informationen"
+       :weekdays
+       [[8 21]
+        [8 21]
+        [8 21]
+        [8 21]
+        [8 21]]}
+      {:title "Helpdesk"
+       :weekdays
+       [[10 16]
+        [10 16]
+        [10 16]
+        [10 16]
+        [10 16]]}
+      {:title "Læsesal Vest og E-Vest"
+       :weekdays
+       [[9 21]
+        [9 21]
+        [9 21]
+        [9 21]
+        [9 21]
+        [10 17]]}
+      {:title "Læsesal Nord og Øst"
+       :weekdays
+       [[8 21]
+        [8 21]
+        [8 21]
+        [8 21]
+        [8 21]
+        [10 17]]}
+      {:title "Center for Kort og Billeder"
+       :weekdays
+       [nil
+        [10 16]
+        [12 16]
+        [10 16]]}
+      {:title "Center for Manuskripter og Boghistorie"
+       :weekdays
+       [[10 17]
+        [10 17]
+        [12 19]
+        [10 17]
+        [10 17]]}
+      {:title "Småtrykssamlingens interne læsesal"
+       :weekdays
+       [[10 15]
+        [10 15]
+        [10 15]
+        [10 15]
+        [10 15]]}
+      {:title "Dansk Folkemindesamling"
+       :weekdays
+       [nil
+        [10 15]
+        [10 15]
+        [10 15]
+        [10 15]]}]}}})
+
+(register-sub
+ :current-library (fn [db] (reaction
+                            (get-in sample-lib [:library "710100"]))))
+
 (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
 (register-sub :works (fn [db] (reaction (:works @db))))
 (register-sub :route (fn [db] (reaction (get @db :route))))
