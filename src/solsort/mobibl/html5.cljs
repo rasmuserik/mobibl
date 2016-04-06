@@ -139,7 +139,7 @@
      "open-hours-styling")
     (load-style!
      {".contact"
-      {:padding "0em 0em 1em 0em"
+      {:padding "0em 0em 10em 0em"
        ".contact div span"
         {:margin "0em 1em 0em 0em"
          :border "1px solid blue"}}}
@@ -253,7 +253,7 @@
 
 (def daynames ["Man" "Tir" "Ons" "Tor" "Fre" "Lør" "Søn"])
 
-(defn library []
+(defn library [id]
   (let [current-library (subscribe [:current-library])]
     (fn []
         (let [address (:address @current-library)
