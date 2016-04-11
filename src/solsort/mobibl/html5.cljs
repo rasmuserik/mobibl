@@ -299,7 +299,7 @@
              [:span "Email"]
              [:span (:email @current-library)]]
             [:div
-             [:span "Telefon"] 
+             [:span "Telefon"]
              [:span (:number phone)]
              [:span (:time phone)]]]]))))
 
