@@ -296,9 +296,12 @@
            [:div.contact
             [:h2 "Kontakt"]
             [:div
-             [:span "Email"] [:span (:email @current-library)]]
+             [:span "Email"]
+             [:span (:email @current-library)]]
             [:div
-             [:span "Telefon"] [:span (:number phone)] [:span (:time phone)]]]]))))
+             [:span "Telefon"] 
+             [:span (:number phone)]
+             [:span (:time phone)]]]]))))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
