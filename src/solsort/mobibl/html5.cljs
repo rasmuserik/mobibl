@@ -178,8 +178,68 @@
     [tabbar-button "library" "Bibliotek"]
     [tabbar-button "status" "Status"]]])
 
-;; ### book-view
+;; ### work-tiny
 
+(def work-tiny-height (* 13 5.5))
+(defn work-tiny [pid]
+  (let  [o @(subscribe [:work pid])
+         unit 13
+         width (* 4.5 unit)]
+    [:a {:href (str "#work/" pid)
+         :style {:color "#111"}
+         }
+     [:div.center
+     {:style
+      {:display :inline-block
+       :white-space :normal
+       :font-size (* 0.8 unit)
+       :line-height (str unit "px")
+       :position :relative
+       :width width
+       :height (* 5.5 unit)
+       :text-shadow
+        (str "1px 0px 1px white,"
+             "0px 0px 1px white,"
+             "1px 1px 1px white,"
+             "0px 1px 1px white")
+
+       }}
+     [:img
+      {:src (:cover-url o)
+       :width "100%"
+       :height "100%"
+       }
+      ]
+     [:div.bold
+      {:style
+       {:display :inline-block
+        :position :absolute
+        :top 0
+        :left 0
+        :width width
+        :height (* 4 unit)
+        :background "rgba(255,255,255,0.4)"
+        :padding-bottom (* .25 unit)
+        :overflow :hidden
+        }}
+      (:title o)]
+     [:div.condensed
+      {:style
+       {:display :inline-block
+        :position :absolute
+        :text-align :left
+        :bottom 0
+        :left 0
+        :width width
+        :font-size (* 1 unit)
+        :white-space :nowrap
+        :padding (* .25 unit)
+        :height (* 1.5 unit)
+        :background "rgba(255,255,255,0.4)"
+        :overflow :hidden}}
+      (:creator o)]]]))
+
+;; ### work-item
 (defn work-item [pid]
   (let [o @(subscribe [:work pid])
         keywords
@@ -312,9 +372,25 @@
         language (:language work)
         keywords (:keywords work)
         location (:location work)
-        creator (:creator work)]
-    [:div.ui.container
-     ;[:div "TODO: Work history here"]
+        creator (:creator work)
+        work-history @(subscribe [:work-history])
+        ]
+    (log 'work-history work-history)
+    (when (not= work-id (first work-history))
+      (dispatch [:latest-work work-id]))
+    [:div
+     [:div
+      {:style
+       {:height work-tiny-height
+        :background-color "#777"
+        :overflow :hidden}}
+      (into [:div
+            {:style
+             {:white-space :nowrap
+              :overflow-x :auto}
+             }
+            ] (map work-tiny work-history))]
+     [:div.ui.container
      [:p]
      [:h1.center (:title work)]
      [:p.center "af " [:a {:href (str "#search/" creator)} creator]]
@@ -357,7 +433,7 @@
           (take 12 (rest (:related work))))
         )]
      [tabbar]
-     ]))
+     ]]))
 
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
