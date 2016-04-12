@@ -189,55 +189,55 @@
          :style {:color "#111"}
          }
      [:div.center
-     {:style
-      {:display :inline-block
-       :white-space :normal
-       :font-size (* 0.8 unit)
-       :line-height (str unit "px")
-       :position :relative
-       :width width
-       :height (* 5.5 unit)
-       :text-shadow
+      {:style
+       {:display :inline-block
+        :white-space :normal
+        :font-size (* 0.8 unit)
+        :line-height (str unit "px")
+        :position :relative
+        :width width
+        :height (* 5.5 unit)
+        :text-shadow
         (str "1px 0px 1px white,"
              "0px 0px 1px white,"
              "1px 1px 1px white,"
              "0px 1px 1px white")
 
-       }}
-     [:img
-      {:src (:cover-url o)
-       :width "100%"
-       :height "100%"
-       }
-      ]
-     [:div.bold
-      {:style
-       {:display :inline-block
-        :position :absolute
-        :top 0
-        :left 0
-        :width width
-        :height (* 4 unit)
-        :background "rgba(255,255,255,0.4)"
-        :padding-bottom (* .25 unit)
-        :overflow :hidden
         }}
-      (:title o)]
-     [:div.condensed
-      {:style
-       {:display :inline-block
-        :position :absolute
-        :text-align :left
-        :bottom 0
-        :left 0
-        :width width
-        :font-size (* 1 unit)
-        :white-space :nowrap
-        :padding (* .25 unit)
-        :height (* 1.5 unit)
-        :background "rgba(255,255,255,0.4)"
-        :overflow :hidden}}
-      (:creator o)]]]))
+      [:img
+       {:src (:cover-url o)
+        :width "100%"
+        :height "100%"
+        }
+       ]
+      [:div.bold
+       {:style
+        {:display :inline-block
+         :position :absolute
+         :top 0
+         :left 0
+         :width width
+         :height (* 4 unit)
+         :background "rgba(255,255,255,0.4)"
+         :padding-bottom (* .25 unit)
+         :overflow :hidden
+         }}
+       (:title o)]
+      [:div.condensed
+       {:style
+        {:display :inline-block
+         :position :absolute
+         :text-align :left
+         :bottom 0
+         :left 0
+         :width width
+         :font-size (* 1 unit)
+         :white-space :nowrap
+         :padding (* .25 unit)
+         :height (* 1.5 unit)
+         :background "rgba(255,255,255,0.4)"
+         :overflow :hidden}}
+       (:creator o)]]]))
 
 ;; ### work-item
 (defn work-item [pid]
@@ -297,19 +297,40 @@
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
-(defn facets [& facets]
-  (into
-    [:div.condensed
-     {:style
-      {:height "6rem"
-       :overflow :hidden
-       :line-height "2rem"
-       :margin-bottom "0.4rem" }}]
-    (map (fn [s]
-           [:a.ui.label s " "
-            [:span.small.regular "123"]
-            ])
-         facets) )
+(defn facet-color [s]
+  (case s
+    :creator "orange"
+    :type "olive"
+    :language "teal"
+    :subject "violet"
+    :year "pink"
+    "" )) 
+(defn facets [selected all]
+  (let
+    [all (remove
+           (fn [[a b c]]
+             (some #{[a b]} selected))
+           all)]
+    (merge
+      [:div.condensed
+       {:style
+        {:height "6rem"
+         :overflow :hidden
+         :line-height "2rem"
+         :margin-bottom "0.4rem" }}]
+      (map (fn [[col s]]
+             [:a.ui.mini.button
+              {:on-click #(dispatch [:remove-facet [col s]])
+               :key (hash [col s])
+               :class (facet-color col)} s])
+           selected)
+      (map (fn [[col s cnt]]
+             [:a.ui.mini.basic.button
+              {:on-click #(dispatch [:add-facet [col s]])
+               :key (hash [col s])
+               :class (facet-color col)} s " "
+              [:span.small.regular " (" cnt ")"]])
+           (reverse (sort-by #(nth % 2) all))) ))
 
   )
 (defn search [query]
@@ -352,24 +373,57 @@
          }]
        [:button.ui.icon.button
         {:class (if-not search-history "disabled"
-                        (if show-history "active" ""))
+                  (if show-history "active" ""))
          :on-click #(dispatch [:ui :show-history (not show-history)])}
         [:i.caret.down.icon]]
        (when suggest
          (into [:div.results.transition.visible
-              {:style {:display "block !important"}}]
+                {:style {:display "block !important"}}]
                (for [s suggest]
                  [:a.result
                   {:href (str "#search/" s)
                    :on-click #(dispatch [:ui :show-history false])}
                   s])))]
 
-      [facets "Jens Jensen" "Holger Danske" "H C Andersen" "Kumbel"
-       "bog" "noder" "cd" "tidskriftsartikel" "dvd" "video" "avisartikel"
-       "lydbog" "2000" "billedbog" "2002" "VHS" "cd-rom" "ost" "filosofi"
-       "2001" "engelske skuespillere" "kager" "åer" "gæs" "sjove bøger"
-       "engelsk" "dansk" "blandede sprog" "tysk" "færøsk" "persisk"]
-      ]
+      [facets 
+       @(subscribe [:facets])
+       [[:creator "Jens Jensen" 412]
+        [:creator "Holger Danske" 231]
+        [:creator "H. C. Andersen" 518]
+        [:creator "Kumbel" 100]
+        [:creator "Mr. X" 93]
+        [:type "bog" 1541]
+        [:type "noder" 541]
+        [:type "cd" 341]
+        [:type "tidskriftsartikel" 641]
+        [:type "dvd" 300]
+        [:type "video" 144]
+        [:type "avisartikel" 381]
+        [:type "VHS" 1]
+        [:type "cd-rom" 41]
+        [:language "dansk" 913]
+        [:language "engelsk" 569]
+        [:language "blandede sprog" 319]
+        [:language "tysk" 293]
+        [:language "færøsk" 321]
+        [:language "persisk" 139]
+        [:subject "gæs" 49]
+        [:subject "filosofi" 332]
+        [:subject "kager" 232]
+        [:subject "engelske skuespillere" 32]
+        [:subject "åer" 132]
+        [:subject "tautologi" 123]
+        [:subject "sjove bøger" 400]
+        [:year "2000" 154]
+        [:year "2001" 49]
+        [:year "2002" 14]
+        [:year "2003" 293]
+        [:year "2004" 114]
+        [:year "2005" 239]
+        [:year "2006" 276]
+        [:year "2007" 481]
+        [:year "2008" 359]
+        ]]]
      [:p]
      [:div.ui.grid
       (merge [:div.stackable.doubling.four.column.row]
@@ -399,55 +453,55 @@
         :background-color "#777"
         :overflow :hidden}}
       (into [:div
-            {:style
-             {:white-space :nowrap
-              :overflow-x :auto}
-             }
-            ] (map work-tiny work-history))]
+             {:style
+              {:white-space :nowrap
+               :overflow-x :auto}
+              }
+             ] (map work-tiny work-history))]
      [:div.ui.container
-     [:p]
-     [:h1.center (:title work)]
-     [:p.center "af " [:a {:href (str "#search/" creator)} creator]]
-     [:p.center
-      [:img
-       {:src (:cover-url work)
-        :style
-        {:max-height (* 0.5 (- js/document.body.clientHeight 50))
-         :max-width (* 0.8 (- js/document.body.clientWidth 20))
+      [:p]
+      [:h1.center (:title work)]
+      [:p.center "af " [:a {:href (str "#search/" creator)} creator]]
+      [:p.center
+       [:img
+        {:src (:cover-url work)
+         :style
+         {:max-height (* 0.5 (- js/document.body.clientHeight 50))
+          :max-width (* 0.8 (- js/document.body.clientWidth 20))
 
-         }
-        }]
-      ]
-     [:p.center [:a.ui.primary.button "Bestil"]  ]
-     [:p (:description work)]
-     (if-not keywords ""
-       (into [:p {:style {:line-height "2rem"}}]
-             (interpose
-               " "
-               (for [word keywords]
-                 [:a.ui.label {:href
-                               (str "#search/" word)} word]))))
-     (if language [:p [:em "Sprog: "] language] "")
-     (if location [:p [:em "Opstilling: "] location] "")
-     [:p.bold "Relaterede:"]
+          }
+         }]
+       ]
+      [:p.center [:a.ui.primary.button "Bestil"]  ]
+      [:p (:description work)]
+      (if-not keywords ""
+        (into [:p {:style {:line-height "2rem"}}]
+              (interpose
+                " "
+                (for [word keywords]
+                  [:a.ui.label {:href
+                                (str "#search/" word)} word]))))
+      (if language [:p [:em "Sprog: "] language] "")
+      (if location [:p [:em "Opstilling: "] location] "")
+      [:p.bold "Relaterede:"]
       [:div.ui.grid
-      (into
-        [:div.stackable.four.column.doubling.row]
-        (map
-          (fn [id]
-            [:div.column
-             [:a.small
-              {:href (str "#work/" id)
-               :style
-               {:display :inline-block
-                :height "6em"}
-               }
-             (work-item id)]]
-            )
-          (take 12 (rest (:related work))))
-        )]
-     [tabbar]
-     ]]))
+       (into
+         [:div.stackable.four.column.doubling.row]
+         (map
+           (fn [id]
+             [:div.column
+              [:a.small
+               {:href (str "#work/" id)
+                :style
+                {:display :inline-block
+                 :height "6em"}
+                }
+               (work-item id)]]
+             )
+           (take 12 (rest (:related work))))
+         )]
+      [tabbar]
+      ]]))
 
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
