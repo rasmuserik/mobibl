@@ -304,7 +304,7 @@
     :language "teal"
     :subject "violet"
     :year "pink"
-    "" )) 
+    "" ))
 (defn facets [selected all]
   (let
     [all (remove
@@ -385,7 +385,7 @@
                    :on-click #(dispatch [:ui :show-history false])}
                   s])))]
 
-      [facets 
+      [facets
        @(subscribe [:facets])
        [[:creator "Jens Jensen" 412]
         [:creator "Holger Danske" 231]
