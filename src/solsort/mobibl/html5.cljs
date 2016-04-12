@@ -223,11 +223,13 @@
          }}]
       [:div.bold.large (:title o)]
       [:div.italic.large (:creator o)]
-      (into [:div] (interpose " " (map
-                                    (fn [s] [:span.condensed
-                                             {:style {:display :inline-block}}
-                                             s])
-                                    (:keywords o))))
+      (into [:div]
+            (interpose
+              ", "
+              (map (fn [s] [:span.condensed
+                            {:style {:display :inline-block}}
+                            s])
+                   (:keywords o))))
       [:div (:description o)]
       ]]
     ))
@@ -272,7 +274,7 @@
        results)]
     (log 'search-results query results)
     [:div.ui.container
-     [:h1 "Enby Biblioteker"]
+     [:h1 "Københavns Biblioteker"]
      [:div
       [:div.ui.search.fluid.input.icon
        [:input
@@ -403,24 +405,24 @@
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
 (defn loan-entry [id & content]
-[:div
-             {:style {:margin-bottom "1rem"}}
-             (into [:span
-              {:style
-               {:display :inline-block
-                :vertical-align :top
-                :width "30%" }}]
-                   content)
-             [:a
-              {:href (str "#work/" id)
-               :style
-               {:display :inline-block
-                :font-size "70%"
-                :vertical-align :top
-                :width "70%"
-                :height "4rem" } }
-              [work-item id]]
-             ]
+  [:div
+   {:style {:margin-bottom "1rem"}}
+   (into [:span
+          {:style
+           {:display :inline-block
+            :vertical-align :top
+            :width "30%" }}]
+         content)
+   [:a
+    {:href (str "#work/" id)
+     :style
+     {:display :inline-block
+      :font-size "70%"
+      :vertical-align :top
+      :width "70%"
+      :height "4rem" } }
+    [work-item id]]
+   ]
 
   )
 
@@ -439,12 +441,12 @@
           (for
             [ra @arrived]
             (loan-entry
-             (:id ra)
-               [:div (:until ra)]
-               [:div [:a {:href (str "#/location/" (:location ra))}
-                      (:location ra)]]
-               [:div [:a {:href (str "#/creator/" "TODO-creator-id")}
-                      (:creator ra)]])
+              (:id ra)
+              [:div (:until ra)]
+              [:div [:a {:href (str "#/location/" (:location ra))}
+                     (:location ra)]]
+              [:div [:a {:href (str "#/creator/" "TODO-creator-id")}
+                     (:creator ra)]])
             ))]
        [:p
         [:h2 "Hjemlån" [:div.ui.right.floated.small.button "Forny alle"]]

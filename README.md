@@ -532,11 +532,13 @@ FIXME Not so nice to have the style for bib-map defined here
              }}]
           [:div.bold.large (:title o)]
           [:div.italic.large (:creator o)]
-          (into [:div] (interpose " " (map
-                                        (fn [s] [:span.condensed
-                                                 {:style {:display :inline-block}}
-                                                 s])
-                                        (:keywords o))))
+          (into [:div]
+                (interpose
+                  ", "
+                  (map (fn [s] [:span.condensed
+                                {:style {:display :inline-block}}
+                                s])
+                       (:keywords o))))
           [:div (:description o)]
           ]]
         ))
@@ -581,7 +583,7 @@ FIXME Not so nice to have the style for bib-map defined here
            results)]
         (log 'search-results query results)
         [:div.ui.container
-         [:h1 "Enby Biblioteker"]
+         [:h1 "Københavns Biblioteker"]
          [:div
           [:div.ui.search.fluid.input.icon
            [:input
@@ -599,9 +601,9 @@ FIXME Not so nice to have the style for bib-map defined here
 
 
           [facets "Jens Jensen" "Holger Danske" "H C Andersen" "Kumbel"
-           "bog" "noder" "cd" "tidskriftsartikel" "dvd" "video" "avisartikel" "lydbog"
-           "2000" "billedbog" "2002" "VHS" "cd-rom" "ost" "filosofi" "2001"
-           "engelske skuespillere" "kager" "åer" "gæs" "sjove bøger"
+           "bog" "noder" "cd" "tidskriftsartikel" "dvd" "video" "avisartikel"
+           "lydbog" "2000" "billedbog" "2002" "VHS" "cd-rom" "ost" "filosofi"
+           "2001" "engelske skuespillere" "kager" "åer" "gæs" "sjove bøger"
            "engelsk" "dansk" "blandede sprog" "tysk" "færøsk" "persisk"]
           ]
          [:p]
@@ -712,24 +714,24 @@ FIXME Not so nice to have the style for bib-map defined here
 ### Status
 <img width=20% align=top src=doc/wireframes/patron-status.jpg>
     (defn loan-entry [id & content]
-    [:div
-                 {:style {:margin-bottom "1rem"}}
-                 (into [:span
-                  {:style
-                   {:display :inline-block
-                    :vertical-align :top
-                    :width "30%" }}]
-                       content)
-                 [:a
-                  {:href (str "#work/" id)
-                   :style
-                   {:display :inline-block
-                    :font-size "70%"
-                    :vertical-align :top
-                    :width "70%"
-                    :height "4rem" } }
-                  [work-item id]]
-                 ]
+      [:div
+       {:style {:margin-bottom "1rem"}}
+       (into [:span
+              {:style
+               {:display :inline-block
+                :vertical-align :top
+                :width "30%" }}]
+             content)
+       [:a
+        {:href (str "#work/" id)
+         :style
+         {:display :inline-block
+          :font-size "70%"
+          :vertical-align :top
+          :width "70%"
+          :height "4rem" } }
+        [work-item id]]
+       ]
 
       )
 
@@ -748,10 +750,12 @@ FIXME Not so nice to have the style for bib-map defined here
               (for
                 [ra @arrived]
                 (loan-entry
-                 (:id ra)
-                   [:div (:until ra)]
-                   [:div [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
-                   [:div [:a {:href (str "#/creator/" "TODO-creator-id")} (:creator ra)]])
+                  (:id ra)
+                  [:div (:until ra)]
+                  [:div [:a {:href (str "#/location/" (:location ra))}
+                         (:location ra)]]
+                  [:div [:a {:href (str "#/creator/" "TODO-creator-id")}
+                         (:creator ra)]])
                 ))]
            [:p
             [:h2 "Hjemlån" [:div.ui.right.floated.small.button "Forny alle"]]
