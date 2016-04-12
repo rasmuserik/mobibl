@@ -48,13 +48,13 @@
         ; :background-color "#fbf8f4"
         :font-family "\"Open Sans\", sans-serif"
         :font-weight "300"}
-       ".bold" {:font-weight "bold"}
+       ".bold" {:font-weight "bold !important"}
        ".center" {:text-align :center}
-       ".italic" {:font-style "italic"}
-       ".large" {:font-size "120%"}
-       ".small" {:font-size "80%"}
-       ".regular " {:font-weight "300"}
-       ".condensed" {:font-family "\"Open Sans Condensed\""}
+       ".italic" {:font-style "italic !important"}
+       ".large" {:font-size "120% !important"}
+       ".small" {:font-size "80% !important"}
+       ".regular " {:font-weight "300 !important"}
+       ".condensed" {:font-family "\"Open Sans Condensed\" !important"}
        ".ssbutton"
        {:display :inline-block
         :min-height (* 2.5 unit)
@@ -314,22 +314,22 @@
     (merge
       [:div.condensed
        {:style
-        {:height "6rem"
+        {:height "6.9rem"
          :overflow :hidden
-         :line-height "2rem"
+         :line-height "2.3rem"
          :margin-bottom "0.4rem" }}]
       (map (fn [[col s]]
-             [:a.ui.mini.button
+             [:a.ui.small.button.condensed.bold
               {:on-click #(dispatch [:remove-facet [col s]])
                :key (hash [col s])
                :class (facet-color col)} s])
            selected)
       (map (fn [[col s cnt]]
-             [:a.ui.mini.basic.button
+             [:a.ui.small.basic.button.condensed.bold
               {:on-click #(dispatch [:add-facet [col s]])
                :key (hash [col s])
                :class (facet-color col)} s " "
-              [:span.small.regular " (" cnt ")"]])
+              [:span.small.regular " " cnt ""]])
            (reverse (sort-by #(nth % 2) all))) ))
 
   )
