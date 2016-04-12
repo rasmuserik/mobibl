@@ -52,6 +52,8 @@
        ".center" {:text-align :center}
        ".italic" {:font-style "italic"}
        ".large" {:font-size "120%"}
+       ".small" {:font-size "80%"}
+       ".regular " {:font-weight "300"}
        ".condensed" {:font-family "\"Open Sans Condensed\""}
        ".ssbutton"
        {:display :inline-block
@@ -140,13 +142,13 @@
        "table.openhours tbody td"
        {:text-align "center"}}
       "open-hours-styling")
-    (load-style!
-      {".contact"
-       {:padding "0em 0em 10em 0em"
-        ".contact div span"
-        {:margin "0em 1em 0em 0em"
-         :border "1px solid blue"}}}
-      "contact-styling")))
+(load-style!
+  {".contact"
+   {:padding "0em 0em 10em 0em"
+    ".contact div span"
+    {:margin "0em 1em 0em 0em"
+     :border "1px solid blue"}}}
+  "contact-styling")))
 
 ;; ### Actually apply styling
 ;;
@@ -175,71 +177,98 @@
     [tabbar-button "library" "Bibliotek"]
     [tabbar-button "status" "Status"]]])
 
-;; ### Search
-;; <img width=20% align=top src=doc/wireframes/search.jpg>
+;; ### book-view
 
-(defn work-line [pid]
+(defn work-item [pid]
   (let [o @(subscribe [:work pid])
         keywords
         (map
           (fn [kw] [:a {:href (str "#search/" kw)} kw])
           (:keywords o)
           )]
-    [:a.column
-     {:key pid
-      :href (str "#work/" pid)}
+
+    [:div
+     {:style
+      {:position :relative
+       :overflow "hidden"
+       :height "100%"
+       :width "100%" }}
+     [:img
+      {:src (:cover-url o)
+       :style
+       {:max-width "33%"
+        :max-height "100%"
+        :box-sizing :border-box
+        :vertical-align :top
+        }}]
      [:div
       {:style
-       {:border "0px solid black"
-        :position :relative
-        :overflow "hidden"
-        :height "9rem"
-        :color :black
-        :margin-bottom "1rem"
-        :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"
-        }
-       }
-      [:img
-       {:src (:cover-url o)
-        :style
-        {:max-width "33%"
-         :max-height "100%"
-         :box-sizing :border-box
-         :vertical-align :top
-         }}]
+       {:display :inline-block
+        :box-sizing :border-box
+        :width "66%"
+        :height "100%"
+        :vertical-align :top
+        :padding-left ".3em"
+        :overflow :hidden
+        }}
       [:div
        {:style
-        {:display :inline-block
-         :box-sizing :border-box
-         :width "66%"
-         :height "100%"
-         :vertical-align :top
-         :padding-left ".3em"
-         :overflow :hidden
-         }}
-       [:div
-        {:style
-         {:display :block
-          :position :absolute
-          :bottom "0px"
-          :height "33%"
-          :width "100%"
-          :background "linear-gradient(rgba(255,255,255,0), white)"
-          }}]
-       [:div.bold.large (:title o)]
-       [:div.italic.large (:creator o)]
-       (into [:div] (interpose " " (map
-                                     (fn [s] [:span.condensed
-                                              {:style {:display :inline-block}}
-                                              s])
-                                     (:keywords o))))
-       [:div (:description o)]
-       ]]]))
+        {:display :block
+         :position :absolute
+         :bottom "0px"
+         :height "33%"
+         :width "100%"
+         :background "linear-gradient(rgba(255,255,255,0), white)"
+         }}]
+      [:div.bold.large (:title o)]
+      [:div.italic.large (:creator o)]
+      (into [:div] (interpose " " (map
+                                    (fn [s] [:span.condensed
+                                             {:style {:display :inline-block}}
+                                             s])
+                                    (:keywords o))))
+      [:div (:description o)]
+      ]]
+    ))
 
+;; ### Search
+;; <img width=20% align=top src=doc/wireframes/search.jpg>
+
+(defn facets [& facets]
+  (into 
+    [:div.condensed
+     {:style 
+      {:height "6rem" 
+       :overflow :hidden
+       :line-height "2rem"
+       :margin-bottom "0.4rem" }}]
+    (map (fn [s] 
+           [:a.ui.label s " "
+            [:span.small.regular "123"]
+            ])
+    facets) )
+  
+  )
 (defn search [query]
   (let
     [results @(subscribe [:search query 0])
-     results (map work-line results)]
+     results 
+     (map 
+       (fn [pid]
+         [:a.column
+          {:key pid
+           :href (str "#work/" pid)}
+          [:div
+           {:style
+            {:border "0px solid black"
+             :height "9rem"
+             :color :black
+             :margin-bottom "1rem"
+             :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"
+             }
+            }
+            [work-item pid]]])
+       results)]
     (log 'search-results query results)
     [:div.ui.container
      [:h1 "Enby Biblioteker"]
@@ -257,8 +286,14 @@
         [:div.result "hjhj"]
         [:a.result "reulst2"]
         ]]
-      "\u00a0"
+      
+      
+       [facets "Jens Jensen" "Holger Danske" "H C Andersen" "Kumbel"
+       "bog" "noder" "cd" "tidskriftsartikel" "dvd" "video" "avisartikel" "lydbog" "billedbog" "VHS" "cd-rom" 
+       "engelske skuespillere" "kager" "åer" "gæs" "sjove bøger"
+       "engelsk" "dansk" "blandede sprog" "tysk" "færøsk" "persisk"] 
       ]
+     [:p]
      [:div.ui.grid
       (merge [:div.stackable.doubling.four.column.row]
              results)]
@@ -276,7 +311,7 @@
         location (:location work)
         creator (:creator work)]
     [:div.ui.container
-     [:div "TODO: Work history here"]
+     ;[:div "TODO: Work history here"]
      [:h1.center (:title work)]
      [:p.center "af " [:a {:href (str "#search/" creator)} creator]]
      [:p.center
@@ -292,12 +327,12 @@
      [:p.center [:a.ui.primary.button "Bestil"]  ]
      [:p (:description work)]
      (if-not keywords ""
-       (into [:p #_[:em "Emne: "]]
+       (into [:p {:style {:line-height "2rem"}}]
              (interpose
                " "
                (for [word keywords]
-                 [:a.ui.tag.label {:href
-                                              (str "#search/" word)} word]))))
+                 [:a.ui.label {:href
+                                   (str "#search/" word)} word]))))
      (if language [:p [:em "Sprog: "] language] "")
      (if location [:p [:em "Opstilling: "] location] "")
      [tabbar]
