@@ -146,6 +146,139 @@ The data source / connection to the server.
                 (dispatch [:request-search q page])
                 []))))))
 
+    (def sample-lib
+      {
+## Known libraries
+
+Simple representation of the libraries that are interesting for the user
+including position on a map, opening hours and contact information.
+
+FIXME The above books in the works section are from different libraries,
+ie. 775100 is Aarhus hovedbibliotek.
+
+       :library
+       {"710100"
+        {:name "Københavns Hovedbibliotek"
+         :type "Folkebibliotek"
+         :address
+         {:road "Krystalgade 15"
+          :city "1172 København K"
+          :country "Danmark"}
+         :email "bibliotek@kff.kk.dk"
+         :phone {:number "33663000"
+                 :time "man-fre 10-17"}
+         :position
+         [55.680887 12.573619]
+         :hours
+         [{:title "Åbningstider"
+           :weekdays
+           [[8 22]
+            [8 20]
+            [8 20]
+            [8 20]
+            [8 19]
+            [8 17]]}
+          {:title "Betjening"
+           :weekdays
+           [[12 17]
+            [12 17]
+            [12 17]
+            [12 17]
+            [12 17]
+            [12 15]]}]}
+        "810010"
+        {:name "Det Kongelige Bibliotek, Diamanten"
+         :type "Forskningsbibliotek"
+         :address {
+                   :road "Søren Kierkegaards Plads 1"
+                   :city "1221 København K"
+                   :country "Danmark"}
+         :email "kb@kb.dk"
+         :phone {:number "33 47 47 47"
+                 :time "man - fre 9-16"}
+         :position
+         [55.67321579999999 12.5821264]
+
+FIXME How to represent many opening hours for departments of a library
+
+At the Diamanten library there are a lot of possible access times, so
+many are included here to see if it is possible to represent them in a
+manageable way on a mobile app.
+
+The user could also be presented for a way to selecting which department
+of the library to view opening hours for.
+
+         :hours
+         [{:title "Adgang til Diamanten"
+           :weekdays
+           [[8 22]
+            [8 22]
+            [8 22]
+            [8 22]
+            [8 22]
+            [8 22]]}
+          {:title "Informationen"
+           :weekdays
+           [[8 21]
+            [8 21]
+            [8 21]
+            [8 21]
+            [8 21]]}
+          {:title "Helpdesk"
+           :weekdays
+           [[10 16]
+            [10 16]
+            [10 16]
+            [10 16]
+            [10 16]]}
+          {:title "Læsesal Vest og E-Vest"
+           :weekdays
+           [[9 21]
+            [9 21]
+            [9 21]
+            [9 21]
+            [9 21]
+            [10 17]]}
+          {:title "Læsesal Nord og Øst"
+           :weekdays
+           [[8 21]
+            [8 21]
+            [8 21]
+            [8 21]
+            [8 21]
+            [10 17]]}
+          {:title "Center for Kort og Billeder"
+           :weekdays
+           [nil
+            [10 16]
+            [12 16]
+            [10 16]]}
+          {:title "Center for Manuskripter og Boghistorie"
+           :weekdays
+           [[10 17]
+            [10 17]
+            [12 19]
+            [10 17]
+            [10 17]]}
+          {:title "Småtrykssamlingens interne læsesal"
+           :weekdays
+           [[10 15]
+            [10 15]
+            [10 15]
+            [10 15]
+            [10 15]]}
+          {:title "Dansk Folkemindesamling"
+           :weekdays
+           [nil
+            [10 15]
+            [10 15]
+            [10 15]
+            [10 15]]}]}}})
+
+    (register-sub
+     :current-library (fn [db] (reaction
+                                (get-in sample-lib [:library "710100"]))))
+
     (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
     (register-sub :works (fn [db] (reaction (:works @db))))
     (register-sub :route (fn [db] (reaction (get @db :route))))
@@ -189,9 +322,11 @@ TODO: sync database to disk, and restore on load
         [re-frame.core :as re-frame
          :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
         [clojure.string :as string :refer [replace split blank?]]
-        [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
-## Styling
+        [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
+        [solsort.mobibl.bib-map :refer [bib-map]]
+        [goog.string :refer [unescapeEntities]]))
 
+## Styling
 
     (load-style! normalize-css "style-reset")
     (def highlight "#326bc5")
@@ -200,7 +335,7 @@ TODO: sync database to disk, and restore on load
     (def light "#e5e5e5")
     (def medium "#d8d8d8")
     (defn styling []
-
+### general styling
 We are designing for mobile-portrait-mode,
 which can be enforced in the packaged cordova-app.
 
@@ -213,15 +348,22 @@ and 5/8 vs 3/8 which approximately the golden ratio.
 
       (let [unit (/ (js/Math.min js/document.body.clientHeight
                                  js/document.body.clientWidth)
-                    24)]
+                    24)
+            unit-height (/ js/document.body.clientHeight 24)]
         (load-style!
           {:body
-           {:background "url(assets/background.jpg)"
-            :background-color "#fbf8f4"
+           {
+            ; :background "url(assets/background.jpg)"
+            ; :background-color "#fbf8f4"
             :font-family "\"Open Sans\", sans-serif"
             :font-weight "300"}
-           ".condensed"
-           {:font-family "\"Open Sans Condensed\""}
+           ".bold" {:font-weight "bold"}
+           ".center" {:text-align :center}
+           ".italic" {:font-style "italic"}
+           ".large" {:font-size "120%"}
+           ".small" {:font-size "80%"}
+           ".regular " {:font-weight "300"}
+           ".condensed" {:font-family "\"Open Sans Condensed\""}
            ".ssbutton"
            {:display :inline-block
             :min-height (* 2.5 unit)
@@ -237,7 +379,7 @@ and 5/8 vs 3/8 which approximately the golden ratio.
         (load-style!
           {".tabbar-spacer"
            {:display :inline-block
-            :height (* 4 unit)
+            :height 50
             }
            ".tabbar"
            {:position :fixed
@@ -246,22 +388,21 @@ and 5/8 vs 3/8 which approximately the golden ratio.
             :text-align :center
             :left 0
             :width "100%"
-            :background "url(assets/background.jpg)"
-            :background-color "#fbf8f4"
+            ;:background "url(assets/background.jpg)"
+            ;:background-color "#fbf8f4"
+            :background-color "#ffffff"
             :box-shadow "-1px 0px 5px rgba(0,0,0,1);"
             :z-index "100"
             }
            ".tabbar a"
            {:display :inline-block
             :box-sizing :border-box
-            :width (* 6 unit)
+            :width (* 0.25 (- js/document.body.clientWidth 100))
             :text-align :center}
            ".tabbar img"
-           {:padding (* 0.5 unit)
-            :height (* 4 unit)
-            :width (* 4 unit)}
-           "body"
-           {:padding-bottom (* 4 unit)}
+           {:padding 5
+            :height 40
+            :width 40}
            }
           "tabbar-styling")
 ### Book
@@ -294,9 +435,31 @@ and 5/8 vs 3/8 which approximately the golden ratio.
             :margin-left 0
             :margin-right 0
             :width (* unit 14)}}
-          "work-style"
-          )
-        ))
+          "work-style")
+### Library view
+
+FIXME Not so nice to have the style for bib-map defined here
+
+        (load-style!
+          {"#bib-map"
+           {:height (js/Math.min js/document.body.clientWidth
+                                 (* 0.6 js/document.body.clientHeight))}}
+          "bib-map-style")
+        (load-style!
+          {"table.openhours th"
+           {:text-align "left"
+            :padding "0em 0.8em 0em 0em"}
+           "table.openhours tbody td"
+           {:text-align "center"}}
+          "open-hours-styling")
+    (load-style!
+      {".contact"
+       {:padding "0em 0em 10em 0em"
+        ".contact div span"
+        {:margin "0em 1em 0em 0em"
+         :border "1px solid blue"}}}
+      "contact-styling")))
+
 ### Actually apply styling
 
     ; re-layout on rotation etc.
@@ -319,57 +482,135 @@ and 5/8 vs 3/8 which approximately the golden ratio.
       [:div
        [:div.tabbar-spacer " "]
        [:div.tabbar
-       [tabbar-button "search" "Søg"]
-       [tabbar-button "work" "Materiale"]
-       [tabbar-button "library" "Bibliotek"]
-       [tabbar-button "status" "Status"]]])
+        [tabbar-button "search" "Søg"]
+        [tabbar-button "work" "Materiale"]
+        [tabbar-button "library" "Bibliotek"]
+        [tabbar-button "status" "Status"]]])
+
+### book-view
+
+    (defn work-item [pid]
+      (let [o @(subscribe [:work pid])
+            keywords
+            (map
+              (fn [kw] [:a {:href (str "#search/" kw)} kw])
+              (:keywords o)
+              )]
+
+        [:div
+         {:style
+          {:position :relative
+           :overflow "hidden"
+           :height "100%"
+           :width "100%" }}
+         [:img
+          {:src (:cover-url o)
+           :style
+           {:max-width "33%"
+            :max-height "100%"
+            :box-sizing :border-box
+            :vertical-align :top
+            }}]
+         [:div
+          {:style
+           {:display :inline-block
+            :box-sizing :border-box
+            :width "66%"
+            :height "100%"
+            :vertical-align :top
+            :padding-left ".3em"
+            :overflow :hidden
+            }}
+          [:div
+           {:style
+            {:display :block
+             :position :absolute
+             :bottom "0px"
+             :height "33%"
+             :width "100%"
+             :background "linear-gradient(rgba(255,255,255,0), white)"
+             }}]
+          [:div.bold.large (:title o)]
+          [:div.italic.large (:creator o)]
+          (into [:div] (interpose " " (map
+                                        (fn [s] [:span.condensed
+                                                 {:style {:display :inline-block}}
+                                                 s])
+                                        (:keywords o))))
+          [:div (:description o)]
+          ]]
+        ))
 
 ### Search
 <img width=20% align=top src=doc/wireframes/search.jpg>
 
-    (defn work-line [pid]
-      (let [o @(subscribe [:work pid])
-            keywords
-            (interpose
-              " "
-              (map
-                (fn [kw] [:a.condensed.button {:href (str "#search/" kw)} kw])
-                (:keywords o)
-                ))]
-        [:a
-         {:key pid
-          :href (str "#work/" pid)}
-         [:div.row.callout
-          [:div.large-1.medium-2.small-3.columns
-           [:img {:src (:cover-url o)}]
-           ]
-          [:div.large-11.medium-10.small-9.columns
-           [:h4 (:title o)]
-           [:div.expanded.hollow.button (:creator o)]
-           (into [:div] keywords)]]]))
+    (defn facets [& facets]
+      (into
+        [:div.condensed
+         {:style
+          {:height "6rem"
+           :overflow :hidden
+           :line-height "2rem"
+           :margin-bottom "0.4rem" }}]
+        (map (fn [s]
+               [:a.ui.label s " "
+                [:span.small.regular "123"]
+                ])
+             facets) )
 
+      )
     (defn search [query]
       (let
         [results @(subscribe [:search query 0])
-         results (map work-line results)
-         search-form
-         [:div.row
-          [:div.small-12.columns
-           [:div.input-group
-            [:input.input-group-field
-             {:type :text
-              :value query
-              :on-change
-              #(dispatch-sync [:route "search" (-> % .-target .-value)])}]
-            [:a.input-group-button.button "søg"]]]]
-         ]
+         results
+         (map
+           (fn [pid]
+             [:a.column
+              {:key pid
+               :href (str "#work/" pid)}
+              [:div
+               {:style
+                {:border "0px solid black"
+                 :height "9rem"
+                 :color :black
+                 :margin-bottom "1rem"
+                 :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"
+                 }
+                }
+               [work-item pid]]])
+           results)]
         (log 'search-results query results)
-        [:div
+        [:div.ui.container
+         [:h1 "Enby Biblioteker"]
+         [:div
+          [:div.ui.search.fluid.input.icon
+           [:input
+            {:placeholder "Indtast søgning"
+             :type :text
+             :value query
+             :on-change #(dispatch-sync [:route "search" (-> % .-target .-value)])
+             }]
+           [:i.search.icon]
+           [:div.results.transition.hidden
+            {:style {:display "block !important"}}
+            [:div.result "hjhj"]
+            [:a.result "reulst2"]
+            ]]
+
+
+          [facets "Jens Jensen" "Holger Danske" "H C Andersen" "Kumbel"
+           "bog" "noder" "cd" "tidskriftsartikel" "dvd" "video" "avisartikel" "lydbog"
+           "2000" "billedbog" "2002" "VHS" "cd-rom" "ost" "filosofi" "2001"
+           "engelske skuespillere" "kager" "åer" "gæs" "sjove bøger"
+           "engelsk" "dansk" "blandede sprog" "tysk" "færøsk" "persisk"]
+          ]
          [:p]
-         (merge [:div search-form]
-          results)
+         [:div.ui.grid
+          (merge [:div.stackable.doubling.four.column.row]
+                 results)]
          [tabbar]
-         ]))
+         ]
+        ))
 
 ### Work
 <img width=20% align=top src=doc/wireframes/work.jpg>
@@ -380,20 +621,30 @@ and 5/8 vs 3/8 which approximately the golden ratio.
             keywords (:keywords work)
             location (:location work)
             creator (:creator work)]
-        [:div.work
-         [:div "TODO: Work history here"]
-         [:h1.text-center (:title work)]
-         [:div.text-center "af " [:a {:href (str "#search/" creator)} creator]]
-         [:img.work-cover-img.float-right {:src (:cover-url work)}]
-         [:div [:a.button "Bestil"]]
+        [:div.ui.container
+         ;[:div "TODO: Work history here"]
+         [:p]
+         [:h1.center (:title work)]
+         [:p.center "af " [:a {:href (str "#search/" creator)} creator]]
+         [:p.center
+          [:img
+           {:src (:cover-url work)
+            :style
+            {:max-height (* 0.5 (- js/document.body.clientHeight 50))
+             :max-width (* 0.8 (- js/document.body.clientWidth 20))
+
+             }
+            }]
+          ]
+         [:p.center [:a.ui.primary.button "Bestil"]  ]
+         [:p (:description work)]
          (if-not keywords ""
-           (into [:p #_[:em "Emne: "]]
+           (into [:p {:style {:line-height "2rem"}}]
                  (interpose
                    " "
                    (for [word keywords]
-                     [:a.hollow.condensed.button {:href
-                                       (str "#search/" word)} word]))))
-         [:div.work-desc (:description work)]
+                     [:a.ui.label {:href
+                                   (str "#search/" word)} word]))))
          (if language [:p [:em "Sprog: "] language] "")
          (if location [:p [:em "Opstilling: "] location] "")
          [tabbar]
@@ -403,73 +654,129 @@ and 5/8 vs 3/8 which approximately the golden ratio.
 ### Library
 <img width=20% align=top src=doc/wireframes/library.jpg>
 
-    (defn library [library]
-      [:div
-       [tabbar]
-       [:h1 library]
-       "..."])
+    (def daynames ["Man" "Tir" "Ons" "Tor" "Fre" "Lør" "Søn"])
+
+    (defn library [id]
+      (let [current-library (subscribe [:current-library])]
+        (fn []
+          (let [address (:address @current-library)
+                hours   (:hours @current-library)
+                phone   (:phone @current-library)]
+            [:div
+             [bib-map
+              :id "bib-map"
+              :pos (:position @current-library)]
+             [:div.ui.container [:h1 (:name @current-library)]]
+             [:div.ui.container
+              [:div.address
+               [:h2 "Adresse"]
+               [:div (:road address)]
+               [:div (:city address)]
+               [:div (:country address)]]
+              [:div.open
+               [:h2 "Åbningstider"]
+               [:table.openhours
+                [:thead
+                 (into
+                   [:tr [:th]]
+                   (for [title (map :title hours)]
+                     [:th title]))]
+                (into [:tbody]
+                      (for [day (range 7)]
+                        (into [:tr
+                               [:th (get daynames day)]]
+                              (for [area (map :weekdays hours)
+                                    :let [time (get area day)]]
+                                (into [:td]
+                                      [(if (nil? time)
+                                         "Lukket"
+                                         (let [t0 (get time 0)
+                                               t1 (get time 1)]
+                                           (str (if (< t0 10)
+                                                  (unescapeEntities "&nbsp;")
+                                                  "")
+                                                t0 " - " t1)))])))))]]
+              [:div.contact
+               [:h2 "Kontakt"]
+               [:div
+                [:span "Email: "]
+                [:span (:email @current-library)]]
+               [:div
+                [:span "Telefon: "]
+                [:span (:number phone)]
+                " "
+                [:span (:time phone)]]]]
+             [tabbar]
+             ]))))
 
 ### Status
 <img width=20% align=top src=doc/wireframes/patron-status.jpg>
+    (defn loan-entry [id & content]
+    [:div
+                 {:style {:margin-bottom "1rem"}}
+                 (into [:span
+                  {:style
+                   {:display :inline-block
+                    :vertical-align :top
+                    :width "30%" }}]
+                       content)
+                 [:a
+                  {:href (str "#work/" id)
+                   :style
+                   {:display :inline-block
+                    :font-size "70%"
+                    :vertical-align :top
+                    :width "70%"
+                    :height "4rem" } }
+                  [work-item id]]
+                 ]
+
+      )
 
     (defn status []
       (let [arrived (subscribe [:arrived])
             borrowed             (subscribe [:borrowed])
             reservations         (subscribe [:reservations])]
         (fn []
-          [:div
-           [tabbar]
+          [:div.ui.container
+           [:div.right.floated.ui.primary.button "Log ud"]
            [:h1 "Låner status"]
-           [:div {:class "menu"}
-            [:button {:type "submit"} "Log Ud"]]
-           [:div
+           [:p
             [:h2 "Hjemkomne"]
             (into
-              [:ul]
+              [:div]
               (for
                 [ra @arrived]
-                [:li
-                 [:a {:href (str "#work/" (:id ra))} (:title ra)]
-                 [:ul
-                  [:li (str "Afhentes inden " (:until ra))]
-                  [:li "Opstilling "
-                   [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
-
-**TODO** Add unique creator ID
-
-                  [:li
-                   [:a
-                    {:href (str "#/creator/" "TODO-creator-id")} (:creator ra)]]
-                  ]]))]
-           [:div
-            [:h2 "Hjemlån"]
-            [:div
-             [:a {:href (str "#/borrowed/renew/all")} "Forny Alle"]]
+                (loan-entry
+                 (:id ra)
+                   [:div (:until ra)]
+                   [:div [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
+                   [:div [:a {:href (str "#/creator/" "TODO-creator-id")} (:creator ra)]])
+                ))]
+           [:p
+            [:h2 "Hjemlån" [:div.ui.right.floated.small.button "Forny alle"]]
             (into
-              [:ul]
+              [:div]
               (for [b @borrowed]
-                [:li
-                 [:a {:href (str "#/borrowed/item/" (:id b))}
-
-**TODO** It would be nice with thumbnails
-
-                  [:img {:src "http://www.bogpriser.dk/Images/placeholder-cover.png"
-                         :width "32" :height "32" :alt "TODO :cover-mini-url"}]
-                  [:span { :style {:margin-left "1em"}} (:title b)]]
-                 [:ul
-                  [:li (str "Afleveres senest " (:until b))]
-                  [:li [:a {:href (str "#/borrowed/renew/" (:id b))} "Forny"]]]]))]
-           [:div
+                (loan-entry
+                  (:id b)
+                  [:div (:until b)]
+                  [:div.ui.small.button "Forny"]
+                  )
+                ))]
+           [:p
             [:h2 "Bestillinger"]
             (into
-              [:ul]
+              [:div]
               (for [r @reservations]
-                [:li
-                 [:a {:href (str "#/reservation/" (:id r))} (:title r)]
-                 [:ul
-                  [:li [:a {:href (str "#/creator/" (:id r))} (:creator r)]]
-                  [:li [:a {:href (str "#/reservation/remove/" (:id r))} "Slet"]]
-                  ]]))]])))
+                (loan-entry
+                  (:id r)
+                  [:div.ui.small.button "Slet"]
+                  )
+                ))
+            ]
+           [tabbar]
+           ])))
 
 ### Main App entry point
     (defn app []
