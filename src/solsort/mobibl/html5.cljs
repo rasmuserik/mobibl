@@ -376,11 +376,18 @@
        (when suggest
          (into [:div.results.transition.visible
                 {:style {:display "block !important"}}]
-               (for [s suggest]
-                 [:a.result
-                  {:href (str "#search/" s)
-                   :on-click #(dispatch [:ui :show-history false])}
-                  s])))]
+               (for [[s facets] suggest]
+                 (into
+                   [:a.result
+                    {:href (str "#search/" s)
+                     :on-click #(dispatch-sync [:ui :show-history false])}
+                    s " "]
+                   (for [[col f] facets]
+                    [:div.ui.small.label
+                     {:class (facet-color col)}
+                     (str f)]
+                     )
+                   ))))]
 
       [facets
        @(subscribe [:facets])

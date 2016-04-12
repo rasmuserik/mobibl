@@ -34,11 +34,13 @@
           (assoc-in db [:ui id] value)))
 (register-handler
   :add-facet (fn [db [_ facet]]
-               (assoc db :facets (cons facet (get db :facets [])))))
+               (assoc-in db [:ui :facets]
+                         (cons facet (get-in db [:ui :facets] [])))))
 
 (register-handler
   :remove-facet (fn [db [_ facet]]
-               (assoc db :facets (remove #{facet} (get db :facets [])))))
+               (assoc-in db [:ui :facets]
+                         (remove #{facet} (get-in db [:ui :facets] [])))))
 
 (register-handler
   :latest-work
@@ -64,7 +66,7 @@
 
 (register-sub
   :facets
-  (fn [db [_ path]] (reaction (get @db :facets))))
+  (fn [db [_ path]] (reaction (get-in @db [:ui :facets]))))
 
 (register-sub
   :ui
@@ -73,10 +75,10 @@
 (register-sub
   :search-history
   (fn [db _] (reaction
-               ["filosofi"
-                "ost"
-                "Harry Potter"
-                "hest"])))
+               [["filosofi" [[:creator "plato"] [:creator "socrates"]]]
+                ["ost" []]
+                ["Harry Potter" [[:type "dvd"] [:type "bog"]]]
+                ["hest" [[:year "2001"]]]])))
 
 
 (register-sub
