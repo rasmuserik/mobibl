@@ -26,7 +26,7 @@
 (def light "#e5e5e5")
 (def medium "#d8d8d8")
 (defn styling []
-  ;;
+  ;; ### general styling
   ;; We are designing for mobile-portrait-mode,
   ;; which can be enforced in the packaged cordova-app.
   ;;
@@ -43,12 +43,16 @@
         unit-height (/ js/document.body.clientHeight 24)]
     (load-style!
       {:body
-       {:background "url(assets/background.jpg)"
-        :background-color "#fbf8f4"
+       {
+        ; :background "url(assets/background.jpg)"
+        ; :background-color "#fbf8f4"
         :font-family "\"Open Sans\", sans-serif"
         :font-weight "300"}
-       ".condensed"
-       {:font-family "\"Open Sans Condensed\""}
+       ".bold" {:font-weight "bold"}
+       ".center" {:text-align :center}
+       ".italic" {:font-style "italic"}
+       ".large" {:font-size "120%"}
+       ".condensed" {:font-family "\"Open Sans Condensed\""}
        ".ssbutton"
        {:display :inline-block
         :min-height (* 2.5 unit)
@@ -64,7 +68,7 @@
     (load-style!
       {".tabbar-spacer"
        {:display :inline-block
-        :height (* 4 unit)
+        :height 50
         }
        ".tabbar"
        {:position :fixed
@@ -73,22 +77,21 @@
         :text-align :center
         :left 0
         :width "100%"
-        :background "url(assets/background.jpg)"
-        :background-color "#fbf8f4"
+        ;:background "url(assets/background.jpg)"
+        ;:background-color "#fbf8f4"
+        :background-color "#ffffff"
         :box-shadow "-1px 0px 5px rgba(0,0,0,1);"
         :z-index "100"
         }
        ".tabbar a"
        {:display :inline-block
         :box-sizing :border-box
-        :width (* 6 unit)
+        :width (* 0.25 (- js/document.body.clientWidth 100))
         :text-align :center}
        ".tabbar img"
-       {:padding (* 0.5 unit)
-        :height (* 4 unit)
-        :width (* 4 unit)}
-       "body"
-       {:padding-bottom (* 4 unit)}
+       {:padding 5
+        :height 40
+        :width 40}
        }
       "tabbar-styling")
     ;; ### Book
@@ -127,23 +130,23 @@
     ;; FIXME Not so nice to have the style for bib-map defined here
     ;;
     (load-style!
-     {"#bib-map"
-      {:height (* unit-height 6)}}
-     "bib-map-style")
+      {"#bib-map"
+       {:height (* unit-height 6)}}
+      "bib-map-style")
     (load-style!
-     {"table.openhours th"
-      {:text-align "left"
-       :padding "0em 0.8em 0em 0em"}
-      "table.openhours tbody td"
-      {:text-align "center"}}
-     "open-hours-styling")
+      {"table.openhours th"
+       {:text-align "left"
+        :padding "0em 0.8em 0em 0em"}
+       "table.openhours tbody td"
+       {:text-align "center"}}
+      "open-hours-styling")
     (load-style!
-     {".contact"
-      {:padding "0em 0em 10em 0em"
-       ".contact div span"
+      {".contact"
+       {:padding "0em 0em 10em 0em"
+        ".contact div span"
         {:margin "0em 1em 0em 0em"
          :border "1px solid blue"}}}
-     "contact-styling")))
+      "contact-styling")))
 
 ;; ### Actually apply styling
 ;;
@@ -167,10 +170,10 @@
   [:div
    [:div.tabbar-spacer " "]
    [:div.tabbar
-   [tabbar-button "search" "Søg"]
-   [tabbar-button "work" "Materiale"]
-   [tabbar-button "library" "Bibliotek"]
-   [tabbar-button "status" "Status"]]])
+    [tabbar-button "search" "Søg"]
+    [tabbar-button "work" "Materiale"]
+    [tabbar-button "library" "Bibliotek"]
+    [tabbar-button "status" "Status"]]])
 
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
@@ -178,46 +181,90 @@
 (defn work-line [pid]
   (let [o @(subscribe [:work pid])
         keywords
-        (interpose
-          " "
-          (map
-            (fn [kw] [:a.condensed.button {:href (str "#search/" kw)} kw])
-            (:keywords o)
-            ))]
-    [:a
+        (map
+          (fn [kw] [:a {:href (str "#search/" kw)} kw])
+          (:keywords o)
+          )]
+    [:a.column
      {:key pid
       :href (str "#work/" pid)}
-     [:div.row.callout
-      [:div.large-1.medium-2.small-3.columns
-       [:img {:src (:cover-url o)}]
-       ]
-      [:div.large-11.medium-10.small-9.columns
-       [:h4 (:title o)]
-       [:div.expanded.hollow.button (:creator o)]
-       (into [:div] keywords)]]]))
+     [:div
+      {:style
+       {:border "0px solid black"
+        :position :relative
+        :overflow "hidden"
+        :height "9rem"
+        :color :black
+        :margin-bottom "1rem"
+        :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"
+        }
+       }
+      [:img
+       {:src (:cover-url o)
+        :style
+        {:max-width "33%"
+         :max-height "100%"
+         :box-sizing :border-box
+         :vertical-align :top
+         }}]
+      [:div
+       {:style
+        {:display :inline-block
+         :box-sizing :border-box
+         :width "66%"
+         :height "100%"
+         :vertical-align :top
+         :padding-left ".3em"
+         :overflow :hidden
+         }}
+       [:div
+        {:style
+         {:display :block
+          :position :absolute
+          :bottom "0px"
+          :height "33%"
+          :width "100%"
+          :background "linear-gradient(rgba(255,255,255,0), white)"
+          }}]
+       [:div.bold.large (:title o)]
+       [:div.italic.large (:creator o)]
+       (into [:div] (interpose " " (map
+                                     (fn [s] [:span.condensed
+                                              {:style {:display :inline-block}}
+                                              s])
+                                     (:keywords o))))
+       [:div (:description o)]
+       ]]]))
 
 (defn search [query]
   (let
     [results @(subscribe [:search query 0])
-     results (map work-line results)
-     search-form
-     [:div.row
-      [:div.small-12.columns
-       [:div.input-group
-        [:input.input-group-field
-         {:type :text
-          :value query
-          :on-change
-          #(dispatch-sync [:route "search" (-> % .-target .-value)])}]
-        [:a.input-group-button.button "søg"]]]]
-     ]
+     results (map work-line results)]
     (log 'search-results query results)
-    [:div
-     [:p]
-     (merge [:div search-form]
-      results)
+    [:div.ui.container
+     [:h1 "Enby Biblioteker"]
+     [:div
+      [:div.ui.search.fluid.input.icon
+       [:input
+        {:placeholder "Indtast søgning"
+         :type :text
+         :value query
+         :on-change #(dispatch-sync [:route "search" (-> % .-target .-value)])
+         }]
+       [:i.search.icon]
+       [:div.results.transition.hidden
+        {:style {:display "block !important"}}
+        [:div.result "hjhj"]
+        [:a.result "reulst2"]
+        ]]
+      "\u00a0"
+      ]
+     [:div.ui.grid
+      (merge [:div.stackable.doubling.four.column.row]
+             results)]
      [tabbar]
-     ]))
+     ]
+    ))
 
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
@@ -228,20 +275,29 @@
         keywords (:keywords work)
         location (:location work)
         creator (:creator work)]
-    [:div.work
+    [:div.ui.container
      [:div "TODO: Work history here"]
-     [:h1.text-center (:title work)]
-     [:div.text-center "af " [:a {:href (str "#search/" creator)} creator]]
-     [:img.work-cover-img.float-right {:src (:cover-url work)}]
-     [:div [:a.button "Bestil"]]
+     [:h1.center (:title work)]
+     [:p.center "af " [:a {:href (str "#search/" creator)} creator]]
+     [:p.center
+      [:img
+       {:src (:cover-url work)
+        :style
+        {:max-height (* 0.5 (- js/document.body.clientHeight 50))
+         :max-width (* 0.8 (- js/document.body.clientWidth 20))
+
+         }
+        }]
+      ]
+     [:p.center [:a.ui.primary.button "Bestil"]  ]
+     [:p (:description work)]
      (if-not keywords ""
        (into [:p #_[:em "Emne: "]]
              (interpose
                " "
                (for [word keywords]
-                 [:a.hollow.condensed.button {:href
-                                   (str "#search/" word)} word]))))
-     [:div.work-desc (:description work)]
+                 [:a.ui.tag.label {:href
+                                              (str "#search/" word)} word]))))
      (if language [:p [:em "Sprog: "] language] "")
      (if location [:p [:em "Opstilling: "] location] "")
      [tabbar]
@@ -256,52 +312,53 @@
 (defn library [id]
   (let [current-library (subscribe [:current-library])]
     (fn []
-        (let [address (:address @current-library)
-              hours   (:hours @current-library)
-              phone   (:phone @current-library)]
+      (let [address (:address @current-library)
+            hours   (:hours @current-library)
+            phone   (:phone @current-library)]
+        [:div
+         [:h1 (:name @current-library)]
+         [bib-map
+          :id "bib-map"
+          :pos (:position @current-library)]
+         [:div.address
+          [:h2 "Adresse"]
+          [:div (:road address)]
+          [:div (:city address)]
+          [:div (:country address)]]
+         [:div.open
+          [:h2 "Åbningstider"]
+          [:table.openhours
+           [:thead
+            (into
+              [:tr [:th]]
+              (for [title (map :title hours)]
+                [:th title]))]
+           (into [:tbody]
+                 (for [day (range 7)]
+                   (into [:tr
+                          [:th (get daynames day)]]
+                         (for [area (map :weekdays hours)
+                               :let [time (get area day)]]
+                           (into [:td]
+                                 [(if (nil? time)
+                                    "Lukket"
+                                    (let [t0 (get time 0)
+                                          t1 (get time 1)]
+                                      (str (if (< t0 10)
+                                             (unescapeEntities "&nbsp;")
+                                             "")
+                                           t0 " - " t1)))])))))]]
+         [:div.contact
+          [:h2 "Kontakt"]
           [:div
-           [tabbar]
-           [:h1 (:name @current-library)]
-           [bib-map
-            :id "bib-map"
-            :pos (:position @current-library)]
-           [:div.address
-            [:h2 "Adresse"]
-            [:div (:road address)]
-            [:div (:city address)]
-            [:div (:country address)]]
-           [:div.open
-            [:h2 "Åbningstider"]
-            [:table.openhours
-             [:thead
-              (into
-               [:tr [:th]]
-               (for [title (map :title hours)]
-                    [:th title]))]
-             (into [:tbody]
-                   (for [day (range 7)]
-                        (into [:tr
-                               [:th (get daynames day)]]
-                              (for [area (map :weekdays hours)
-                                    :let [time (get area day)]]
-                                   (into [:td]
-                                         [(if (nil? time)
-                                            "Lukket"
-                                            (let [t0 (get time 0)
-                                                  t1 (get time 1)]
-                                              (str (if (< t0 10)
-                                                     (unescapeEntities "&nbsp;")
-                                                     "")
-                                                   t0 " - " t1)))])))))]]
-           [:div.contact
-            [:h2 "Kontakt"]
-            [:div
-             [:span "Email"]
-             [:span (:email @current-library)]]
-            [:div
-             [:span "Telefon"]
-             [:span (:number phone)]
-             [:span (:time phone)]]]]))))
+           [:span "Email"]
+           [:span (:email @current-library)]]
+          [:div
+           [:span "Telefon"]
+           [:span (:number phone)]
+           [:span (:time phone)]]]
+         [tabbar]
+         ]))))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
@@ -312,7 +369,6 @@
         reservations         (subscribe [:reservations])]
     (fn []
       [:div
-       [tabbar]
        [:h1 "Låner status"]
        [:div {:class "menu"}
         [:button {:type "submit"} "Log Ud"]]
@@ -363,7 +419,9 @@
              [:ul
               [:li [:a {:href (str "#/creator/" (:id r))} (:creator r)]]
               [:li [:a {:href (str "#/reservation/remove/" (:id r))} "Slet"]]
-              ]]))]])))
+              ]]))]
+       [tabbar]
+       ])))
 
 ;; ### Main App entry point
 (defn app []
