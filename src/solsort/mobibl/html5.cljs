@@ -355,10 +355,7 @@
        results)
      show-history @(subscribe [:ui :show-history])
      search-history @(subscribe [:search-history])
-     suggest (if show-history
-               search-history
-               nil
-               )
+     suggest (when show-history search-history)
      ]
     [:div.ui.container
      [:h1 "Københavns Biblioteker"]
