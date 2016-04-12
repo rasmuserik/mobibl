@@ -314,6 +314,7 @@
         creator (:creator work)]
     [:div.ui.container
      ;[:div "TODO: Work history here"]
+     [:p]
      [:h1.center (:title work)]
      [:p.center "af " [:a {:href (str "#search/" creator)} creator]]
      [:p.center
@@ -389,75 +390,82 @@
           [:div.contact
            [:h2 "Kontakt"]
            [:div
-            [:span "Email"]
+            [:span "Email: "]
             [:span (:email @current-library)]]
            [:div
-            [:span "Telefon"]
+            [:span "Telefon: "]
             [:span (:number phone)]
+            " "
             [:span (:time phone)]]]]
          [tabbar]
          ]))))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
+(defn loan-entry [id & content]
+[:div
+             {:style {:margin-bottom "1rem"}}
+             (into [:span
+              {:style
+               {:display :inline-block
+                :vertical-align :top
+                :width "30%" }}]
+                   content)
+             [:a
+              {:href (str "#work/" id)
+               :style
+               {:display :inline-block
+                :font-size "70%"
+                :vertical-align :top
+                :width "70%"
+                :height "4rem" } }
+              [work-item id]]
+             ]
+
+  )
 
 (defn status []
   (let [arrived (subscribe [:arrived])
         borrowed             (subscribe [:borrowed])
         reservations         (subscribe [:reservations])]
     (fn []
-      [:div
+      [:div.ui.container
+       [:div.right.floated.ui.primary.button "Log ud"]
        [:h1 "Låner status"]
-       [:div {:class "menu"}
-        [:button {:type "submit"} "Log Ud"]]
-       [:div
+       [:p
         [:h2 "Hjemkomne"]
         (into
-          [:ul]
+          [:div]
           (for
             [ra @arrived]
-            [:li
-             [:a {:href (str "#work/" (:id ra))} (:title ra)]
-             [:ul
-              [:li (str "Afhentes inden " (:until ra))]
-              [:li "Opstilling "
-               [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
-              ;;
-              ;; **TODO** Add unique creator ID
-              ;;
-              [:li
-               [:a
-                {:href (str "#/creator/" "TODO-creator-id")} (:creator ra)]]
-              ]]))]
-       [:div
-        [:h2 "Hjemlån"]
-        [:div
-         [:a {:href (str "#/borrowed/renew/all")} "Forny Alle"]]
+            (loan-entry
+             (:id ra)
+               [:div (:until ra)]
+               [:div [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
+               [:div [:a {:href (str "#/creator/" "TODO-creator-id")} (:creator ra)]])
+            ))]
+       [:p
+        [:h2 "Hjemlån" [:div.ui.right.floated.small.button "Forny alle"]]
         (into
-          [:ul]
+          [:div]
           (for [b @borrowed]
-            [:li
-             [:a {:href (str "#/borrowed/item/" (:id b))}
-              ;;
-              ;; **TODO** It would be nice with thumbnails
-              ;;
-              [:img {:src "http://www.bogpriser.dk/Images/placeholder-cover.png"
-                     :width "32" :height "32" :alt "TODO :cover-mini-url"}]
-              [:span { :style {:margin-left "1em"}} (:title b)]]
-             [:ul
-              [:li (str "Afleveres senest " (:until b))]
-              [:li [:a {:href (str "#/borrowed/renew/" (:id b))} "Forny"]]]]))]
-       [:div
+            (loan-entry
+              (:id b)
+              [:div (:until b)]
+              [:div.ui.small.button "Forny"]
+              )
+            ))]
+       [:p
         [:h2 "Bestillinger"]
         (into
-          [:ul]
+          [:div]
           (for [r @reservations]
-            [:li
-             [:a {:href (str "#/reservation/" (:id r))} (:title r)]
-             [:ul
-              [:li [:a {:href (str "#/creator/" (:id r))} (:creator r)]]
-              [:li [:a {:href (str "#/reservation/remove/" (:id r))} "Slet"]]
-              ]]))]
+            (loan-entry
+              (:id r)
+              [:div.ui.small.button "Slet"]
+              )
+            ))
+        ]
        [tabbar]
        ])))
 
