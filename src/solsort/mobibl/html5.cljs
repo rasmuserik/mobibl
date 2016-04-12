@@ -290,9 +290,9 @@
 
 
       [facets "Jens Jensen" "Holger Danske" "H C Andersen" "Kumbel"
-       "bog" "noder" "cd" "tidskriftsartikel" "dvd" "video" "avisartikel" "lydbog"
-       "2000" "billedbog" "2002" "VHS" "cd-rom" "ost" "filosofi" "2001"
-       "engelske skuespillere" "kager" "åer" "gæs" "sjove bøger"
+       "bog" "noder" "cd" "tidskriftsartikel" "dvd" "video" "avisartikel"
+       "lydbog" "2000" "billedbog" "2002" "VHS" "cd-rom" "ost" "filosofi"
+       "2001" "engelske skuespillere" "kager" "åer" "gæs" "sjove bøger"
        "engelsk" "dansk" "blandede sprog" "tysk" "færøsk" "persisk"]
       ]
      [:p]
@@ -441,8 +441,10 @@
             (loan-entry
              (:id ra)
                [:div (:until ra)]
-               [:div [:a {:href (str "#/location/" (:location ra))} (:location ra)]]
-               [:div [:a {:href (str "#/creator/" "TODO-creator-id")} (:creator ra)]])
+               [:div [:a {:href (str "#/location/" (:location ra))}
+                      (:location ra)]]
+               [:div [:a {:href (str "#/creator/" "TODO-creator-id")}
+                      (:creator ra)]])
             ))]
        [:p
         [:h2 "Hjemlån" [:div.ui.right.floated.small.button "Forny alle"]]
