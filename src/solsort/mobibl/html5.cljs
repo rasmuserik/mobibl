@@ -272,7 +272,6 @@
             }
            [work-item pid]]])
        results)]
-    (log 'search-results query results)
     [:div.ui.container
      [:h1 "Københavns Biblioteker"]
      [:div
@@ -340,9 +339,25 @@
                                (str "#search/" word)} word]))))
      (if language [:p [:em "Sprog: "] language] "")
      (if location [:p [:em "Opstilling: "] location] "")
+     [:p.bold "Relaterede:"]
+      [:div.ui.grid
+      (into
+        [:div.stackable.four.column.doubling.row]
+        (map
+          (fn [id]
+            [:div.column
+             [:a.small
+              {:href (str "#work/" id)
+               :style
+               {:display :inline-block
+                :height "6em"}
+               }
+             (work-item id)]]
+            )
+          (take 12 (rest (:related work))))
+        )]
      [tabbar]
      ]))
-
 
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
