@@ -133,7 +133,8 @@
     ;;
     (load-style!
       {"#bib-map"
-       {:height (* unit-height 6)}}
+       {:height (js/Math.min js/document.body.clientWidth
+                             (* 0.6 js/document.body.clientHeight))}}
       "bib-map-style")
     (load-style!
       {"table.openhours th"
@@ -235,25 +236,25 @@
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
 (defn facets [& facets]
-  (into 
+  (into
     [:div.condensed
-     {:style 
-      {:height "6rem" 
+     {:style
+      {:height "6rem"
        :overflow :hidden
        :line-height "2rem"
        :margin-bottom "0.4rem" }}]
-    (map (fn [s] 
+    (map (fn [s]
            [:a.ui.label s " "
             [:span.small.regular "123"]
             ])
-    facets) )
-  
+         facets) )
+
   )
 (defn search [query]
   (let
     [results @(subscribe [:search query 0])
-     results 
-     (map 
+     results
+     (map
        (fn [pid]
          [:a.column
           {:key pid
@@ -267,7 +268,7 @@
              :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"
              }
             }
-            [work-item pid]]])
+           [work-item pid]]])
        results)]
     (log 'search-results query results)
     [:div.ui.container
@@ -286,12 +287,13 @@
         [:div.result "hjhj"]
         [:a.result "reulst2"]
         ]]
-      
-      
-       [facets "Jens Jensen" "Holger Danske" "H C Andersen" "Kumbel"
-       "bog" "noder" "cd" "tidskriftsartikel" "dvd" "video" "avisartikel" "lydbog" "billedbog" "VHS" "cd-rom" 
+
+
+      [facets "Jens Jensen" "Holger Danske" "H C Andersen" "Kumbel"
+       "bog" "noder" "cd" "tidskriftsartikel" "dvd" "video" "avisartikel" "lydbog"
+       "2000" "billedbog" "2002" "VHS" "cd-rom" "ost" "filosofi" "2001"
        "engelske skuespillere" "kager" "åer" "gæs" "sjove bøger"
-       "engelsk" "dansk" "blandede sprog" "tysk" "færøsk" "persisk"] 
+       "engelsk" "dansk" "blandede sprog" "tysk" "færøsk" "persisk"]
       ]
      [:p]
      [:div.ui.grid
@@ -332,7 +334,7 @@
                " "
                (for [word keywords]
                  [:a.ui.label {:href
-                                   (str "#search/" word)} word]))))
+                               (str "#search/" word)} word]))))
      (if language [:p [:em "Sprog: "] language] "")
      (if location [:p [:em "Opstilling: "] location] "")
      [tabbar]
@@ -351,47 +353,48 @@
             hours   (:hours @current-library)
             phone   (:phone @current-library)]
         [:div
-         [:h1 (:name @current-library)]
          [bib-map
           :id "bib-map"
           :pos (:position @current-library)]
-         [:div.address
-          [:h2 "Adresse"]
-          [:div (:road address)]
-          [:div (:city address)]
-          [:div (:country address)]]
-         [:div.open
-          [:h2 "Åbningstider"]
-          [:table.openhours
-           [:thead
-            (into
-              [:tr [:th]]
-              (for [title (map :title hours)]
-                [:th title]))]
-           (into [:tbody]
-                 (for [day (range 7)]
-                   (into [:tr
-                          [:th (get daynames day)]]
-                         (for [area (map :weekdays hours)
-                               :let [time (get area day)]]
-                           (into [:td]
-                                 [(if (nil? time)
-                                    "Lukket"
-                                    (let [t0 (get time 0)
-                                          t1 (get time 1)]
-                                      (str (if (< t0 10)
-                                             (unescapeEntities "&nbsp;")
-                                             "")
-                                           t0 " - " t1)))])))))]]
-         [:div.contact
-          [:h2 "Kontakt"]
-          [:div
-           [:span "Email"]
-           [:span (:email @current-library)]]
-          [:div
-           [:span "Telefon"]
-           [:span (:number phone)]
-           [:span (:time phone)]]]
+         [:div.ui.container [:h1 (:name @current-library)]]
+         [:div.ui.container
+          [:div.address
+           [:h2 "Adresse"]
+           [:div (:road address)]
+           [:div (:city address)]
+           [:div (:country address)]]
+          [:div.open
+           [:h2 "Åbningstider"]
+           [:table.openhours
+            [:thead
+             (into
+               [:tr [:th]]
+               (for [title (map :title hours)]
+                 [:th title]))]
+            (into [:tbody]
+                  (for [day (range 7)]
+                    (into [:tr
+                           [:th (get daynames day)]]
+                          (for [area (map :weekdays hours)
+                                :let [time (get area day)]]
+                            (into [:td]
+                                  [(if (nil? time)
+                                     "Lukket"
+                                     (let [t0 (get time 0)
+                                           t1 (get time 1)]
+                                       (str (if (< t0 10)
+                                              (unescapeEntities "&nbsp;")
+                                              "")
+                                            t0 " - " t1)))])))))]]
+          [:div.contact
+           [:h2 "Kontakt"]
+           [:div
+            [:span "Email"]
+            [:span (:email @current-library)]]
+           [:div
+            [:span "Telefon"]
+            [:span (:number phone)]
+            [:span (:time phone)]]]]
          [tabbar]
          ]))))
 
