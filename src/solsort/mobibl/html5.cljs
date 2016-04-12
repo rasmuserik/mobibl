@@ -331,24 +331,38 @@
              }
             }
            [work-item pid]]])
-       results)]
+       results)
+     show-history @(subscribe [:ui :show-history])
+     search-history @(subscribe [:search-history])
+     suggest (if show-history
+               search-history
+               nil
+               )
+     ]
     [:div.ui.container
      [:h1 "Københavns Biblioteker"]
      [:div
-      [:div.ui.search.fluid.input.icon
+      [:div.ui.search.fluid.input.action.left.icon
+       [:i.search.icon]
        [:input
         {:placeholder "Indtast søgning"
          :type :text
          :value query
          :on-change #(dispatch-sync [:route "search" (-> % .-target .-value)])
          }]
-       [:i.search.icon]
-       [:div.results.transition.hidden
-        {:style {:display "block !important"}}
-        [:div.result "hjhj"]
-        [:a.result "reulst2"]
-        ]]
-
+       [:button.ui.icon.button
+        {:class (if-not search-history "disabled"
+                        (if show-history "active" ""))
+         :on-click #(dispatch [:ui :show-history (not show-history)])}
+        [:i.caret.down.icon]]
+       (when suggest
+         (into [:div.results.transition.visible
+              {:style {:display "block !important"}}]
+               (for [s suggest]
+                 [:a.result
+                  {:href (str "#search/" s)
+                   :on-click #(dispatch [:ui :show-history false])}
+                  s])))]
 
       [facets "Jens Jensen" "Holger Danske" "H C Andersen" "Kumbel"
        "bog" "noder" "cd" "tidskriftsartikel" "dvd" "video" "avisartikel"
