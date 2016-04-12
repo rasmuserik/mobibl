@@ -27,16 +27,16 @@
   (.icon js/L
          (clj->js
           {:iconUrl
-           "/assets/marker-icon.png"
+           "./assets/marker-icon.png"
            :iconRetinaUrl
-           "/assets/marker-icon-2x.png"
+           "./assets/marker-icon-2x.png"
            :iconSize [25 41]
            :iconAnchor [12 38]
            :popupAnchor [-3 -76]
            :shadowUrl
-           "/assets/marker-shadow.png"
+           "./assets/marker-shadow.png"
            :shadowRetinaUrl
-           "/assets/marker-shadow.png"
+           "./assets/marker-shadow.png"
            :shadowSize [25 45]
            :shadowAnchor [6 42]})))
 

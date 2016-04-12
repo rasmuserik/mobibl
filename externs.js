@@ -16,3 +16,11 @@ Object.prototype.header = function() {};
 Object.prototype.removeHeader = function() {};
 Object.prototype.parseFromString = function() {};
 window.onSolsortReady = function() {};
+var eventsKey = {};
+
+Object.prototype.addTo = function() {};
+Object.prototype.tileLayer = function() {};
+Object.prototype.map = function() {};
+Object.prototype.marker = function() {};
+Object.prototype.setView = function() {};
+Object.prototype.icon = function() {};
