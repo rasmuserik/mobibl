@@ -70,7 +70,7 @@
       :main solsort.mobibl.main
       :externs ["externs.js"]
       :optimizations :advanced
-      :pretty-print false}}]}
+      :pretty-print true}}]}
   :figwheel
   {:nrepl-port ~(read-string (or (System/getenv "FIGWHEEL_NREPL_PORT") "7888"))
    :server-port ~(read-string (or (System/getenv "FIGWHEEL_SERVER_PORT") "3449"))})
