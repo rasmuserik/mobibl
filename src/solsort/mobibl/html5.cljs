@@ -91,9 +91,9 @@
         :width (* 0.25 (- js/document.body.clientWidth 100))
         :text-align :center}
        ".tabbar img"
-       {:padding 5
-        :height 40
-        :width 40}
+       {:padding 3
+        :height 44
+        :width 44}
        }
       "tabbar-styling")
     ;; ### Book
