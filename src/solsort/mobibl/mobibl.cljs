@@ -30,6 +30,10 @@
                     (merge (get-in db [:work id] {})
                            content))))
 (register-handler
+  :ui (fn [db [_ id value]]
+          (assoc-in db [:ui id] value)))
+
+(register-handler
   :latest-work
   (fn [db [_ id]]
     (let [work-history (get-in db [:work-history] [])
@@ -49,6 +53,20 @@
 (register-sub
   :work-history
   (fn [db _] (reaction (get @db :work-history []))))
+
+(register-sub
+  :ui
+  (fn [db [_ path]] (reaction (get-in @db [:ui path]))))
+
+(register-sub
+  :search-history
+  (fn [db _] (reaction
+               ["filosofi"
+                "ost"
+                "Harry Potter"
+                "hest"])))
+
+
 (register-sub
   :search
   (fn [db [_ q page]]
