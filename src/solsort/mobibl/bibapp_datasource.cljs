@@ -27,6 +27,7 @@
                   "http://www.bogpriser.dk/Covers/"
                   (.slice isbn -3) "/" isbn ".jpg")
      :keywords (get o "subject" [])
+     :related (map first (o "related"))
      :description (first (o "description"))
      :location nil
      :language (first (o "language"))

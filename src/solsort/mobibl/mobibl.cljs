@@ -29,6 +29,12 @@
           (assoc-in db [:works id]
                     (merge (get-in db [:work id] {})
                            content))))
+(register-handler
+  :latest-work
+  (fn [db [_ id]]
+    (let [work-history (get-in db [:work-history] [])
+          work-history (into [id] (remove #(= % id) work-history))]
+      (assoc db :work-history work-history))))
 ;; ## Subscriptions
 
 (def default-work
@@ -40,6 +46,9 @@
     (when-not work (dispatch [:request-work id]))
     (merge default-work {:id id} work)))
 
+(register-sub
+  :work-history
+  (fn [db _] (reaction (get @db :work-history []))))
 (register-sub
   :search
   (fn [db [_ q page]]
