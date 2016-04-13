@@ -32,6 +32,15 @@
 (register-handler
   :ui (fn [db [_ id value]]
           (assoc-in db [:ui id] value)))
+(register-handler
+  :add-facet (fn [db [_ facet]]
+               (assoc-in db [:ui :facets]
+                         (cons facet (get-in db [:ui :facets] [])))))
+
+(register-handler
+  :remove-facet (fn [db [_ facet]]
+               (assoc-in db [:ui :facets]
+                         (remove #{facet} (get-in db [:ui :facets] [])))))
 
 (register-handler
   :latest-work
@@ -39,6 +48,7 @@
     (let [work-history (get-in db [:work-history] [])
           work-history (into [id] (remove #(= % id) work-history))]
       (assoc db :work-history work-history))))
+
 ;; ## Subscriptions
 
 (def default-work
@@ -55,16 +65,20 @@
   (fn [db _] (reaction (get @db :work-history []))))
 
 (register-sub
+  :facets
+  (fn [db [_ path]] (reaction (get-in @db [:ui :facets]))))
+
+(register-sub
   :ui
   (fn [db [_ path]] (reaction (get-in @db [:ui path]))))
 
 (register-sub
   :search-history
   (fn [db _] (reaction
-               ["filosofi"
-                "ost"
-                "Harry Potter"
-                "hest"])))
+               [["filosofi" [[:creator "plato"] [:creator "socrates"]]]
+                ["ost" []]
+                ["Harry Potter" [[:type "dvd"] [:type "bog"]]]
+                ["hest" [[:year "2001"]]]])))
 
 
 (register-sub
