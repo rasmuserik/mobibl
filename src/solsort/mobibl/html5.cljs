@@ -15,6 +15,7 @@
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
     [solsort.mobibl.bib-map :refer [bib-map]]
+    [cljsjs.hammer]
     [goog.string :refer [unescapeEntities]]))
 
 ;; ## Styling
@@ -160,6 +161,33 @@
 (js/window.addEventListener "load" #(js/setTimeout styling 0))
 ; re-layout on load, and on figwheel reload
 (styling)
+
+;; ## Swipe gestures
+
+(def pageNames (vector "search"  "work" "library" "status"))
+(def curPage 0)
+
+(defn changeHash [newHash]
+  (.pushState js/history newHash newHash (str "#" newHash))
+  (.dispatchEvent js/window (js/HashChangeEvent. "hashchange")))
+
+(defn addSwipeGestures []
+  (let [hammer (js/Hammer.Manager. js/document.body)
+        swipe  (js/Hammer.Swipe.)]
+    (.add hammer swipe)
+    (.on hammer "swipeleft" (fn []
+                                (set! curPage
+                                  (if (= curPage 0)
+                                    (- (count pageNames) 1)
+                                    (dec curPage)))
+                                (changeHash (get pageNames curPage))))
+
+    (.on hammer "swiperight" (fn []
+                                 (set! curPage
+                                   (mod (inc curPage) (count pageNames)))
+                                 (changeHash (get pageNames curPage))))))
+
+(addSwipeGestures)
 
 ;; ## Components
 ;; ### Tab bar - menu in bottom of the screen
