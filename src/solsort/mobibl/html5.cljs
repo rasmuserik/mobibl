@@ -612,7 +612,12 @@
                      (:creator ra)]])
             ))]
        [:p
-        [:h2 "Hjemlån" [:div.ui.right.floated.small.button "Forny alle"]]
+        [:h2.ui.left.header
+         [:div.content
+          {:style
+           {:width "30%"
+            :min-width "8rem"}} "Hjemlån"]
+         [:div.ui.button "Forny alle"]]
         (into
           [:div]
           (for [b @borrowed]
