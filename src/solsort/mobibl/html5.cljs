@@ -366,7 +366,9 @@
         {:placeholder "Indtast søgning"
          :type :text
          :value query
-         :on-change #(dispatch-sync [:route "search" (-> % .-target .-value)])
+         :on-change #(dispatch-sync [:route "search"
+                                     [(-> % .-target .-value)]
+                                     js/document.body.scrollTop])
          }]
        [:button.ui.icon.button
         {:class (if-not search-history "disabled"
@@ -643,7 +645,10 @@
 
 ;; ### Main App entry point
 (defn app []
-  (let [[page id] @(subscribe [:route])]
+  (let [[page id scroll] @(subscribe [:route])]
+    ;; TODO Really annoying hack to scroll to position after page render.  Use
+    ;; component lifecycle to do this properly
+    (js/setTimeout #(set! js/document.body.scrollTop (or scroll 0)) 100)
     (case page
       "search" [search id]
       "work" [work id]
@@ -658,6 +663,9 @@
 ;; ## Routing
 
 (defn handle-hash []
-  (dispatch (into [:route] (string/split (.slice js/location.hash 1) "/"))))
+  (let [[page id] (string/split (.slice js/location.hash 1) "/")]
+    (dispatch [:route page id js/document.body.scrollTop])))
+
+(js/window.removeEventListener "hashchange" handle-hash)
 (js/window.addEventListener "hashchange" handle-hash)
 (handle-hash)

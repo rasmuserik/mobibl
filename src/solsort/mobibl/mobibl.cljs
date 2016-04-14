@@ -18,11 +18,15 @@
 ;; ## Handlers
 
 (register-handler
-  :route (fn [db [_ page id]]
-           (let [id (or id (get-in db [:current page]))]
-             (-> db
-                 (assoc-in [:current page] id)
-                 (assoc :route [page id])))))
+ :route (fn [db [_ page id prevPageScroll]]
+            (log "route-handler" page id prevPageScroll)
+            (let [[prevPage prevId _] (get db :route)
+                  prevPage (or prevPage "search")
+                  [id scroll] (or id (get-in db [:current page]))]
+              (-> db
+                  (assoc-in [:current prevPage] [prevId prevPageScroll])
+                  (assoc-in [:current page] [id scroll])
+                  (assoc :route [page id scroll])))))
 
 (register-handler
   :work (fn [db [_ id content]]
