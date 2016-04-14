@@ -164,8 +164,7 @@
 
 ;; ## Swipe gestures
 
-(def pageNames (vector "search"  "work" "library" "status"))
-(def curPageIndex 0)
+(def pageNames (to-array ["search"  "work" "library" "status"]))
 
 (defn changeHash [newHash]
   (.pushState js/history newHash newHash (str "#" newHash))
@@ -176,16 +175,22 @@
         swipe  (js/Hammer.Swipe.)]
     (.add hammer swipe)
     (.on hammer "swipeleft" (fn []
-                                (set! curPageIndex
-                                  (if (= curPageIndex 0)
-                                    (- (count pageNames) 1)
-                                    (dec curPageIndex)))
-                                (changeHash (get pageNames curPageIndex))))
+                                (let [[page id _] @(subscribe [:route])
+                                      index (.indexOf pageNames page)]
+                                  (changeHash
+                                   (get pageNames
+                                        (if (= index 0)
+                                          (- (count pageNames) 1)
+                                          (dec index)))))))
 
     (.on hammer "swiperight" (fn []
-                                 (set! curPageIndex
-                                   (mod (inc curPageIndex) (count pageNames)))
-                                 (changeHash (get pageNames curPageIndex))))))
+                                   (let [[page id _] @(subscribe [:route])
+                                         index (.indexOf pageNames page)]
+                                     (changeHash
+                                      (get pageNames
+                                           (if (= index (- (count pageNames) 1))
+                                             0
+                                             (inc index)))))))))
 
 (addSwipeGestures)
 

@@ -16,10 +16,8 @@
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
 ;; ## Handlers
-
 (register-handler
  :route (fn [db [_ page id prevPageScroll]]
-            (log "route-handler" page id prevPageScroll)
             (let [[prevPage prevId _] (get db :route)
                   prevPage (or prevPage "search")
                   [id scroll] (or id (get-in db [:current page]))]
@@ -254,5 +252,16 @@
 ;; TODO: also run on network reconnect, and after a while
 ;;
 (dispatch [:request-status])
+
+
+;; ## Page state init
+;;
+;; TODO initialize the hash in the browser
+(register-handler
+ :init-db (fn [db _]
+              (assoc db :route ["search" "" 0])
+              (assoc-in db [:current "search"] ["" 0])))
+
+(dispatch [:init-db])
 
 ;; TODO: sync database to disk, and restore on load
