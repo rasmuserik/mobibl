@@ -21,10 +21,11 @@
             (let [[prevPage prevId _] (get db :route)
                   prevPage (or prevPage "search")
                   [id scroll] (or id (get-in db [:current page]))]
+              (dispatch [:scroll scroll])
               (-> db
                   (assoc-in [:current prevPage] [prevId prevPageScroll])
                   (assoc-in [:current page] [id scroll])
-                  (assoc :route [page id scroll])))))
+                  (assoc :route [page id])))))
 
 (register-handler
   :work (fn [db [_ id content]]
@@ -253,6 +254,8 @@
 ;;
 (dispatch [:request-status])
 
+;; TODO: sync database to disk, and restore on load
+
 
 ;; ## Page state init
 ;;
@@ -264,4 +267,9 @@
 
 (dispatch [:init-db])
 
-;; TODO: sync database to disk, and restore on load
+;; Handler 
+(register-handler
+ :scroll (fn [db [_ scroll]]
+             (set! js/document.body.scrollTop (or scroll 0))
+             db))
+

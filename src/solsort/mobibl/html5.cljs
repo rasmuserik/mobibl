@@ -177,6 +177,7 @@
     (.on hammer "swipeleft" (fn []
                                 (let [[page id _] @(subscribe [:route])
                                       index (.indexOf pageNames page)]
+                                  (log "left" page index)
                                   (changeHash
                                    (get pageNames
                                         (if (= index 0)
@@ -186,6 +187,7 @@
     (.on hammer "swiperight" (fn []
                                    (let [[page id _] @(subscribe [:route])
                                          index (.indexOf pageNames page)]
+                                     (log "right" page index)
                                      (changeHash
                                       (get pageNames
                                            (if (= index (- (count pageNames) 1))
@@ -676,12 +678,13 @@
        [tabbar]
        ])))
 
+
+
 ;; ### Main App entry point
 (defn app []
-  (let [[page id scroll] @(subscribe [:route])]
+  (let [[page id _] @(subscribe [:route])]
     ;; TODO Really annoying hack to scroll to position after page render.  Use
     ;; component lifecycle to do this properly
-    (js/setTimeout #(set! js/document.body.scrollTop (or scroll 0)) 100)
     (case page
       "search" [search id]
       "work" [work id]
