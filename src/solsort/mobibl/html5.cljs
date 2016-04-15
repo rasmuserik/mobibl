@@ -162,40 +162,6 @@
 ; re-layout on load, and on figwheel reload
 (styling)
 
-;; ## Swipe gestures
-
-(def pageNames (to-array ["search"  "work" "library" "status"]))
-
-(defn changeHash [newHash]
-  (.pushState js/history newHash newHash (str "#" newHash))
-  (.dispatchEvent js/window (js/HashChangeEvent. "hashchange")))
-
-(defn addSwipeGestures []
-  (let [hammer (js/Hammer.Manager. js/document.body)
-        swipe  (js/Hammer.Swipe.)]
-    (.add hammer swipe)
-    (.on hammer "swipeleft" (fn []
-                                (let [[page id _] @(subscribe [:route])
-                                      index (.indexOf pageNames page)]
-                                  (log "left" page index)
-                                  (changeHash
-                                   (get pageNames
-                                        (if (= index 0)
-                                          (- (count pageNames) 1)
-                                          (dec index)))))))
-
-    (.on hammer "swiperight" (fn []
-                                   (let [[page id _] @(subscribe [:route])
-                                         index (.indexOf pageNames page)]
-                                     (log "right" page index)
-                                     (changeHash
-                                      (get pageNames
-                                           (if (= index (- (count pageNames) 1))
-                                             0
-                                             (inc index)))))))))
-
-(addSwipeGestures)
-
 ;; ## Components
 ;; ### Tab bar - menu in bottom of the screen
 
@@ -696,11 +662,47 @@
 
 (render [app])
 
+;; ## Swipe gestures
+
+(def ordered-page-names (to-array ["search"  "work" "library" "status"]))
+
+(defn change-hash [newHash]
+  (.pushState js/history newHash newHash (str "#" newHash))
+  (.dispatchEvent js/window (js/HashChangeEvent. "hashchange")))
+
+(defn addSwipeGestures []
+  (let [hammer (js/Hammer.Manager. js/document.body)
+        swipe  (js/Hammer.Swipe.)]
+    (.add hammer swipe)
+    (.on hammer "swipeleft" (fn []
+                                (let [[page id _] @(subscribe [:route])
+                                      index (.indexOf ordered-page-names page)]
+                                  (change-hash
+                                   (get ordered-page-names
+                                        (if (= index 0)
+                                          (- (count ordered-page-names) 1)
+                                          (dec index)))))))
+
+    (.on hammer "swiperight" (fn []
+                                   (let [[page id _] @(subscribe [:route])
+                                         index (.indexOf ordered-page-names page)]
+                                     (change-hash
+                                      (get ordered-page-names
+                                           (if (= index (- (count ordered-page-names) 1))
+                                             0
+                                             (inc index)))))))))
+
+(addSwipeGestures)
+
+
 ;; ## Routing
 
 (defn handle-hash []
   (let [[page id] (string/split (.slice js/location.hash 1) "/")]
-    (dispatch [:route page id js/document.body.scrollTop])))
+    (if (< (.indexOf ordered-page-names page) 0)
+      ;; Default to the search page
+      (change-hash "search")
+      (dispatch [:route page id js/document.body.scrollTop]))))
 
 (js/window.removeEventListener "hashchange" handle-hash)
 (js/window.addEventListener "hashchange" handle-hash)

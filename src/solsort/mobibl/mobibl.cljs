@@ -19,7 +19,6 @@
 (register-handler
  :route (fn [db [_ page id prevPageScroll]]
             (let [[prevPage prevId _] (get db :route)
-                  prevPage (or prevPage "search")
                   [id scroll] (or id (get-in db [:current page]))]
               (dispatch [:scroll scroll])
               (-> db
@@ -256,18 +255,7 @@
 
 ;; TODO: sync database to disk, and restore on load
 
-
-;; ## Page state init
-;;
-;; TODO initialize the hash in the browser
-(register-handler
- :init-db (fn [db _]
-              (assoc db :route ["search" "" 0])
-              (assoc-in db [:current "search"] ["" 0])))
-
-(dispatch [:init-db])
-
-;; Handler 
+;; Handler to scroll page to previous scrollTop position
 (register-handler
  :scroll (fn [db [_ scroll]]
              (set! js/document.body.scrollTop (or scroll 0))
