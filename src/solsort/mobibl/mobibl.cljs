@@ -258,5 +258,6 @@
 ;; Handler to scroll page to previous scrollTop position
 (register-handler
  :scroll (fn [db [_ scroll]]
-             (set! js/document.body.scrollTop (or scroll 0))
+             (js/setTimeout
+              #(set! js/document.body.scrollTop (or scroll 0)) 100)
              db))
