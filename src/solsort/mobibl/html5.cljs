@@ -645,7 +645,6 @@
        ])))
 
 
-
 ;; ### Main App entry point
 (defn app []
   (let [[page id _] @(subscribe [:route])]
@@ -674,23 +673,25 @@
   (let [hammer (js/Hammer.Manager. js/document.body)
         swipe  (js/Hammer.Swipe.)]
     (.add hammer swipe)
-    (.on hammer "swipeleft" (fn []
-                                (let [[page id _] @(subscribe [:route])
-                                      index (.indexOf ordered-page-names page)]
-                                  (change-hash
-                                   (get ordered-page-names
-                                        (if (= index 0)
-                                          (- (count ordered-page-names) 1)
-                                          (dec index)))))))
+    (.on hammer "swipeleft"
+         (fn []
+             (let [[page id _] @(subscribe [:route])
+                   index (.indexOf ordered-page-names page)]
+               (change-hash
+                (get ordered-page-names
+                     (if (zero? index)
+                       (dec (count ordered-page-names))
+                       (dec index)))))))
 
-    (.on hammer "swiperight" (fn []
-                                   (let [[page id _] @(subscribe [:route])
-                                         index (.indexOf ordered-page-names page)]
-                                     (change-hash
-                                      (get ordered-page-names
-                                           (if (= index (- (count ordered-page-names) 1))
-                                             0
-                                             (inc index)))))))))
+    (.on hammer "swiperight"
+         (fn []
+             (let [[page id _] @(subscribe [:route])
+                   index (.indexOf ordered-page-names page)]
+               (change-hash
+                (get ordered-page-names
+                     (if (= index (dec (count ordered-page-names)))
+                       0
+                       (inc index)))))))))
 
 (addSwipeGestures)
 
@@ -699,7 +700,7 @@
 
 (defn handle-hash []
   (let [[page id] (string/split (.slice js/location.hash 1) "/")]
-    (if (< (.indexOf ordered-page-names page) 0)
+    (if (neg? (.indexOf ordered-page-names page))
       ;; Default to the search page
       (change-hash "search")
       (dispatch [:route page id js/document.body.scrollTop]))))
