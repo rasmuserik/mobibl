@@ -15,6 +15,7 @@
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
     [solsort.mobibl.bib-map :refer [bib-map]]
+    [cljsjs.hammer]
     [goog.string :refer [unescapeEntities]]))
 
 ;; ## Styling
@@ -48,13 +49,13 @@
         ; :background-color "#fbf8f4"
         :font-family "\"Open Sans\", sans-serif"
         :font-weight "300"}
-       ".bold" {:font-weight "bold"}
+       ".bold" {:font-weight "bold !important"}
        ".center" {:text-align :center}
-       ".italic" {:font-style "italic"}
-       ".large" {:font-size "120%"}
-       ".small" {:font-size "80%"}
-       ".regular " {:font-weight "300"}
-       ".condensed" {:font-family "\"Open Sans Condensed\""}
+       ".italic" {:font-style "italic !important"}
+       ".large" {:font-size "120% !important"}
+       ".small" {:font-size "80% !important"}
+       ".regular " {:font-weight "300 !important"}
+       ".condensed" {:font-family "\"Open Sans Condensed\" !important"}
        ".ssbutton"
        {:display :inline-block
         :min-height (* 2.5 unit)
@@ -91,9 +92,9 @@
         :width (* 0.25 (- js/document.body.clientWidth 100))
         :text-align :center}
        ".tabbar img"
-       {:padding 5
-        :height 40
-        :width 40}
+       {:padding 3
+        :height 44
+        :width 44}
        }
       "tabbar-styling")
     ;; ### Book
@@ -178,8 +179,68 @@
     [tabbar-button "library" "Bibliotek"]
     [tabbar-button "status" "Status"]]])
 
-;; ### book-view
+;; ### work-tiny
 
+(def work-tiny-height (* 13 5.5))
+(defn work-tiny [pid]
+  (let  [o @(subscribe [:work pid])
+         unit 13
+         width (* 4.5 unit)]
+    [:a {:href (str "#work/" pid)
+         :style {:color "#111"}
+         }
+     [:div.center
+      {:style
+       {:display :inline-block
+        :white-space :normal
+        :font-size (* 0.8 unit)
+        :line-height (str unit "px")
+        :position :relative
+        :width width
+        :height (* 5.5 unit)
+        :text-shadow
+        (str "1px 0px 1px white,"
+             "0px 0px 1px white,"
+             "1px 1px 1px white,"
+             "0px 1px 1px white")
+
+        }}
+      [:img
+       {:src (:cover-url o)
+        :width "100%"
+        :height "100%"
+        }
+       ]
+      [:div.bold
+       {:style
+        {:display :inline-block
+         :position :absolute
+         :top 0
+         :left 0
+         :width width
+         :height (* 4 unit)
+         :background "rgba(255,255,255,0.4)"
+         :padding-bottom (* .25 unit)
+         :overflow :hidden
+         }}
+       (:title o)]
+      [:div.condensed
+       {:style
+        {:display :inline-block
+         :position :absolute
+         :text-align :left
+         :bottom 0
+         :left 0
+         :width width
+         :font-size (* 1 unit)
+         :white-space :nowrap
+         :padding (* .25 unit)
+         :height (* 1.5 unit)
+         :background "rgba(255,255,255,0.4)"
+         :overflow :hidden}}
+       (:creator o)]]]))
+
+;; ### work-item
 (defn work-item [pid]
   (let [o @(subscribe [:work pid])
         keywords
@@ -237,19 +298,40 @@
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
-(defn facets [& facets]
-  (into
-    [:div.condensed
-     {:style
-      {:height "6rem"
-       :overflow :hidden
-       :line-height "2rem"
-       :margin-bottom "0.4rem" }}]
-    (map (fn [s]
-           [:a.ui.label s " "
-            [:span.small.regular "123"]
-            ])
-         facets) )
+(defn facet-color [s]
+  (case s
+    :creator "orange"
+    :type "olive"
+    :language "teal"
+    :subject "violet"
+    :year "pink"
+    "" ))
+(defn facets [selected all]
+  (let
+    [all (remove
+           (fn [[a b c]]
+             (some #{[a b]} selected))
+           all)]
+    (merge
+      [:div.condensed
+       {:style
+        {:height "6.9rem"
+         :overflow :hidden
+         :line-height "2.3rem"
+         :margin-bottom "0.4rem" }}]
+      (map (fn [[col s]]
+             [:a.ui.small.button.condensed.bold
+              {:on-click #(dispatch [:remove-facet [col s]])
+               :key (hash [col s])
+               :class (facet-color col)} s])
+           selected)
+      (map (fn [[col s cnt]]
+             [:a.ui.small.basic.button.condensed.bold
+              {:on-click #(dispatch [:add-facet [col s]])
+               :key (hash [col s])
+               :class (facet-color col)} s " "
+              [:span.small.regular " " cnt ""]])
+           (reverse (sort-by #(nth % 2) all))) ))
 
   )
 (defn search [query]
@@ -271,32 +353,84 @@
              }
             }
            [work-item pid]]])
-       results)]
-    (log 'search-results query results)
+       results)
+     show-history @(subscribe [:ui :show-history])
+     search-history @(subscribe [:search-history])
+     suggest (when show-history search-history)
+     ]
     [:div.ui.container
      [:h1 "Københavns Biblioteker"]
      [:div
-      [:div.ui.search.fluid.input.icon
+      [:div.ui.search.fluid.input.action.left.icon
+       [:i.search.icon]
        [:input
         {:placeholder "Indtast søgning"
          :type :text
          :value query
-         :on-change #(dispatch-sync [:route "search" (-> % .-target .-value)])
+         :on-change #(dispatch-sync [:route "search"
+                                     [(-> % .-target .-value)]
+                                     js/document.body.scrollTop])
          }]
-       [:i.search.icon]
-       [:div.results.transition.hidden
-        {:style {:display "block !important"}}
-        [:div.result "hjhj"]
-        [:a.result "reulst2"]
-        ]]
+       [:button.ui.icon.button
+        {:class (if-not search-history "disabled"
+                  (if show-history "active" ""))
+         :on-click #(dispatch [:ui :show-history (not show-history)])}
+        [:i.caret.down.icon]]
+       (when suggest
+         (into [:div.results.transition.visible
+                {:style {:display "block !important"}}]
+               (for [[s facets] suggest]
+                 (into
+                   [:a.result
+                    {:href (str "#search/" s)
+                     :on-click #(dispatch-sync [:ui :show-history false])}
+                    s " "]
+                   (for [[col f] facets]
+                    [:div.ui.small.label
+                     {:class (facet-color col)}
+                     (str f)]
+                     )
+                   ))))]
 
-
-      [facets "Jens Jensen" "Holger Danske" "H C Andersen" "Kumbel"
-       "bog" "noder" "cd" "tidskriftsartikel" "dvd" "video" "avisartikel"
-       "lydbog" "2000" "billedbog" "2002" "VHS" "cd-rom" "ost" "filosofi"
-       "2001" "engelske skuespillere" "kager" "åer" "gæs" "sjove bøger"
-       "engelsk" "dansk" "blandede sprog" "tysk" "færøsk" "persisk"]
-      ]
+      [facets
+       @(subscribe [:facets])
+       [[:creator "Jens Jensen" 412]
+        [:creator "Holger Danske" 231]
+        [:creator "H. C. Andersen" 518]
+        [:creator "Kumbel" 100]
+        [:creator "Mr. X" 93]
+        [:type "bog" 1541]
+        [:type "noder" 541]
+        [:type "cd" 341]
+        [:type "tidskriftsartikel" 641]
+        [:type "dvd" 300]
+        [:type "video" 144]
+        [:type "avisartikel" 381]
+        [:type "VHS" 1]
+        [:type "cd-rom" 41]
+        [:language "dansk" 913]
+        [:language "engelsk" 569]
+        [:language "blandede sprog" 319]
+        [:language "tysk" 293]
+        [:language "færøsk" 321]
+        [:language "persisk" 139]
+        [:subject "gæs" 49]
+        [:subject "filosofi" 332]
+        [:subject "kager" 232]
+        [:subject "engelske skuespillere" 32]
+        [:subject "åer" 132]
+        [:subject "tautologi" 123]
+        [:subject "sjove bøger" 400]
+        [:year "2000" 154]
+        [:year "2001" 49]
+        [:year "2002" 14]
+        [:year "2003" 293]
+        [:year "2004" 114]
+        [:year "2005" 239]
+        [:year "2006" 276]
+        [:year "2007" 481]
+        [:year "2008" 359]
+        ]]]
      [:p]
      [:div.ui.grid
       (merge [:div.stackable.doubling.four.column.row]
@@ -313,36 +447,68 @@
         language (:language work)
         keywords (:keywords work)
         location (:location work)
-        creator (:creator work)]
-    [:div.ui.container
-     ;[:div "TODO: Work history here"]
-     [:p]
-     [:h1.center (:title work)]
-     [:p.center "af " [:a {:href (str "#search/" creator)} creator]]
-     [:p.center
-      [:img
-       {:src (:cover-url work)
-        :style
-        {:max-height (* 0.5 (- js/document.body.clientHeight 50))
-         :max-width (* 0.8 (- js/document.body.clientWidth 20))
+        creator (:creator work)
+        work-history @(subscribe [:work-history])
+        ]
+    (log 'work-history work-history)
+    (when (not= work-id (first work-history))
+      (dispatch [:latest-work work-id]))
+    [:div
+     [:div
+      {:style
+       {:height work-tiny-height
+        :background-color "#777"
+        :overflow :hidden}}
+      (into [:div
+             {:style
+              {:white-space :nowrap
+               :overflow-x :auto}
+              }
+             ] (map work-tiny work-history))]
+     [:div.ui.container
+      [:p]
+      [:h1.center (:title work)]
+      [:p.center "af " [:a {:href (str "#search/" creator)} creator]]
+      [:p.center
+       [:img
+        {:src (:cover-url work)
+         :style
+         {:max-height (* 0.5 (- js/document.body.clientHeight 50))
+          :max-width (* 0.8 (- js/document.body.clientWidth 20))
 
-         }
-        }]
-      ]
-     [:p.center [:a.ui.primary.button "Bestil"]  ]
-     [:p (:description work)]
-     (if-not keywords ""
-       (into [:p {:style {:line-height "2rem"}}]
-             (interpose
-               " "
-               (for [word keywords]
-                 [:a.ui.label {:href
-                               (str "#search/" word)} word]))))
-     (if language [:p [:em "Sprog: "] language] "")
-     (if location [:p [:em "Opstilling: "] location] "")
-     [tabbar]
-     ]))
-
+          }
+         }]
+       ]
+      [:p.center [:a.ui.primary.button "Bestil"]  ]
+      [:p (:description work)]
+      (if-not keywords ""
+        (into [:p {:style {:line-height "2rem"}}]
+              (interpose
+                " "
+                (for [word keywords]
+                  [:a.ui.label {:href
+                                (str "#search/" word)} word]))))
+      (if language [:p [:em "Sprog: "] language] "")
+      (if location [:p [:em "Opstilling: "] location] "")
+      [:p.bold "Relaterede:"]
+      [:div.ui.grid
+       (into
+         [:div.stackable.four.column.doubling.row]
+         (map
+           (fn [id]
+             [:div.column
+              [:a.small
+               {:href (str "#work/" id)
+                :style
+                {:display :inline-block
+                 :height "6em"}
+                }
+               (work-item id)]]
+             )
+           (take 12 (rest (:related work))))
+         )]
+      [tabbar]
+      ]]))
 
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
@@ -449,7 +615,12 @@
                      (:creator ra)]])
             ))]
        [:p
-        [:h2 "Hjemlån" [:div.ui.right.floated.small.button "Forny alle"]]
+        [:h2.ui.left.header
+         [:div.content
+          {:style
+           {:width "30%"
+            :min-width "8rem"}} "Hjemlån"]
+         [:div.ui.button "Forny alle"]]
         (into
           [:div]
           (for [b @borrowed]
@@ -473,9 +644,12 @@
        [tabbar]
        ])))
 
+
 ;; ### Main App entry point
 (defn app []
-  (let [[page id] @(subscribe [:route])]
+  (let [[page id _] @(subscribe [:route])]
+    ;; TODO Really annoying hack to scroll to position after page render.  Use
+    ;; component lifecycle to do this properly
     (case page
       "search" [search id]
       "work" [work id]
@@ -487,9 +661,50 @@
 
 (render [app])
 
+;; ## Swipe gestures
+
+(def ordered-page-names (to-array ["search"  "work" "library" "status"]))
+
+(defn change-hash [newHash]
+  (.pushState js/history newHash newHash (str "#" newHash))
+  (.dispatchEvent js/window (js/HashChangeEvent. "hashchange")))
+
+(defn addSwipeGestures []
+  (let [hammer (js/Hammer.Manager. js/document.body)
+        swipe  (js/Hammer.Swipe.)]
+    (.add hammer swipe)
+    (.on hammer "swipeleft"
+         (fn []
+             (let [[page id _] @(subscribe [:route])
+                   index (.indexOf ordered-page-names page)]
+               (change-hash
+                (get ordered-page-names
+                     (if (zero? index)
+                       (dec (count ordered-page-names))
+                       (dec index)))))))
+
+    (.on hammer "swiperight"
+         (fn []
+             (let [[page id _] @(subscribe [:route])
+                   index (.indexOf ordered-page-names page)]
+               (change-hash
+                (get ordered-page-names
+                     (if (= index (dec (count ordered-page-names)))
+                       0
+                       (inc index)))))))))
+
+(addSwipeGestures)
+
+
 ;; ## Routing
 
 (defn handle-hash []
-  (dispatch (into [:route] (string/split (.slice js/location.hash 1) "/"))))
+  (let [[page id] (string/split (.slice js/location.hash 1) "/")]
+    (if (neg? (.indexOf ordered-page-names page))
+      ;; Default to the search page
+      (change-hash "search")
+      (dispatch [:route page id js/document.body.scrollTop]))))
+
+(js/window.removeEventListener "hashchange" handle-hash)
 (js/window.addEventListener "hashchange" handle-hash)
 (handle-hash)

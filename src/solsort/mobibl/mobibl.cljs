@@ -16,19 +16,41 @@
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
 ;; ## Handlers
-
 (register-handler
-  :route (fn [db [_ page id]]
-           (let [id (or id (get-in db [:current page]))]
-             (-> db
-                 (assoc-in [:current page] id)
-                 (assoc :route [page id])))))
+ :route (fn [db [_ page id prevPageScroll]]
+            (let [[prevPage prevId _] (get db :route)
+                  [id scroll] (or id (get-in db [:current page]))]
+              (dispatch [:scroll scroll])
+              (-> db
+                  (assoc-in [:current prevPage] [prevId prevPageScroll])
+                  (assoc-in [:current page] [id scroll])
+                  (assoc :route [page id])))))
 
 (register-handler
   :work (fn [db [_ id content]]
           (assoc-in db [:works id]
                     (merge (get-in db [:work id] {})
                            content))))
+(register-handler
+  :ui (fn [db [_ id value]]
+          (assoc-in db [:ui id] value)))
+(register-handler
+  :add-facet (fn [db [_ facet]]
+               (assoc-in db [:ui :facets]
+                         (cons facet (get-in db [:ui :facets] [])))))
+
+(register-handler
+  :remove-facet (fn [db [_ facet]]
+               (assoc-in db [:ui :facets]
+                         (remove #{facet} (get-in db [:ui :facets] [])))))
+
+(register-handler
+  :latest-work
+  (fn [db [_ id]]
+    (let [work-history (get-in db [:work-history] [])
+          work-history (into [id] (remove #(= % id) work-history))]
+      (assoc db :work-history work-history))))
+
 ;; ## Subscriptions
 
 (def default-work
@@ -39,6 +61,27 @@
   (let [work (get-in db [:works id])]
     (when-not work (dispatch [:request-work id]))
     (merge default-work {:id id} work)))
+
+(register-sub
+  :work-history
+  (fn [db _] (reaction (get @db :work-history []))))
+
+(register-sub
+  :facets
+  (fn [db [_ path]] (reaction (get-in @db [:ui :facets]))))
+
+(register-sub
+  :ui
+  (fn [db [_ path]] (reaction (get-in @db [:ui path]))))
+
+(register-sub
+  :search-history
+  (fn [db _] (reaction
+               [["filosofi" [[:creator "plato"] [:creator "socrates"]]]
+                ["ost" []]
+                ["Harry Potter" [[:type "dvd"] [:type "bog"]]]
+                ["hest" [[:year "2001"]]]])))
+
 
 (register-sub
   :search
@@ -211,3 +254,10 @@
 (dispatch [:request-status])
 
 ;; TODO: sync database to disk, and restore on load
+
+;; Handler to scroll page to previous scrollTop position
+(register-handler
+ :scroll (fn [db [_ scroll]]
+             (js/setTimeout
+              #(set! js/document.body.scrollTop (or scroll 0)) 100)
+             db))
