@@ -1,4 +1,5 @@
 [![Stories in Ready](https://badge.waffle.io/solsort/mobibl.png?label=ready&title=Ready)](https://waffle.io/solsort/mobibl)
+[![Build Status](https://travis-ci.org/solsort/mobibl.svg?branch=master)](https://travis-ci.org/solsort/mobibl)
 
 # MoBibl
 

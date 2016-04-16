@@ -359,7 +359,7 @@
      suggest (when show-history search-history)
      ]
     [:div.ui.container
-     [:h1 "Københavns Biblioteker"]
+     [:h1 "Mobiblby biblioteker"]
      [:div
       [:div.ui.search.fluid.input.action.left.icon
        [:i.search.icon]

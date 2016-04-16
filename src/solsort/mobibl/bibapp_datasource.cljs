@@ -33,7 +33,6 @@
      :language (first (o "language"))
      }))
 
-
 ;; ## Mock data
 ;; ### Dummy ids of books etc. with metadata
 
@@ -81,6 +80,27 @@
       (doall
         (for [o mockdata]
           (dispatch [:work (o "_id") (convert-bibentry o)]))))))
+;; ## Library data
+(go
+  (let [libraries (<! (<ajax "assets/libraries.json"))
+        libgeo (map
+                 (fn [lib]
+                   [#js[((lib "geo") "lat") ((lib "geo") "lng")] (lib "id")])
+                 libraries)]
+
+    (dispatch [:libraries libgeo])
+    (log libraries)
+    (doall
+      (map #(dispatch
+              [:library
+               {:id (% "id")
+                :name (% "name")
+                :address
+                {:road(% "street")
+                :postcode (% "postcode")
+                :city (% "city")}
+                :position [((% "geo") "lat")  ((% "geo") "lng")]}])
+           libraries))))
 
 ;; ## Get work metadata from database
 ;;
