@@ -17,14 +17,14 @@
 
 ;; ## Handlers
 (register-handler
- :route (fn [db [_ page id prevPageScroll]]
-            (let [[prevPage prevId _] (get db :route)
-                  [id scroll] (or id (get-in db [:current page]))]
-              (dispatch [:scroll scroll])
-              (-> db
-                  (assoc-in [:current prevPage] [prevId prevPageScroll])
-                  (assoc-in [:current page] [id scroll])
-                  (assoc :route [page id])))))
+  :route (fn [db [_ page id prevPageScroll]]
+           (let [[prevPage prevId _] (get db :route)
+                 [id scroll] (or id (get-in db [:current page]))]
+             (dispatch [:scroll scroll])
+             (-> db
+                 (assoc-in [:current prevPage] [prevId prevPageScroll])
+                 (assoc-in [:current page] [id scroll])
+                 (assoc :route [page id])))))
 
 (register-handler
   :work (fn [db [_ id content]]
@@ -33,7 +33,8 @@
                            content))))
 (register-handler
   :ui (fn [db [_ id value]]
-          (assoc-in db [:ui id] value)))
+        ;(log :ui id value)
+        (assoc-in db [:ui id] value)))
 (register-handler
   :add-facet (fn [db [_ facet]]
                (assoc-in db [:ui :facets]
@@ -41,8 +42,8 @@
 
 (register-handler
   :remove-facet (fn [db [_ facet]]
-               (assoc-in db [:ui :facets]
-                         (remove #{facet} (get-in db [:ui :facets] [])))))
+                  (assoc-in db [:ui :facets]
+                            (remove #{facet} (get-in db [:ui :facets] [])))))
 
 (register-handler
   :latest-work
@@ -89,9 +90,9 @@
     (reaction
       (let [results (get-in @db [:search q page])]
         (or results
-           (do
-            (dispatch [:request-search q page])
-            []))))))
+            (do
+              (dispatch [:request-search q page])
+              []))))))
 
 (def sample-lib
   {
@@ -223,8 +224,8 @@
         [10 15]]}]}}})
 
 (register-sub
- :current-library (fn [db] (reaction
-                            (get-in sample-lib [:library "710100"]))))
+  :current-library (fn [db] (reaction
+                              (get-in sample-lib [:library "710100"]))))
 
 (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
 (register-sub :works (fn [db] (reaction (:works @db))))
@@ -257,7 +258,7 @@
 
 ;; Handler to scroll page to previous scrollTop position
 (register-handler
- :scroll (fn [db [_ scroll]]
-             (js/setTimeout
+  :scroll (fn [db [_ scroll]]
+            (js/setTimeout
               #(set! js/document.body.scrollTop (or scroll 0)) 100)
-             db))
+            db))
