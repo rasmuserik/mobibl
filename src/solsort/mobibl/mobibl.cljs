@@ -1,4 +1,8 @@
-;; # Actual application logic (`mobibl.cljs`)
+;; # Core application logic and database (`mobibl.cljs`)
+;;
+;; This file contain the platform independent logic of the app.
+;;
+;; The app-db is the core of the application and has the following structure:
 ;;
 (ns solsort.mobibl.mobibl
   (:require-macros
@@ -15,65 +19,16 @@
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
-;; ## Handlers
-(register-handler
- :route (fn [db [_ page id prevPageScroll]]
-            (let [[prevPage prevId _] (get db :route)
-                  [id scroll] (or id (get-in db [:current page]))]
-              (dispatch [:scroll scroll])
-              (-> db
-                  (assoc-in [:current prevPage] [prevId prevPageScroll])
-                  (assoc-in [:current page] [id scroll])
-                  (assoc :route [page id])))))
+(declare get-work default-work sample-lib)
 
-(register-handler
-  :work (fn [db [_ id content]]
-          (assoc-in db [:works id]
-                    (merge (get-in db [:work id] {})
-                           content))))
-(register-handler
-  :ui (fn [db [_ id value]]
-          (assoc-in db [:ui id] value)))
-(register-handler
-  :add-facet (fn [db [_ facet]]
-               (assoc-in db [:ui :facets]
-                         (cons facet (get-in db [:ui :facets] [])))))
+;; ## General
+;;
+(register-sub :db (fn [db] (reaction @db)))
 
-(register-handler
-  :remove-facet (fn [db [_ facet]]
-               (assoc-in db [:ui :facets]
-                         (remove #{facet} (get-in db [:ui :facets] [])))))
-
-(register-handler
-  :latest-work
-  (fn [db [_ id]]
-    (let [work-history (get-in db [:work-history] [])
-          work-history (into [id] (remove #(= % id) work-history))]
-      (assoc db :work-history work-history))))
-
-;; ## Subscriptions
-
-(def default-work
-  {:title "Unknown Title"
-   :creator "Unknown Creator"})
-
-(defn get-work [db id]
-  (let [work (get-in db [:works id])]
-    (when-not work (dispatch [:request-work id]))
-    (merge default-work {:id id} work)))
-
-(register-sub
-  :work-history
-  (fn [db _] (reaction (get @db :work-history []))))
-
-(register-sub
-  :facets
-  (fn [db [_ path]] (reaction (get-in @db [:ui :facets]))))
-
-(register-sub
-  :ui
-  (fn [db [_ path]] (reaction (get-in @db [:ui path]))))
-
+;; ## Routing and history
+;;
+;;
+(register-sub :work-history (fn [db _] (reaction (get @db :work-history []))))
 (register-sub
   :search-history
   (fn [db _] (reaction
@@ -81,32 +36,98 @@
                 ["ost" []]
                 ["Harry Potter" [[:type "dvd"] [:type "bog"]]]
                 ["hest" [[:year "2001"]]]])))
+(register-sub :route (fn [db] (reaction (get @db :route))))
 
+(register-handler
+  :route (fn [db [_ page id prevPageScroll]]
+           (let [[prevPage prevId _] (get db :route)
+                 [id scroll] (or id (get-in db [:current page]))]
+             (dispatch [:scroll scroll])
+             (-> db
+                 (assoc-in [:current prevPage] [prevId prevPageScroll])
+                 (assoc-in [:current page] [id scroll])
+                 (assoc :route [page id])))))
+(register-handler
+  :latest-work
+  (fn [db [_ id]]
+    (let [work-history (get-in db [:work-history] [])
+          work-history (into [id] (remove #(= % id) work-history))]
+      (assoc db :work-history work-history))))
+;; ## Work
+;;
+(register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
+(register-sub :works (fn [db] (reaction (:works @db))))
+
+(register-handler
+  :work (fn [db [_ id content]]
+          (assoc-in db [:works id]
+                    (merge (get-in db [:work id] {})
+                           content))))
+
+(defn get-work [db id]
+  (let [work (get-in db [:works id])]
+    (when-not work (dispatch [:request-work id]))
+    (merge default-work {:id id} work)))
+(def default-work {:title "Unknown Title" :creator "Unknown Creator"})
+
+
+;; ## Search
 
 (register-sub
   :search
   (fn [db [_ q page]]
-    (reaction
-      (let [results (get-in @db [:search q page])]
-        (or results
-           (do
-            (dispatch [:request-search q page])
-            []))))))
+    (reaction (let [results (get-in @db [:search q page])]
+                (or results
+                    (do (dispatch [:request-search q page]) []))))))
 
-(def sample-lib
-  {
-   ;; ## Known libraries
-   ;;
+;; ## UI
+
+(register-handler
+  :ui (fn [db [_ id value]]
+        (assoc-in db [:ui id] value)))
+
+(register-sub :ui (fn [db [_ path]] (reaction (get-in @db [:ui path]))))
+(register-handler
+  :add-facet (fn [db [_ facet]]
+               (assoc-in db [:ui :facets]
+                         (cons facet (get-in db [:ui :facets] [])))))
+(register-handler
+  :remove-facet (fn [db [_ facet]]
+                  (assoc-in db [:ui :facets]
+                            (remove #{facet} (get-in db [:ui :facets] [])))))
+(register-sub :facets (fn [db [_ path]] (reaction (get-in @db [:ui :facets]))))
+
+;; TODO this is HTML5-specific, so should probably be moved into html5.cljs
+(register-handler
+  :scroll (fn [db [_ scroll]]
+            (js/setTimeout
+              #(set! js/document.body.scrollTop (or scroll 0)) 100)
+            db))
+
+;; ## Libraries
+
+(register-sub
+  :current-library (fn [db] (reaction
+                              (get-in @db [:libraries "710100"]))))
+
+(register-handler
+  :library
+  (fn [db [_ library]] (assoc-in db [:libraries (:id library)] library)))
+
+(register-handler
+  :libraries
+  (fn [db [_ libraries]] (assoc-in db [:libraries :all] libraries)))
+;; ### Sample library
+
+(dispatch-sync [:library
    ;; Simple representation of the libraries that are interesting for the user
    ;; including position on a map, opening hours and contact information.
    ;;
    ;; FIXME The above books in the works section are from different libraries,
    ;; ie. 775100 is Aarhus hovedbibliotek.
    ;;
-   :library
-   {"710100"
-    {:name "Københavns Hovedbibliotek"
-     :type "Folkebibliotek"
+    {:id "710100"
+     :name "Københavns Hovedbibliotek"
      :address
      {:road "Krystalgade 15"
       :city "1172 København K"
@@ -114,127 +135,21 @@
      :email "bibliotek@kff.kk.dk"
      :phone {:number "33663000"
              :time "man-fre 10-17"}
-     :position
-     [55.680887 12.573619]
+     :position [55.680887 12.573619]
+     ;; FIXME How to represent many opening hours for departments of a library?
+     ;; - these are delivered as a &lt;pre&gt;-formatted data
      :hours
      [{:title "Åbningstider"
-       :weekdays
-       [[8 22]
-        [8 20]
-        [8 20]
-        [8 20]
-        [8 19]
-        [8 17]]}
+       :weekdays [[8 22] [8 20] [8 20] [8 20] [8 19] [8 17]]}
       {:title "Betjening"
-       :weekdays
-       [[12 17]
-        [12 17]
-        [12 17]
-        [12 17]
-        [12 17]
-        [12 15]]}]}
-    "810010"
-    {:name "Det Kongelige Bibliotek, Diamanten"
-     :type "Forskningsbibliotek"
-     :address {
-               :road "Søren Kierkegaards Plads 1"
-               :city "1221 København K"
-               :country "Danmark"}
-     :email "kb@kb.dk"
-     :phone {:number "33 47 47 47"
-             :time "man - fre 9-16"}
-     :position
-     [55.67321579999999 12.5821264]
-     ;;
-     ;; FIXME How to represent many opening hours for departments of a library
-     ;;
-     ;; At the Diamanten library there are a lot of possible access times, so
-     ;; many are included here to see if it is possible to represent them in a
-     ;; manageable way on a mobile app.
-     ;;
-     ;; The user could also be presented for a way to selecting which department
-     ;; of the library to view opening hours for.
-     ;;
-     :hours
-     [{:title "Adgang til Diamanten"
-       :weekdays
-       [[8 22]
-        [8 22]
-        [8 22]
-        [8 22]
-        [8 22]
-        [8 22]]}
-      {:title "Informationen"
-       :weekdays
-       [[8 21]
-        [8 21]
-        [8 21]
-        [8 21]
-        [8 21]]}
-      {:title "Helpdesk"
-       :weekdays
-       [[10 16]
-        [10 16]
-        [10 16]
-        [10 16]
-        [10 16]]}
-      {:title "Læsesal Vest og E-Vest"
-       :weekdays
-       [[9 21]
-        [9 21]
-        [9 21]
-        [9 21]
-        [9 21]
-        [10 17]]}
-      {:title "Læsesal Nord og Øst"
-       :weekdays
-       [[8 21]
-        [8 21]
-        [8 21]
-        [8 21]
-        [8 21]
-        [10 17]]}
-      {:title "Center for Kort og Billeder"
-       :weekdays
-       [nil
-        [10 16]
-        [12 16]
-        [10 16]]}
-      {:title "Center for Manuskripter og Boghistorie"
-       :weekdays
-       [[10 17]
-        [10 17]
-        [12 19]
-        [10 17]
-        [10 17]]}
-      {:title "Småtrykssamlingens interne læsesal"
-       :weekdays
-       [[10 15]
-        [10 15]
-        [10 15]
-        [10 15]
-        [10 15]]}
-      {:title "Dansk Folkemindesamling"
-       :weekdays
-       [nil
-        [10 15]
-        [10 15]
-        [10 15]
-        [10 15]]}]}}})
+       :weekdays [[12 17] [12 17] [12 17] [12 17] [12 17] [12 15]]}]}
+    ])
 
-(register-sub
- :current-library (fn [db] (reaction
-                            (get-in sample-lib [:library "710100"]))))
+;; ## User status
 
-(register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
-(register-sub :works (fn [db] (reaction (:works @db))))
-(register-sub :route (fn [db] (reaction (get @db :route))))
-(register-sub :db (fn [db] (reaction @db)))
-
-;;
-;; Helper function to query the db for the full info about works
-;;
-(defn get-status-works [db prop]
+(defn get-status-works
+  "Helper function to query the db for the full info about works"
+  [db prop]
   (let [status-obj (get-in db [:status prop])
         res (for [so status-obj]
               (merge so (get-work db (:id so))))]
@@ -247,17 +162,5 @@
 (register-sub :borrowed
               (fn [db _] (reaction (get-status-works @db :borrowed))))
 
-;; ## Data initialisation
-;;
 ;; TODO: also run on network reconnect, and after a while
-;;
 (dispatch [:request-status])
-
-;; TODO: sync database to disk, and restore on load
-
-;; Handler to scroll page to previous scrollTop position
-(register-handler
- :scroll (fn [db [_ scroll]]
-             (js/setTimeout
-              #(set! js/document.body.scrollTop (or scroll 0)) 100)
-             db))
