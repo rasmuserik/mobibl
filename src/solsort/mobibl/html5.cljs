@@ -14,7 +14,7 @@
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
-    [solsort.mobibl.bib-map :refer [bib-map]]
+    [solsort.mobibl.leaflet :refer [leaflet]]
     [cljsjs.hammer]
     [goog.string :refer [unescapeEntities]]))
 
@@ -133,7 +133,7 @@
     ;; FIXME Not so nice to have the style for bib-map defined here
     ;;
     (load-style!
-      {"#bib-map"
+      {".map"
        {:height (js/Math.min js/document.body.clientWidth
                              (* 0.6 js/document.body.clientHeight))}}
       "bib-map-style")
@@ -386,9 +386,9 @@
                      :on-click #(dispatch-sync [:ui :show-history false])}
                     s " "]
                    (for [[col f] facets]
-                    [:div.ui.small.label
-                     {:class (facet-color col)}
-                     (str f)]
+                     [:div.ui.small.label
+                      {:class (facet-color col)}
+                      (str f)]
                      )
                    ))))]
 
@@ -437,7 +437,7 @@
              results)]
      [tabbar]
      ]
-    ))
+))
 
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
@@ -450,7 +450,6 @@
         creator (:creator work)
         work-history @(subscribe [:work-history])
         ]
-    (log 'work-history work-history)
     (when (not= work-id (first work-history))
       (dispatch [:latest-work work-id]))
     [:div
@@ -522,9 +521,16 @@
             hours   (:hours @current-library)
             phone   (:phone @current-library)]
         [:div
-         [bib-map
-          :id "bib-map"
-          :pos (:position @current-library)]
+         [leaflet
+          :class "map"
+          :id "leafletdiv"
+          :pos0 (:position @current-library)
+          :zoom 13
+          :markers
+          [{:pos (:position @current-library)
+            :click #(js/alert "click")
+            }]
+          ]
          [:div.ui.container [:h1 (:name @current-library)]]
          [:div.ui.container
           [:div.address
@@ -675,23 +681,23 @@
     (.add hammer swipe)
     (.on hammer "swipeleft"
          (fn []
-             (let [[page id _] @(subscribe [:route])
-                   index (.indexOf ordered-page-names page)]
-               (change-hash
-                (get ordered-page-names
-                     (if (zero? index)
-                       (dec (count ordered-page-names))
-                       (dec index)))))))
+           (let [[page id _] @(subscribe [:route])
+                 index (.indexOf ordered-page-names page)]
+             (change-hash
+               (get ordered-page-names
+                    (if (zero? index)
+                      (dec (count ordered-page-names))
+                      (dec index)))))))
 
     (.on hammer "swiperight"
          (fn []
-             (let [[page id _] @(subscribe [:route])
-                   index (.indexOf ordered-page-names page)]
-               (change-hash
-                (get ordered-page-names
-                     (if (= index (dec (count ordered-page-names)))
-                       0
-                       (inc index)))))))))
+           (let [[page id _] @(subscribe [:route])
+                 index (.indexOf ordered-page-names page)]
+             (change-hash
+               (get ordered-page-names
+                    (if (= index (dec (count ordered-page-names)))
+                      0
+                      (inc index)))))))))
 
 (addSwipeGestures)
 
