@@ -15,6 +15,7 @@
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
     [solsort.mobibl.bib-map :refer [bib-map]]
+    [cljsjs.hammer]
     [goog.string :refer [unescapeEntities]]))
 
 ;; ## Styling
@@ -643,12 +644,12 @@
        [tabbar]
        ])))
 
+
 ;; ### Main App entry point
 (defn app []
-  (let [[page id scroll] @(subscribe [:route])]
+  (let [[page id _] @(subscribe [:route])]
     ;; TODO Really annoying hack to scroll to position after page render.  Use
     ;; component lifecycle to do this properly
-    (js/setTimeout #(set! js/document.body.scrollTop (or scroll 0)) 100)
     (case page
       "search" [search id]
       "work" [work id]
@@ -660,11 +661,49 @@
 
 (render [app])
 
+;; ## Swipe gestures
+
+(def ordered-page-names (to-array ["search"  "work" "library" "status"]))
+
+(defn change-hash [newHash]
+  (.pushState js/history newHash newHash (str "#" newHash))
+  (.dispatchEvent js/window (js/HashChangeEvent. "hashchange")))
+
+(defn addSwipeGestures []
+  (let [hammer (js/Hammer.Manager. js/document.body)
+        swipe  (js/Hammer.Swipe.)]
+    (.add hammer swipe)
+    (.on hammer "swipeleft"
+         (fn []
+             (let [[page id _] @(subscribe [:route])
+                   index (.indexOf ordered-page-names page)]
+               (change-hash
+                (get ordered-page-names
+                     (if (zero? index)
+                       (dec (count ordered-page-names))
+                       (dec index)))))))
+
+    (.on hammer "swiperight"
+         (fn []
+             (let [[page id _] @(subscribe [:route])
+                   index (.indexOf ordered-page-names page)]
+               (change-hash
+                (get ordered-page-names
+                     (if (= index (dec (count ordered-page-names)))
+                       0
+                       (inc index)))))))))
+
+(addSwipeGestures)
+
+
 ;; ## Routing
 
 (defn handle-hash []
   (let [[page id] (string/split (.slice js/location.hash 1) "/")]
-    (dispatch [:route page id js/document.body.scrollTop])))
+    (if (neg? (.indexOf ordered-page-names page))
+      ;; Default to the search page
+      (change-hash "search")
+      (dispatch [:route page id js/document.body.scrollTop]))))
 
 (js/window.removeEventListener "hashchange" handle-hash)
 (js/window.addEventListener "hashchange" handle-hash)

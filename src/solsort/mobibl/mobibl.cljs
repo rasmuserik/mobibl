@@ -16,17 +16,15 @@
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
 ;; ## Handlers
-
 (register-handler
  :route (fn [db [_ page id prevPageScroll]]
-            (log "route-handler" page id prevPageScroll)
             (let [[prevPage prevId _] (get db :route)
-                  prevPage (or prevPage "search")
                   [id scroll] (or id (get-in db [:current page]))]
+              (dispatch [:scroll scroll])
               (-> db
                   (assoc-in [:current prevPage] [prevId prevPageScroll])
                   (assoc-in [:current page] [id scroll])
-                  (assoc :route [page id scroll])))))
+                  (assoc :route [page id])))))
 
 (register-handler
   :work (fn [db [_ id content]]
@@ -256,3 +254,10 @@
 (dispatch [:request-status])
 
 ;; TODO: sync database to disk, and restore on load
+
+;; Handler to scroll page to previous scrollTop position
+(register-handler
+ :scroll (fn [db [_ scroll]]
+             (js/setTimeout
+              #(set! js/document.body.scrollTop (or scroll 0)) 100)
+             db))
