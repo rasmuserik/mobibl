@@ -4,6 +4,16 @@
 ;;
 ;; The app-db is the core of the application and has the following structure:
 ;;
+;; - `:ui` everything related to the ui
+;; - `:route` TODO everything about routing and history
+;; - `:backend` everything specific to certain backends (currently `requested`)
+;; - `:data` TODO application specific data:
+;;     - `:libraries` information about the libraries
+;;     - `:search :results` results of search queries
+;;     - `:facets` TODO facets for searches
+;;     - `:user` user status (currently `:status`)
+;;     - `:works` information about specific works
+;;
 (ns solsort.mobibl.mobibl
   (:require-macros
     [cljs.core.async.macros :refer [go go-loop alt!]]
@@ -18,12 +28,12 @@
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
-
 (declare get-work default-work sample-lib)
 
-;; ## General
-;;
-(register-sub :db (fn [db] (reaction @db)))
+;; DEBUG: uncomment this to print db on reload
+
+;(register-sub :db (fn [db] (reaction @db)))
+;(log 'db @(subscribe [:db]))
 
 ;; ## Routing and history
 ;;
@@ -117,6 +127,7 @@
 (register-handler
   :libraries
   (fn [db [_ libraries]] (assoc-in db [:libraries :all] libraries)))
+
 ;; ### Sample library
 
 (dispatch-sync [:library
