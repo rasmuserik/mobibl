@@ -119,6 +119,8 @@
 (register-sub
   :current-library (fn [db] (reaction
                               (get-in @db [:libraries "710100"]))))
+(register-sub
+  :libraries (fn [db] (reaction (get-in @db [:libraries :all] []))))
 
 (register-handler
   :library

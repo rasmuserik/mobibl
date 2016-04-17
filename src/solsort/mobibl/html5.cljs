@@ -527,10 +527,8 @@
           :pos0 (:position @current-library)
           :zoom 13
           :markers
-          [{:pos (:position @current-library)
-            :click #(js/alert "click")
-            }]
-          ]
+          (map (fn [[pos id]] {:pos pos :click #(js/alert id)})
+               @(subscribe [:libraries]))]
          [:div.ui.container [:h1 (:name @current-library)]]
          [:div.ui.container
           [:div.address
