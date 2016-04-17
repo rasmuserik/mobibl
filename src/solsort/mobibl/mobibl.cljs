@@ -51,7 +51,9 @@
 (register-handler
   :route (fn [db [_ page id prevPageScroll]]
            (let [[prevPage prevId _] (get db :route)
-                 [id scroll] (or id (get-in db [:current page]))]
+                 [id scroll] (if id
+                               [id 0]
+                               (get-in db [:current page]))]
              (dispatch [:scroll scroll])
              (-> db
                  (assoc-in [:current prevPage] [prevId prevPageScroll])
