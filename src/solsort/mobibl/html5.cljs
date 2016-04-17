@@ -56,16 +56,7 @@
        ".small" {:font-size "80% !important"}
        ".regular " {:font-weight "300 !important"}
        ".condensed" {:font-family "\"Open Sans Condensed\" !important"}
-       ".ssbutton"
-       {:display :inline-block
-        :min-height (* 2.5 unit)
-        :border-radius (* 0.5 unit)
-        :border (str (* 0.15 unit) "px solid black")
-        :padding-top (* 0.5 unit)
-        :padding-left (* 0.3 unit)
-        :padding-right (* 0.3 unit)
-        :text-align :center
-        :vertical-align :middle}}
+       }
       "general styling")
     ;; ### Tabbar
     (load-style!
@@ -97,37 +88,6 @@
         :width 44}
        }
       "tabbar-styling")
-    ;; ### Book
-    (load-style!
-      {".work"
-       {:margin-left unit
-        :margin-right unit }
-       ".work-cover-img"
-       {:float :right
-        :max-width "62%"
-        :max-height (- js/window.innerHeight (* 4 unit)) }
-       ".work .title"
-       {:text-align :center
-        :font-size "200%"
-        :margin-top unit }
-       ".work .author"
-       {:text-align :center
-        :margin-bottom unit}
-       ".work-keyword"
-       {:display :inline-block
-        :vertical-align :middle
-        :clear :none
-        :padding-top (* 0.5 unit)
-        :min-height (* 2 unit)
-        ;:outline "1px solid black"
-        :width (* unit 7.3)
-        }
-       ".work-img"
-       {:float :right
-        :margin-left 0
-        :margin-right 0
-        :width (* unit 14)}}
-      "work-style")
     ;; ### Library view
     ;;
     ;; FIXME Not so nice to have the style for bib-map defined here
@@ -135,22 +95,18 @@
     (load-style!
       {".map"
        {:height (js/Math.min js/document.body.clientWidth
-                             (* 0.6 js/document.body.clientHeight))}}
-      "bib-map-style")
-    (load-style!
-      {"table.openhours th"
+                             (* 0.6 js/document.body.clientHeight))}
+      "table.openhours th"
        {:text-align "left"
         :padding "0em 0.8em 0em 0em"}
        "table.openhours tbody td"
-       {:text-align "center"}}
-      "open-hours-styling")
-(load-style!
-  {".contact"
-   {:padding "0em 0em 10em 0em"
-    ".contact div span"
-    {:margin "0em 1em 0em 0em"
-     :border "1px solid blue"}}}
-  "contact-styling")))
+       {:text-align "center"}
+       ".contact"
+       {:padding "0em 0em 10em 0em"
+       ".contact div span"
+       {:margin "0em 1em 0em 0em"
+        :border "1px solid blue"}}}
+  "library-styling")))
 
 ;; ### Actually apply styling
 ;;
