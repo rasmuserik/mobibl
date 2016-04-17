@@ -123,6 +123,8 @@
                               (get-in @db [:libraries "710100"]))))
 (register-sub
   :libraries (fn [db] (reaction (get-in @db [:libraries :all] []))))
+(register-sub
+  :library (fn [db [_ id]] (reaction (get-in @db [:libraries id] {}))))
 
 (register-handler
   :library

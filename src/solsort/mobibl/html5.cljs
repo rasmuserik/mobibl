@@ -515,21 +515,22 @@
 (def daynames ["Man" "Tir" "Ons" "Tor" "Fre" "Lør" "Søn"])
 
 (defn library [id]
-  (let [current-library (subscribe [:current-library])]
-    (fn []
-      (let [address (:address @current-library)
-            hours   (:hours @current-library)
-            phone   (:phone @current-library)]
+  (log 'lib id)
+  (let [current-library @(subscribe [:library id])]
+
+      (let [address (:address current-library)
+            hours   (:hours current-library)
+            phone   (:phone current-library)]
         [:div
          [leaflet
           :class "map"
           :id "leafletdiv"
-          :pos0 (:position @current-library)
+          :pos0 (:position current-library)
           :zoom 13
           :markers
-          (map (fn [[pos id]] {:pos pos :click #(js/alert id)})
+          (map (fn [[pos id]] {:pos pos :click #(dispatch-sync [:route "library" id])})
                @(subscribe [:libraries]))]
-         [:div.ui.container [:h1 (:name @current-library)]]
+         [:div.ui.container [:h1 (:name current-library)]]
          [:div.ui.container
           [:div.address
            [:h2 "Adresse"]
@@ -563,14 +564,14 @@
            [:h2 "Kontakt"]
            [:div
             [:span "Email: "]
-            [:span (:email @current-library)]]
+            [:span (:email current-library)]]
            [:div
             [:span "Telefon: "]
             [:span (:number phone)]
             " "
             [:span (:time phone)]]]]
          [tabbar]
-         ]))))
+         ])))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
@@ -652,18 +653,20 @@
 ;; ### Main App entry point
 (defn app []
   (let [[page id _] @(subscribe [:route])]
+    (log 'here id)
     ;; TODO Really annoying hack to scroll to position after page render.  Use
     ;; component lifecycle to do this properly
-    (case page
+    [:div
+     (case page
       "search" [search id]
       "work" [work id]
-      "library" [library id]
+      "library" [library (or id "710100")]
       "status" [status]
-      [search ""])))
+      [search ""])]))
 
 ;; ## Execute and events
 
-(render [app])
+(render [:div [app]])
 
 ;; ## Swipe gestures
 
