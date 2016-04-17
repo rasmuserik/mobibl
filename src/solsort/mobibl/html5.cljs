@@ -238,7 +238,8 @@
       [:div.italic.large (:creator o)]
       (into
         [:div]
-        (interpose ", " (map (fn [s] [:span.condensed.inline-block s]) (:keywords o))))
+        (interpose ", " (map (fn [s] [:span.condensed.inline-block s])
+                             (:keywords o))))
       [:div (:description o)]]]))
 
 ;; ### Search
@@ -471,7 +472,8 @@
         :pos0 (:position current-library)
         :zoom 13
         :markers
-        (map (fn [[pos id]] {:pos pos :click #(dispatch-sync [:route "library" id])})
+        (map (fn [[pos id]] {:pos pos
+                             :click #(dispatch-sync [:route "library" id])})
              @(subscribe [:libraries]))]
        [:div.ui.container [:h1 (:name current-library)]]
        [:div.ui.container
