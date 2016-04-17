@@ -2,7 +2,7 @@
 <widget id="solsort.mobibl.mobibl" version="0.0.1-SNAPSHOT" 
   xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>MoBibl</name>
-    <date>2016-02</date>
+    <date>2016-04</date>
     <shortdescription>Public Library App</shortdescription>
     <description>
       Very early version, not ready in any way yet...
