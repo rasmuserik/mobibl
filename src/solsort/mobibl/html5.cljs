@@ -96,17 +96,17 @@
       {".map"
        {:height (js/Math.min js/document.body.clientWidth
                              (* 0.6 js/document.body.clientHeight))}
-      "table.openhours th"
+       "table.openhours th"
        {:text-align "left"
         :padding "0em 0.8em 0em 0em"}
        "table.openhours tbody td"
        {:text-align "center"}
        ".contact"
        {:padding "0em 0em 10em 0em"
-       ".contact div span"
-       {:margin "0em 1em 0em 0em"
-        :border "1px solid blue"}}}
-  "library-styling")))
+        ".contact div span"
+        {:margin "0em 1em 0em 0em"
+         :border "1px solid blue"}}}
+      "library-styling")))
 
 ;; ### Actually apply styling
 ;;
@@ -474,60 +474,60 @@
   (log 'lib id)
   (let [current-library @(subscribe [:library id])]
 
-      (let [address (:address current-library)
-            hours   (:hours current-library)
-            phone   (:phone current-library)]
-        [:div
-         [leaflet
-          :class "map"
-          :id "leafletdiv"
-          :pos0 (:position current-library)
-          :zoom 13
-          :markers
-          (map (fn [[pos id]] {:pos pos :click #(dispatch-sync [:route "library" id])})
-               @(subscribe [:libraries]))]
-         [:div.ui.container [:h1 (:name current-library)]]
-         [:div.ui.container
-          [:div.address
-           [:h2 "Adresse"]
-           [:div (:road address)]
-           [:div (:city address)]
-           [:div (:country address)]]
-          [:div.open
-           [:h2 "Åbningstider"]
-           [:table.openhours
-            [:thead
-             (into
-               [:tr [:th]]
-               (for [title (map :title hours)]
-                 [:th title]))]
-            (into [:tbody]
-                  (for [day (range 7)]
-                    (into [:tr
-                           [:th (get daynames day)]]
-                          (for [area (map :weekdays hours)
-                                :let [time (get area day)]]
-                            (into [:td]
-                                  [(if (nil? time)
-                                     "Lukket"
-                                     (let [t0 (get time 0)
-                                           t1 (get time 1)]
-                                       (str (if (< t0 10)
-                                              (unescapeEntities "&nbsp;")
-                                              "")
-                                            t0 " - " t1)))])))))]]
-          [:div.contact
-           [:h2 "Kontakt"]
-           [:div
-            [:span "Email: "]
-            [:span (:email current-library)]]
-           [:div
-            [:span "Telefon: "]
-            [:span (:number phone)]
-            " "
-            [:span (:time phone)]]]]
-         [tabbar]
-         ])))
+    (let [address (:address current-library)
+          hours   (:hours current-library)
+          phone   (:phone current-library)]
+      [:div
+       [leaflet
+        :class "map"
+        :id "leafletdiv"
+        :pos0 (:position current-library)
+        :zoom 13
+        :markers
+        (map (fn [[pos id]] {:pos pos :click #(dispatch-sync [:route "library" id])})
+             @(subscribe [:libraries]))]
+       [:div.ui.container [:h1 (:name current-library)]]
+       [:div.ui.container
+        [:div.address
+         [:h2 "Adresse"]
+         [:div (:road address)]
+         [:div (:city address)]
+         [:div (:country address)]]
+        [:div.open
+         [:h2 "Åbningstider"]
+         [:table.openhours
+          [:thead
+           (into
+             [:tr [:th]]
+             (for [title (map :title hours)]
+               [:th title]))]
+          (into [:tbody]
+                (for [day (range 7)]
+                  (into [:tr
+                         [:th (get daynames day)]]
+                        (for [area (map :weekdays hours)
+                              :let [time (get area day)]]
+                          (into [:td]
+                                [(if (nil? time)
+                                   "Lukket"
+                                   (let [t0 (get time 0)
+                                         t1 (get time 1)]
+                                     (str (if (< t0 10)
+                                            (unescapeEntities "&nbsp;")
+                                            "")
+                                          t0 " - " t1)))])))))]]
+        [:div.contact
+         [:h2 "Kontakt"]
+         [:div
+          [:span "Email: "]
+          [:span (:email current-library)]]
+         [:div
+          [:span "Telefon: "]
+          [:span (:number phone)]
+          " "
+          [:span (:time phone)]]]]
+       [tabbar]
+       ])))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
@@ -614,11 +614,11 @@
     ;; component lifecycle to do this properly
     [:div
      (case page
-      "search" [search id]
-      "work" [work id]
-      "library" [library (or id "710100")]
-      "status" [status]
-      [search ""])]))
+       "search" [search id]
+       "work" [work id]
+       "library" [library (or id "710100")]
+       "status" [status]
+       [search ""])]))
 
 ;; ## Execute and events
 
