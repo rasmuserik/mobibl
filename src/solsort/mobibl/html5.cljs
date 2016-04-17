@@ -51,21 +51,13 @@
         :font-weight "300"}
        ".bold" {:font-weight "bold !important"}
        ".center" {:text-align :center}
+       ".inline-block" {:display :inline-block}
        ".italic" {:font-style "italic !important"}
        ".large" {:font-size "120% !important"}
        ".small" {:font-size "80% !important"}
        ".regular " {:font-weight "300 !important"}
        ".condensed" {:font-family "\"Open Sans Condensed\" !important"}
-       ".ssbutton"
-       {:display :inline-block
-        :min-height (* 2.5 unit)
-        :border-radius (* 0.5 unit)
-        :border (str (* 0.15 unit) "px solid black")
-        :padding-top (* 0.5 unit)
-        :padding-left (* 0.3 unit)
-        :padding-right (* 0.3 unit)
-        :text-align :center
-        :vertical-align :middle}}
+       }
       "general styling")
     ;; ### Tabbar
     (load-style!
@@ -97,37 +89,6 @@
         :width 44}
        }
       "tabbar-styling")
-    ;; ### Book
-    (load-style!
-      {".work"
-       {:margin-left unit
-        :margin-right unit }
-       ".work-cover-img"
-       {:float :right
-        :max-width "62%"
-        :max-height (- js/window.innerHeight (* 4 unit)) }
-       ".work .title"
-       {:text-align :center
-        :font-size "200%"
-        :margin-top unit }
-       ".work .author"
-       {:text-align :center
-        :margin-bottom unit}
-       ".work-keyword"
-       {:display :inline-block
-        :vertical-align :middle
-        :clear :none
-        :padding-top (* 0.5 unit)
-        :min-height (* 2 unit)
-        ;:outline "1px solid black"
-        :width (* unit 7.3)
-        }
-       ".work-img"
-       {:float :right
-        :margin-left 0
-        :margin-right 0
-        :width (* unit 14)}}
-      "work-style")
     ;; ### Library view
     ;;
     ;; FIXME Not so nice to have the style for bib-map defined here
@@ -135,22 +96,92 @@
     (load-style!
       {".map"
        {:height (js/Math.min js/document.body.clientWidth
-                             (* 0.6 js/document.body.clientHeight))}}
-      "bib-map-style")
-    (load-style!
-      {"table.openhours th"
+                             (* 0.6 js/document.body.clientHeight))}
+       "table.openhours th"
        {:text-align "left"
         :padding "0em 0.8em 0em 0em"}
        "table.openhours tbody td"
-       {:text-align "center"}}
-      "open-hours-styling")
+       {:text-align "center"}
+       ".contact"
+       {:padding "0em 0em 10em 0em"
+        ".contact div span"
+        {:margin "0em 1em 0em 0em"
+         :border "1px solid blue"}}}
+      "library-styling")))
+
+;; ### tinywork
+
+(let [unit 13
+      width (* 4.5 unit)]
+  (load-style!
+    {:.tinywork
+     {:display :inline-block
+      :white-space :normal
+      :font-size (* 0.8 unit)
+      :line-height (str unit "px")
+      :position :relative
+      :width width
+      :height (* 5.5 unit)
+      :text-shadow
+      (str "1px 0px 1px white,"
+           "0px 0px 1px white,"
+           "1px 1px 1px white,"
+           "0px 1px 1px white")}
+     ".tinywork > .bold"
+     {:display :inline-block
+      :position :absolute
+      :top 0
+      :left 0
+      :width width
+      :height (* 4 unit)
+      :background "rgba(255,255,255,0.4)"
+      :padding-bottom (* .25 unit)
+      :overflow :hidden}
+     ".tinywork > .condensed"
+     {:display :inline-block
+      :position :absolute
+      :text-align :left
+      :bottom 0
+      :left 0
+      :width width
+      :font-size (* 1 unit)
+      :white-space :nowrap
+      :padding (* .25 unit)
+      :height (* 1.5 unit)
+      :background "rgba(255,255,255,0.4)"
+      :overflow :hidden}
+     }
+    "tinywork-styling"))
+
+;; ### work
+
 (load-style!
-  {".contact"
-   {:padding "0em 0em 10em 0em"
-    ".contact div span"
-    {:margin "0em 1em 0em 0em"
-     :border "1px solid blue"}}}
-  "contact-styling")))
+  {:.work
+   {:position :relative
+    :overflow "hidden"
+    :height "100%"
+    :width "100%"}
+   ".work > img"
+   {:max-width "33%"
+    :max-height "100%"
+    :box-sizing :border-box
+    :vertical-align :top}
+   ".work > div"
+   {:display :inline-block
+    :box-sizing :border-box
+    :width "66%"
+    :height "100%"
+    :vertical-align :top
+    :padding-left ".3em"
+    :overflow :hidden}
+   ".work .fadeout"
+   {:display :block
+    :position :absolute
+    :bottom "0px"
+    :height "33%"
+    :width "100%"
+    :background "linear-gradient(rgba(255,255,255,0), white)" }}
+  "work-styling")
 
 ;; ### Actually apply styling
 ;;
@@ -186,59 +217,11 @@
   (let  [o @(subscribe [:work pid])
          unit 13
          width (* 4.5 unit)]
-    [:a {:href (str "#work/" pid)
-         :style {:color "#111"}
-         }
-     [:div.center
-      {:style
-       {:display :inline-block
-        :white-space :normal
-        :font-size (* 0.8 unit)
-        :line-height (str unit "px")
-        :position :relative
-        :width width
-        :height (* 5.5 unit)
-        :text-shadow
-        (str "1px 0px 1px white,"
-             "0px 0px 1px white,"
-             "1px 1px 1px white,"
-             "0px 1px 1px white")
-
-        }}
-      [:img
-       {:src (:cover-url o)
-        :width "100%"
-        :height "100%"
-        }
-       ]
-      [:div.bold
-       {:style
-        {:display :inline-block
-         :position :absolute
-         :top 0
-         :left 0
-         :width width
-         :height (* 4 unit)
-         :background "rgba(255,255,255,0.4)"
-         :padding-bottom (* .25 unit)
-         :overflow :hidden
-         }}
-       (:title o)]
-      [:div.condensed
-       {:style
-        {:display :inline-block
-         :position :absolute
-         :text-align :left
-         :bottom 0
-         :left 0
-         :width width
-         :font-size (* 1 unit)
-         :white-space :nowrap
-         :padding (* .25 unit)
-         :height (* 1.5 unit)
-         :background "rgba(255,255,255,0.4)"
-         :overflow :hidden}}
-       (:creator o)]]]))
+    [:a {:href (str "#work/" pid) :style {:color "#111"}}
+     [:div.center.tinywork
+      [:img {:src (:cover-url o) :width "100%" :height "100%" } ]
+      [:div.bold (:title o)]
+      [:div.condensed (:creator o)]]]))
 
 ;; ### work-item
 (defn work-item [pid]
@@ -248,52 +231,15 @@
           (fn [kw] [:a {:href (str "#search/" kw)} kw])
           (:keywords o)
           )]
-
-    [:div
-     {:style
-      {:position :relative
-       :overflow "hidden"
-       :height "100%"
-       :width "100%" }}
-     [:img
-      {:src (:cover-url o)
-       :style
-       {:max-width "33%"
-        :max-height "100%"
-        :box-sizing :border-box
-        :vertical-align :top
-        }}]
-     [:div
-      {:style
-       {:display :inline-block
-        :box-sizing :border-box
-        :width "66%"
-        :height "100%"
-        :vertical-align :top
-        :padding-left ".3em"
-        :overflow :hidden
-        }}
-      [:div
-       {:style
-        {:display :block
-         :position :absolute
-         :bottom "0px"
-         :height "33%"
-         :width "100%"
-         :background "linear-gradient(rgba(255,255,255,0), white)"
-         }}]
+    [:div.work
+     [:img {:src (:cover-url o) }]
+     [:div [:div.fadeout]
       [:div.bold.large (:title o)]
       [:div.italic.large (:creator o)]
-      (into [:div]
-            (interpose
-              ", "
-              (map (fn [s] [:span.condensed
-                            {:style {:display :inline-block}}
-                            s])
-                   (:keywords o))))
-      [:div (:description o)]
-      ]]
-    ))
+      (into
+        [:div]
+        (interpose ", " (map (fn [s] [:span.condensed.inline-block s]) (:keywords o))))
+      [:div (:description o)]]]))
 
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
@@ -345,8 +291,7 @@
            :href (str "#work/" pid)}
           [:div
            {:style
-            {:border "0px solid black"
-             :height "9rem"
+            {:height "9rem"
              :color :black
              :margin-bottom "1rem"
              :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"
@@ -435,9 +380,7 @@
      [:div.ui.grid
       (merge [:div.stackable.doubling.four.column.row]
              results)]
-     [tabbar]
-     ]
-))
+     [tabbar]]))
 
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
@@ -515,62 +458,63 @@
 (def daynames ["Man" "Tir" "Ons" "Tor" "Fre" "Lør" "Søn"])
 
 (defn library [id]
-  (let [current-library (subscribe [:current-library])]
-    (fn []
-      (let [address (:address @current-library)
-            hours   (:hours @current-library)
-            phone   (:phone @current-library)]
-        [:div
-         [leaflet
-          :class "map"
-          :id "leafletdiv"
-          :pos0 (:position @current-library)
-          :zoom 13
-          :markers
-          (map (fn [[pos id]] {:pos pos :click #(js/alert id)})
-               @(subscribe [:libraries]))]
-         [:div.ui.container [:h1 (:name @current-library)]]
-         [:div.ui.container
-          [:div.address
-           [:h2 "Adresse"]
-           [:div (:road address)]
-           [:div (:city address)]
-           [:div (:country address)]]
-          [:div.open
-           [:h2 "Åbningstider"]
-           [:table.openhours
-            [:thead
-             (into
-               [:tr [:th]]
-               (for [title (map :title hours)]
-                 [:th title]))]
-            (into [:tbody]
-                  (for [day (range 7)]
-                    (into [:tr
-                           [:th (get daynames day)]]
-                          (for [area (map :weekdays hours)
-                                :let [time (get area day)]]
-                            (into [:td]
-                                  [(if (nil? time)
-                                     "Lukket"
-                                     (let [t0 (get time 0)
-                                           t1 (get time 1)]
-                                       (str (if (< t0 10)
-                                              (unescapeEntities "&nbsp;")
-                                              "")
-                                            t0 " - " t1)))])))))]]
-          [:div.contact
-           [:h2 "Kontakt"]
-           [:div
-            [:span "Email: "]
-            [:span (:email @current-library)]]
-           [:div
-            [:span "Telefon: "]
-            [:span (:number phone)]
-            " "
-            [:span (:time phone)]]]]
-         [tabbar]
-         ]))))
+  (log 'lib id)
+  (let [current-library @(subscribe [:library id])]
+
+    (let [address (:address current-library)
+          hours   (:hours current-library)
+          phone   (:phone current-library)]
+      [:div
+       [leaflet
+        :class "map"
+        :id "leafletdiv"
+        :pos0 (:position current-library)
+        :zoom 13
+        :markers
+        (map (fn [[pos id]] {:pos pos :click #(dispatch-sync [:route "library" id])})
+             @(subscribe [:libraries]))]
+       [:div.ui.container [:h1 (:name current-library)]]
+       [:div.ui.container
+        [:div.address
+         [:h2 "Adresse"]
+         [:div (:road address)]
+         [:div (:city address)]
+         [:div (:country address)]]
+        [:div.open
+         [:h2 "Åbningstider"]
+         [:table.openhours
+          [:thead
+           (into
+             [:tr [:th]]
+             (for [title (map :title hours)]
+               [:th title]))]
+          (into [:tbody]
+                (for [day (range 7)]
+                  (into [:tr
+                         [:th (get daynames day)]]
+                        (for [area (map :weekdays hours)
+                              :let [time (get area day)]]
+                          (into [:td]
+                                [(if (nil? time)
+                                   "Lukket"
+                                   (let [t0 (get time 0)
+                                         t1 (get time 1)]
+                                     (str (if (< t0 10)
+                                            (unescapeEntities "&nbsp;")
+                                            "")
+                                          t0 " - " t1)))])))))]]
+        [:div.contact
+         [:h2 "Kontakt"]
+         [:div
+          [:span "Email: "]
+          [:span (:email current-library)]]
+         [:div
+          [:span "Telefon: "]
+          [:span (:number phone)]
+          " "
+          [:span (:time phone)]]]]
+       [tabbar]
+       ])))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
@@ -652,18 +596,20 @@
 ;; ### Main App entry point
 (defn app []
   (let [[page id _] @(subscribe [:route])]
+    (log 'here id)
     ;; TODO Really annoying hack to scroll to position after page render.  Use
     ;; component lifecycle to do this properly
-    (case page
-      "search" [search id]
-      "work" [work id]
-      "library" [library id]
-      "status" [status]
-      [search ""])))
+    [:div
+     (case page
+       "search" [search id]
+       "work" [work id]
+       "library" [library (or id "710100")]
+       "status" [status]
+       [search ""])]))
 
 ;; ## Execute and events
 
-(render [app])
+(render [:div [app]])
 
 ;; ## Swipe gestures
 
