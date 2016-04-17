@@ -1,6 +1,5 @@
 (ns solsort.mobibl.leaflet
   (:require
-    [cljsjs.leaflet]
     [reagent.core :as reagent]
     [re-frame.core :as re-frame :refer [subscribe dispatch dispatch-sync]]
     [solsort.util :refer [log]]))
@@ -29,13 +28,15 @@
          tile-url "http://{s}.tile.osm.org/{z}/{x}/{y}.png"
          attribution "&copy; OpenStreetMap"}
     :as o}]
-  (let [leaflet (atom nil)]
+  (let [leaflet (atom nil)
+        marker-cluster (atom nil)]
     (reagent/create-class
       {:display-name id
        :reagent-render (fn [] [:div {:id id :class class} "hello" id])
        :component-did-mount
        (fn []
          (reset! leaflet (js/L.map id))
+         (reset! marker-cluster (js/L.markerClusterGroup))
          (.setView @leaflet (clj->js pos) zoom)
          (.addTo (js/L.tileLayer tile-url #js {:attribution attribution})
                  @leaflet)
@@ -57,7 +58,9 @@
                      #js{:icon (marker-icons(or (:type m) :default))})
                    ]
                (when (:click m) (.on marker "click" (:click m)))
-               (.addTo marker @leaflet)))))
+               (.addLayer @marker-cluster marker))))
+         (.addLayer @leaflet @marker-cluster)
+         )
        :component-did-update (fn [component])
        :component-will-unmount
        (fn [] (when gc (dispatch [:ui-remove id])))})))

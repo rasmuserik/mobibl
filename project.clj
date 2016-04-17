@@ -9,7 +9,6 @@
    [cljsjs/showdown "0.4.0-1"]
    [solsort/util "0.1.2"]
    ; maybe use [secretary "1.2.3"]
-   [cljsjs/leaflet "0.7.3-6"]
    [cljsjs/hammer "2.0.4-5"]
    [reagent "0.5.1"]
    [re-frame "0.6.0"]]
