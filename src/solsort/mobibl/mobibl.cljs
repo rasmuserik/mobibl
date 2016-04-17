@@ -2,7 +2,8 @@
 ;;
 ;; This file contain the platform independent logic of the app.
 ;;
-;; The app-db is the core of the application and should have the following structure:
+;; The app-db is the core of the application 
+;; and should have the following structure:
 ;;
 ;; - `:ui` everything related to the ui
 ;; - `:route` TODO everything about routing and history
