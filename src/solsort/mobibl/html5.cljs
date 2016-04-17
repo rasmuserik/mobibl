@@ -51,6 +51,7 @@
         :font-weight "300"}
        ".bold" {:font-weight "bold !important"}
        ".center" {:text-align :center}
+       ".inline-block" {:display :inline-block}
        ".italic" {:font-style "italic !important"}
        ".large" {:font-size "120% !important"}
        ".small" {:font-size "80% !important"}
@@ -108,6 +109,80 @@
          :border "1px solid blue"}}}
       "library-styling")))
 
+;; ### tinywork
+
+(let [unit 13
+      width (* 4.5 unit)]
+  (load-style!
+    {:.tinywork
+     {:display :inline-block
+      :white-space :normal
+      :font-size (* 0.8 unit)
+      :line-height (str unit "px")
+      :position :relative
+      :width width
+      :height (* 5.5 unit)
+      :text-shadow
+      (str "1px 0px 1px white,"
+           "0px 0px 1px white,"
+           "1px 1px 1px white,"
+           "0px 1px 1px white")}
+     ".tinywork > .bold"
+     {:display :inline-block
+      :position :absolute
+      :top 0
+      :left 0
+      :width width
+      :height (* 4 unit)
+      :background "rgba(255,255,255,0.4)"
+      :padding-bottom (* .25 unit)
+      :overflow :hidden}
+     ".tinywork > .condensed"
+     {:display :inline-block
+      :position :absolute
+      :text-align :left
+      :bottom 0
+      :left 0
+      :width width
+      :font-size (* 1 unit)
+      :white-space :nowrap
+      :padding (* .25 unit)
+      :height (* 1.5 unit)
+      :background "rgba(255,255,255,0.4)"
+      :overflow :hidden}
+     }
+    "tinywork-styling"))
+
+;; ### work
+
+(load-style!
+  {:.work
+   {:position :relative
+    :overflow "hidden"
+    :height "100%"
+    :width "100%"}
+   ".work > img"
+   {:max-width "33%"
+    :max-height "100%"
+    :box-sizing :border-box
+    :vertical-align :top}
+   ".work > div"
+   {:display :inline-block
+    :box-sizing :border-box
+    :width "66%"
+    :height "100%"
+    :vertical-align :top
+    :padding-left ".3em"
+    :overflow :hidden}
+   ".work .fadeout"
+   {:display :block
+    :position :absolute
+    :bottom "0px"
+    :height "33%"
+    :width "100%"
+    :background "linear-gradient(rgba(255,255,255,0), white)" }}
+  "work-styling")
+
 ;; ### Actually apply styling
 ;;
 ; re-layout on rotation etc.
@@ -142,59 +217,11 @@
   (let  [o @(subscribe [:work pid])
          unit 13
          width (* 4.5 unit)]
-    [:a {:href (str "#work/" pid)
-         :style {:color "#111"}
-         }
-     [:div.center
-      {:style
-       {:display :inline-block
-        :white-space :normal
-        :font-size (* 0.8 unit)
-        :line-height (str unit "px")
-        :position :relative
-        :width width
-        :height (* 5.5 unit)
-        :text-shadow
-        (str "1px 0px 1px white,"
-             "0px 0px 1px white,"
-             "1px 1px 1px white,"
-             "0px 1px 1px white")
-
-        }}
-      [:img
-       {:src (:cover-url o)
-        :width "100%"
-        :height "100%"
-        }
-       ]
-      [:div.bold
-       {:style
-        {:display :inline-block
-         :position :absolute
-         :top 0
-         :left 0
-         :width width
-         :height (* 4 unit)
-         :background "rgba(255,255,255,0.4)"
-         :padding-bottom (* .25 unit)
-         :overflow :hidden
-         }}
-       (:title o)]
-      [:div.condensed
-       {:style
-        {:display :inline-block
-         :position :absolute
-         :text-align :left
-         :bottom 0
-         :left 0
-         :width width
-         :font-size (* 1 unit)
-         :white-space :nowrap
-         :padding (* .25 unit)
-         :height (* 1.5 unit)
-         :background "rgba(255,255,255,0.4)"
-         :overflow :hidden}}
-       (:creator o)]]]))
+    [:a {:href (str "#work/" pid) :style {:color "#111"}}
+     [:div.center.tinywork
+      [:img {:src (:cover-url o) :width "100%" :height "100%" } ]
+      [:div.bold (:title o)]
+      [:div.condensed (:creator o)]]]))
 
 ;; ### work-item
 (defn work-item [pid]
@@ -204,52 +231,15 @@
           (fn [kw] [:a {:href (str "#search/" kw)} kw])
           (:keywords o)
           )]
-
-    [:div
-     {:style
-      {:position :relative
-       :overflow "hidden"
-       :height "100%"
-       :width "100%" }}
-     [:img
-      {:src (:cover-url o)
-       :style
-       {:max-width "33%"
-        :max-height "100%"
-        :box-sizing :border-box
-        :vertical-align :top
-        }}]
-     [:div
-      {:style
-       {:display :inline-block
-        :box-sizing :border-box
-        :width "66%"
-        :height "100%"
-        :vertical-align :top
-        :padding-left ".3em"
-        :overflow :hidden
-        }}
-      [:div
-       {:style
-        {:display :block
-         :position :absolute
-         :bottom "0px"
-         :height "33%"
-         :width "100%"
-         :background "linear-gradient(rgba(255,255,255,0), white)"
-         }}]
+    [:div.work
+     [:img {:src (:cover-url o) }]
+     [:div [:div.fadeout]
       [:div.bold.large (:title o)]
       [:div.italic.large (:creator o)]
-      (into [:div]
-            (interpose
-              ", "
-              (map (fn [s] [:span.condensed
-                            {:style {:display :inline-block}}
-                            s])
-                   (:keywords o))))
-      [:div (:description o)]
-      ]]
-    ))
+      (into
+        [:div]
+        (interpose ", " (map (fn [s] [:span.condensed.inline-block s]) (:keywords o))))
+      [:div (:description o)]]]))
 
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
@@ -301,8 +291,7 @@
            :href (str "#work/" pid)}
           [:div
            {:style
-            {:border "0px solid black"
-             :height "9rem"
+            {:height "9rem"
              :color :black
              :margin-bottom "1rem"
              :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"
@@ -391,9 +380,7 @@
      [:div.ui.grid
       (merge [:div.stackable.doubling.four.column.row]
              results)]
-     [tabbar]
-     ]
-))
+     [tabbar]]))
 
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
