@@ -95,7 +95,21 @@ The UI/views.
 The data source / connection to the server.
 
         [solsort.mobibl.bibapp-datasource]))
-# Actual application logic (`mobibl.cljs`)
+# Core application logic and database (`mobibl.cljs`)
+
+This file contain the platform independent logic of the app.
+
+The app-db is the core of the application and has the following structure:
+
+- `:ui` everything related to the ui
+- `:route` TODO everything about routing and history
+- `:backend` everything specific to certain backends (currently `requested`)
+- `:data` TODO application specific data:
+    - `:libraries` information about the libraries
+    - `:search :results` results of search queries
+    - `:facets` TODO facets for searches
+    - `:user` user status (currently `:status`)
+    - `:works` information about specific works
 
     (ns solsort.mobibl.mobibl
       (:require-macros
@@ -111,64 +125,17 @@ The data source / connection to the server.
          :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
         [clojure.string :as string :refer [replace split blank?]]
         [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
+    (declare get-work default-work sample-lib)
 
-## Handlers
+DEBUG: uncomment this to print db on reload
 
-    (register-handler
-      :route (fn [db [_ page id]]
-               (let [id (or id (get-in db [:current page]))]
-                 (-> db
-                     (assoc-in [:current page] id)
-                     (assoc :route [page id])))))
+    ;(register-sub :db (fn [db] (reaction @db)))
+    ;(log 'db @(subscribe [:db]))
 
-    (register-handler
-      :work (fn [db [_ id content]]
-              (assoc-in db [:works id]
-                        (merge (get-in db [:work id] {})
-                               content))))
-    (register-handler
-      :ui (fn [db [_ id value]]
-              (assoc-in db [:ui id] value)))
-    (register-handler
-      :add-facet (fn [db [_ facet]]
-                   (assoc-in db [:ui :facets]
-                             (cons facet (get-in db [:ui :facets] [])))))
+## Routing and history
 
-    (register-handler
-      :remove-facet (fn [db [_ facet]]
-                   (assoc-in db [:ui :facets]
-                             (remove #{facet} (get-in db [:ui :facets] [])))))
 
-    (register-handler
-      :latest-work
-      (fn [db [_ id]]
-        (let [work-history (get-in db [:work-history] [])
-              work-history (into [id] (remove #(= % id) work-history))]
-          (assoc db :work-history work-history))))
-
-## Subscriptions
-
-    (def default-work
-      {:title "Unknown Title"
-       :creator "Unknown Creator"})
-
-    (defn get-work [db id]
-      (let [work (get-in db [:works id])]
-        (when-not work (dispatch [:request-work id]))
-        (merge default-work {:id id} work)))
-
-    (register-sub
-      :work-history
-      (fn [db _] (reaction (get @db :work-history []))))
-
-    (register-sub
-      :facets
-      (fn [db [_ path]] (reaction (get-in @db [:ui :facets]))))
-
-    (register-sub
-      :ui
-      (fn [db [_ path]] (reaction (get-in @db [:ui path]))))
-
+    (register-sub :work-history (fn [db _] (reaction (get @db :work-history []))))
     (register-sub
       :search-history
       (fn [db _] (reaction
@@ -176,32 +143,103 @@ The data source / connection to the server.
                     ["ost" []]
                     ["Harry Potter" [[:type "dvd"] [:type "bog"]]]
                     ["hest" [[:year "2001"]]]])))
+    (register-sub :route (fn [db] (reaction (get @db :route))))
 
+    (register-handler
+      :route (fn [db [_ page id prevPageScroll]]
+               (let [[prevPage prevId _] (get db :route)
+                     [id scroll] (if id
+                                   [id 0]
+                                   (get-in db [:current page]))]
+                 (dispatch [:scroll scroll])
+                 (-> db
+                     (assoc-in [:current prevPage] [prevId prevPageScroll])
+                     (assoc-in [:current page] [id scroll])
+                     (assoc :route [page id])))))
+    (register-handler
+      :latest-work
+      (fn [db [_ id]]
+        (let [work-history (get-in db [:work-history] [])
+              work-history (into [id] (remove #(= % id) work-history))]
+          (assoc db :work-history work-history))))
+## Work
+
+    (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
+    (register-sub :works (fn [db] (reaction (:works @db))))
+
+    (register-handler
+      :work (fn [db [_ id content]]
+              (assoc-in db [:works id]
+                        (merge (get-in db [:work id] {})
+                               content))))
+
+    (defn get-work [db id]
+      (let [work (get-in db [:works id])]
+        (when-not work (dispatch [:request-work id]))
+        (merge default-work {:id id} work)))
+    (def default-work {:title "Unknown Title" :creator "Unknown Creator"})
+
+
+## Search
 
     (register-sub
       :search
       (fn [db [_ q page]]
-        (reaction
-          (let [results (get-in @db [:search q page])]
-            (or results
-               (do
-                (dispatch [:request-search q page])
-                []))))))
+        (reaction (let [results (get-in @db [:search q page])]
+                    (or results
+                        (do (dispatch [:request-search q page]) []))))))
 
-    (def sample-lib
-      {
-## Known libraries
+## UI
 
+    (register-handler
+      :ui (fn [db [_ id value]]
+            (assoc-in db [:ui id] value)))
+
+    (register-sub :ui (fn [db [_ path]] (reaction (get-in @db [:ui path]))))
+    (register-handler
+      :add-facet (fn [db [_ facet]]
+                   (assoc-in db [:ui :facets]
+                             (cons facet (get-in db [:ui :facets] [])))))
+    (register-handler
+      :remove-facet (fn [db [_ facet]]
+                      (assoc-in db [:ui :facets]
+                                (remove #{facet} (get-in db [:ui :facets] [])))))
+    (register-sub :facets (fn [db [_ path]] (reaction (get-in @db [:ui :facets]))))
+
+TODO this is HTML5-specific, so should probably be moved into html5.cljs
+    (register-handler
+      :scroll (fn [db [_ scroll]]
+                (js/setTimeout
+                  #(set! js/document.body.scrollTop (or scroll 0)) 100)
+                db))
+
+## Libraries
+
+    (register-sub
+      :current-library (fn [db] (reaction
+                                  (get-in @db [:libraries "710100"]))))
+    (register-sub
+      :libraries (fn [db] (reaction (get-in @db [:libraries :all] []))))
+
+    (register-handler
+      :library
+      (fn [db [_ library]] (assoc-in db [:libraries (:id library)] library)))
+
+    (register-handler
+      :libraries
+      (fn [db [_ libraries]] (assoc-in db [:libraries :all] libraries)))
+
+### Sample library
+
+    (dispatch-sync [:library
 Simple representation of the libraries that are interesting for the user
 including position on a map, opening hours and contact information.
 
 FIXME The above books in the works section are from different libraries,
 ie. 775100 is Aarhus hovedbibliotek.
 
-       :library
-       {"710100"
-        {:name "Københavns Hovedbibliotek"
-         :type "Folkebibliotek"
+        {:id "710100"
+         :name "Københavns Hovedbibliotek"
          :address
          {:road "Krystalgade 15"
           :city "1172 København K"
@@ -209,127 +247,21 @@ ie. 775100 is Aarhus hovedbibliotek.
          :email "bibliotek@kff.kk.dk"
          :phone {:number "33663000"
                  :time "man-fre 10-17"}
-         :position
-         [55.680887 12.573619]
+         :position [55.680887 12.573619]
+FIXME How to represent many opening hours for departments of a library?
+- these are delivered as a &lt;pre&gt;-formatted data
          :hours
          [{:title "Åbningstider"
-           :weekdays
-           [[8 22]
-            [8 20]
-            [8 20]
-            [8 20]
-            [8 19]
-            [8 17]]}
+           :weekdays [[8 22] [8 20] [8 20] [8 20] [8 19] [8 17]]}
           {:title "Betjening"
-           :weekdays
-           [[12 17]
-            [12 17]
-            [12 17]
-            [12 17]
-            [12 17]
-            [12 15]]}]}
-        "810010"
-        {:name "Det Kongelige Bibliotek, Diamanten"
-         :type "Forskningsbibliotek"
-         :address {
-                   :road "Søren Kierkegaards Plads 1"
-                   :city "1221 København K"
-                   :country "Danmark"}
-         :email "kb@kb.dk"
-         :phone {:number "33 47 47 47"
-                 :time "man - fre 9-16"}
-         :position
-         [55.67321579999999 12.5821264]
+           :weekdays [[12 17] [12 17] [12 17] [12 17] [12 17] [12 15]]}]}
+        ])
 
-FIXME How to represent many opening hours for departments of a library
+## User status
 
-At the Diamanten library there are a lot of possible access times, so
-many are included here to see if it is possible to represent them in a
-manageable way on a mobile app.
-
-The user could also be presented for a way to selecting which department
-of the library to view opening hours for.
-
-         :hours
-         [{:title "Adgang til Diamanten"
-           :weekdays
-           [[8 22]
-            [8 22]
-            [8 22]
-            [8 22]
-            [8 22]
-            [8 22]]}
-          {:title "Informationen"
-           :weekdays
-           [[8 21]
-            [8 21]
-            [8 21]
-            [8 21]
-            [8 21]]}
-          {:title "Helpdesk"
-           :weekdays
-           [[10 16]
-            [10 16]
-            [10 16]
-            [10 16]
-            [10 16]]}
-          {:title "Læsesal Vest og E-Vest"
-           :weekdays
-           [[9 21]
-            [9 21]
-            [9 21]
-            [9 21]
-            [9 21]
-            [10 17]]}
-          {:title "Læsesal Nord og Øst"
-           :weekdays
-           [[8 21]
-            [8 21]
-            [8 21]
-            [8 21]
-            [8 21]
-            [10 17]]}
-          {:title "Center for Kort og Billeder"
-           :weekdays
-           [nil
-            [10 16]
-            [12 16]
-            [10 16]]}
-          {:title "Center for Manuskripter og Boghistorie"
-           :weekdays
-           [[10 17]
-            [10 17]
-            [12 19]
-            [10 17]
-            [10 17]]}
-          {:title "Småtrykssamlingens interne læsesal"
-           :weekdays
-           [[10 15]
-            [10 15]
-            [10 15]
-            [10 15]
-            [10 15]]}
-          {:title "Dansk Folkemindesamling"
-           :weekdays
-           [nil
-            [10 15]
-            [10 15]
-            [10 15]
-            [10 15]]}]}}})
-
-    (register-sub
-     :current-library (fn [db] (reaction
-                                (get-in sample-lib [:library "710100"]))))
-
-    (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
-    (register-sub :works (fn [db] (reaction (:works @db))))
-    (register-sub :route (fn [db] (reaction (get @db :route))))
-    (register-sub :db (fn [db] (reaction @db)))
-
-
-Helper function to query the db for the full info about works
-
-    (defn get-status-works [db prop]
+    (defn get-status-works
+      "Helper function to query the db for the full info about works"
+      [db prop]
       (let [status-obj (get-in db [:status prop])
             res (for [so status-obj]
                   (merge so (get-work db (:id so))))]
@@ -342,13 +274,8 @@ Helper function to query the db for the full info about works
     (register-sub :borrowed
                   (fn [db _] (reaction (get-status-works @db :borrowed))))
 
-## Data initialisation
-
 TODO: also run on network reconnect, and after a while
-
     (dispatch [:request-status])
-
-TODO: sync database to disk, and restore on load
 # HTML5 view (html5.cljs)
 
     (ns solsort.mobibl.html5
@@ -365,7 +292,8 @@ TODO: sync database to disk, and restore on load
          :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
         [clojure.string :as string :refer [replace split blank?]]
         [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
-        [solsort.mobibl.bib-map :refer [bib-map]]
+        [solsort.mobibl.leaflet :refer [leaflet]]
+        [cljsjs.hammer]
         [goog.string :refer [unescapeEntities]]))
 
 ## Styling
@@ -483,7 +411,7 @@ and 5/8 vs 3/8 which approximately the golden ratio.
 FIXME Not so nice to have the style for bib-map defined here
 
         (load-style!
-          {"#bib-map"
+          {".map"
            {:height (js/Math.min js/document.body.clientWidth
                                  (* 0.6 js/document.body.clientHeight))}}
           "bib-map-style")
@@ -709,7 +637,7 @@ FIXME Not so nice to have the style for bib-map defined here
          suggest (when show-history search-history)
          ]
         [:div.ui.container
-         [:h1 "Københavns Biblioteker"]
+         [:h1 "Mobiblby biblioteker"]
          [:div
           [:div.ui.search.fluid.input.action.left.icon
            [:i.search.icon]
@@ -717,7 +645,9 @@ FIXME Not so nice to have the style for bib-map defined here
             {:placeholder "Indtast søgning"
              :type :text
              :value query
-             :on-change #(dispatch-sync [:route "search" (-> % .-target .-value)])
+             :on-change #(dispatch-sync [:route "search"
+                                         [(-> % .-target .-value)]
+                                         js/document.body.scrollTop])
              }]
            [:button.ui.icon.button
             {:class (if-not search-history "disabled"
@@ -734,9 +664,9 @@ FIXME Not so nice to have the style for bib-map defined here
                          :on-click #(dispatch-sync [:ui :show-history false])}
                         s " "]
                        (for [[col f] facets]
-                        [:div.ui.small.label
-                         {:class (facet-color col)}
-                         (str f)]
+                         [:div.ui.small.label
+                          {:class (facet-color col)}
+                          (str f)]
                          )
                        ))))]
 
@@ -785,7 +715,7 @@ FIXME Not so nice to have the style for bib-map defined here
                  results)]
          [tabbar]
          ]
-        ))
+    ))
 
 ### Work
 <img width=20% align=top src=doc/wireframes/work.jpg>
@@ -798,7 +728,6 @@ FIXME Not so nice to have the style for bib-map defined here
             creator (:creator work)
             work-history @(subscribe [:work-history])
             ]
-        (log 'work-history work-history)
         (when (not= work-id (first work-history))
           (dispatch [:latest-work work-id]))
         [:div
@@ -870,9 +799,14 @@ FIXME Not so nice to have the style for bib-map defined here
                 hours   (:hours @current-library)
                 phone   (:phone @current-library)]
             [:div
-             [bib-map
-              :id "bib-map"
-              :pos (:position @current-library)]
+             [leaflet
+              :class "map"
+              :id "leafletdiv"
+              :pos0 (:position @current-library)
+              :zoom 13
+              :markers
+              (map (fn [[pos id]] {:pos pos :click #(js/alert id)})
+                   @(subscribe [:libraries]))]
              [:div.ui.container [:h1 (:name @current-library)]]
              [:div.ui.container
               [:div.address
@@ -992,9 +926,12 @@ FIXME Not so nice to have the style for bib-map defined here
            [tabbar]
            ])))
 
+
 ### Main App entry point
     (defn app []
-      (let [[page id] @(subscribe [:route])]
+      (let [[page id _] @(subscribe [:route])]
+TODO Really annoying hack to scroll to position after page render.  Use
+component lifecycle to do this properly
         (case page
           "search" [search id]
           "work" [work id]
@@ -1006,10 +943,51 @@ FIXME Not so nice to have the style for bib-map defined here
 
     (render [app])
 
+## Swipe gestures
+
+    (def ordered-page-names (to-array ["search"  "work" "library" "status"]))
+
+    (defn change-hash [newHash]
+      (.pushState js/history newHash newHash (str "#" newHash))
+      (.dispatchEvent js/window (js/HashChangeEvent. "hashchange")))
+
+    (defn addSwipeGestures []
+      (let [hammer (js/Hammer.Manager. js/document.body)
+            swipe  (js/Hammer.Swipe.)]
+        (.add hammer swipe)
+        (.on hammer "swipeleft"
+             (fn []
+               (let [[page id _] @(subscribe [:route])
+                     index (.indexOf ordered-page-names page)]
+                 (change-hash
+                   (get ordered-page-names
+                        (if (zero? index)
+                          (dec (count ordered-page-names))
+                          (dec index)))))))
+
+        (.on hammer "swiperight"
+             (fn []
+               (let [[page id _] @(subscribe [:route])
+                     index (.indexOf ordered-page-names page)]
+                 (change-hash
+                   (get ordered-page-names
+                        (if (= index (dec (count ordered-page-names)))
+                          0
+                          (inc index)))))))))
+
+    (addSwipeGestures)
+
+
 ## Routing
 
     (defn handle-hash []
-      (dispatch (into [:route] (string/split (.slice js/location.hash 1) "/"))))
+      (let [[page id] (string/split (.slice js/location.hash 1) "/")]
+        (if (neg? (.indexOf ordered-page-names page))
+Default to the search page
+          (change-hash "search")
+          (dispatch [:route page id js/document.body.scrollTop]))))
+
+    (js/window.removeEventListener "hashchange" handle-hash)
     (js/window.addEventListener "hashchange" handle-hash)
     (handle-hash)
 # BibApp Data Source (bibapp_datasource.cljs)
@@ -1046,7 +1024,6 @@ FIXME Not so nice to have the style for bib-map defined here
          :location nil
          :language (first (o "language"))
          }))
-
 
 ## Mock data
 ### Dummy ids of books etc. with metadata
@@ -1095,6 +1072,27 @@ FIXME Not so nice to have the style for bib-map defined here
           (doall
             (for [o mockdata]
               (dispatch [:work (o "_id") (convert-bibentry o)]))))))
+## Library data
+    (go
+      (let [libraries (<! (<ajax "assets/libraries.json"))
+            libgeo (map
+                     (fn [lib]
+                       [#js[((lib "geo") "lat") ((lib "geo") "lng")] (lib "id")])
+                     libraries)]
+
+        (dispatch [:libraries libgeo])
+        (log libraries)
+        (doall
+          (map #(dispatch
+                  [:library
+                   {:id (% "id")
+                    :name (% "name")
+                    :address
+                    {:road(% "street")
+                    :postcode (% "postcode")
+                    :city (% "city")}
+                    :position [((% "geo") "lat")  ((% "geo") "lng")]}])
+               libraries))))
 
 ## Get work metadata from database
 
