@@ -2,6 +2,8 @@
 ;;
 ;; This file contain the platform independent logic of the app.
 ;;
+;; ## Documentation of data structure
+;;
 ;; The app-db is the core of the application
 ;; and should have the following structure:
 ;;
@@ -15,6 +17,25 @@
 ;;     - `:user` user status (currently `:status`)
 ;;     - `:works` information about specific works
 ;;
+;; ### Data backend
+;;
+;; A data backend should supply the following handlers
+;;
+;; - `:request-work work-id`
+;; - `:request-facets query`
+;; - `:request-search query`
+;; - `:request-suggest query`
+;; - `:request-library library-id`
+;; - `:request-status`
+;; - ... login, order
+;;     - `:order` ...
+;;     - `:login` ...
+;;     - `:request-work-details` ...
+;;
+;; And it should automatically load the list of libraries.
+;;
+;; ## General dependencies and setup
+
 (ns solsort.mobibl.mobibl
   (:require-macros
     [cljs.core.async.macros :refer [go go-loop alt!]]
@@ -39,6 +60,8 @@
 ;; ## Routing and history
 ;;
 ;;
+(register-sub :route (fn [db] (reaction (get-in @db [:route :path] [:search ""]))))
+
 (register-sub :work-history (fn [db _] (reaction (get @db :work-history []))))
 (register-sub
   :search-history
@@ -47,11 +70,10 @@
                 ["ost" []]
                 ["Harry Potter" [[:type "dvd"] [:type "bog"]]]
                 ["hest" [[:year "2001"]]]])))
-(register-sub :route (fn [db] (reaction (get @db :route))))
 
 (register-handler
   :route (fn [db [_ page id prevPageScroll]]
-           (let [[prevPage prevId _] (get db :route)
+           (let [[prevPage prevId _] (get-in db [:route :path])
                  [id scroll] (if id
                                [id 0]
                                (get-in db [:current page]))]
@@ -59,7 +81,8 @@
              (-> db
                  (assoc-in [:current prevPage] [prevId prevPageScroll])
                  (assoc-in [:current page] [id scroll])
-                 (assoc :route [page id])))))
+                 (assoc-in [:route :path] [page id])))))
+
 (register-handler
   :latest-work
   (fn [db [_ id]]
