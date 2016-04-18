@@ -18,6 +18,9 @@
     [cljsjs.hammer]
     [goog.string :refer [unescapeEntities]]))
 
+(defn route-link [& route] 
+  (str "#" (prn-str route)))
+
 ;; ## Styling
 ;;
 (load-style! normalize-css "style-reset")
@@ -208,9 +211,10 @@
 ;; ### Tab bar - menu in bottom of the screen
 
 (defn tabbar-button [id s]
-  [:a {:href (str "#" id)}
+  [:a {:href (route-link id)}
    [:img {:src (str "assets/" id "-icon.svg")
           :alt s}]])
+
 
 (defn tabbar []
   [:div
@@ -228,7 +232,7 @@
   (let  [o @(subscribe [:work pid])
          unit 13
          width (* 4.5 unit)]
-    [:a {:href (str "#work/" pid) :style {:color "#111"}}
+    [:a {:href (route-link :work pid) :style {:color "#111"}}
      [:div.center.tinywork
       [:img {:src (:cover-url o) :width "100%" :height "100%" } ]
       [:div.bold (:title o)]
@@ -239,7 +243,7 @@
   (let [o @(subscribe [:work pid])
         keywords
         (map
-          (fn [kw] [:a {:href (str "#search/" kw)} kw])
+          (fn [kw] [:a {:href (route-link :search ["" [:subject kw]]) } kw])
           (:keywords o)
           )]
     [:div.work
@@ -300,7 +304,7 @@
        (fn [pid]
          [:a.column
           {:key pid
-           :href (str "#work/" pid)}
+           :href (route-link :work pid)}
           [:div
            {:style
             {:height "9rem"
@@ -338,7 +342,7 @@
                (for [[s facets] suggest]
                  (into
                    [:a.result
-                    {:href (str "#search/" s)
+                    {:href (route-link :search s)
                      :on-click #(dispatch-sync [:ui :show-history false])}
                     s " "]
                    (for [[col f] facets]
@@ -414,7 +418,8 @@
      [:div.ui.container
       [:p]
       [:h1.center (:title work)]
-      [:p.center "af " [:a {:href (str "#search/" creator)} creator]]
+      [:p.center "af " 
+       [:a {:href (route-link :search ["" [:creator creator]])} creator]]
       [:p.center
        [:img
         {:src (:cover-url work)
@@ -428,8 +433,9 @@
               (interpose
                 " "
                 (for [word keywords]
-                  [:a.ui.label {:href
-                                (str "#search/" word)} word]))))
+                  [:a.ui.label 
+                   {:href (:route-link :search ["" [:subject word]])} 
+                   word]))))
       (if language [:p [:em "Sprog: "] language] "")
       (if location [:p [:em "Opstilling: "] location] "")
       [:p.bold "Relaterede:"]
@@ -440,7 +446,7 @@
            (fn [id]
              [:div.column
               [:a.small
-               {:href (str "#work/" id)
+               {:href (route-link :work id)
                 :style
                 {:display :inline-block
                  :height "6em"}}
@@ -525,7 +531,7 @@
             :width "30%" }}]
          content)
    [:a
-    {:href (str "#work/" id)
+    {:href (route-link :work id)
      :style
      {:display :inline-block
       :font-size "70%"
@@ -554,11 +560,8 @@
             (loan-entry
               (:id ra)
               [:div (:until ra)]
-              [:div [:a {:href (str "#/location/" (:location ra))}
-                     (:location ra)]]
-              [:div [:a {:href (str "#/creator/" "TODO-creator-id")}
-                     (:creator ra)]])
-            ))]
+              ; TODO location to fetch
+              )))]
        [:p
         [:h2.ui.left.header
          [:div.content
@@ -601,7 +604,7 @@
         [:div
          (case page
            "search" [search id]
-           "work" [work id]
+           :work [work id]
            "library" [library (or id "710100")]
            "status" [status]
            [search ""])]))))
@@ -618,30 +621,18 @@
   (.pushState js/history newHash newHash (str "#" newHash))
   (.dispatchEvent js/window (js/HashChangeEvent. "hashchange")))
 
+(defonce routes #js ["search"  "work" "library" "status"])
+
+(defn change-route [delta]
+  (let [n (+ delta (.indexOf routes (first @(subscribe [:route]))))
+        n (max 0 (min (dec (.-length routes)) n))]
+    (dispatch [:route (aget routes n)])))
 (defn addSwipeGestures []
   (let [hammer (js/Hammer.Manager. js/document.body)
         swipe  (js/Hammer.Swipe.)]
     (.add hammer swipe)
-    (.on hammer "swipeleft"
-         (fn []
-           (let [[page id] @(subscribe [:route])
-                 index (.indexOf ordered-page-names page)]
-             (change-hash
-               (get ordered-page-names
-                    (if (zero? index)
-                      (dec (count ordered-page-names))
-                      (dec index)))))))
-
-    (.on hammer "swiperight"
-         (fn []
-           (let [[page id] @(subscribe [:route])
-                 index (.indexOf ordered-page-names page)]
-             (change-hash
-               (get ordered-page-names
-                    (if (= index (dec (count ordered-page-names)))
-                      0
-                      (inc index)))))))))
-
+    (.on hammer "swipeleft" #(change-route 1))
+    (.on hammer "swiperight" #(change-route -1))))
 (defonce register-swipe (addSwipeGestures))
 
 
@@ -649,12 +640,19 @@
 
 (defonce handle-hash
   (fn []
-  (let [[page id] (string/split (.slice js/location.hash 1) "/")]
-    (if (neg? (.indexOf ordered-page-names page))
-      ;; Default to the search page
-      (change-hash "search")
-      (dispatch [:route page id])))))
+    (log handle-hash)
+    (when-not (empty? js/location.hash)
+      (log 'here)
+      (dispatch (into [:route]
+               (cljs.reader/read-string 
+                  (.slice js/location.hash 1)))))))
 
 (js/window.removeEventListener "hashchange" handle-hash)
 (js/window.addEventListener "hashchange" handle-hash)
 (handle-hash)
+
+(defonce sync-hash
+  (ratom/run!
+    (let [[page param :as route] @(subscribe [:route])]
+    (log 'sync-hash page route)
+    (js/history.pushState nil nil (str "#" (pr-str route) )))))
