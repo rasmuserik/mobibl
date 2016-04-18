@@ -5,6 +5,7 @@
     [cljs.core.async.macros :refer [go go-loop alt!]]
     [reagent.ratom :as ratom :refer  [reaction]])
   (:require
+    [cljs.reader]
     [solsort.util
      :refer
      [<ajax <seq<! js-seq normalize-css load-style! put!close!
@@ -18,8 +19,7 @@
     [cljsjs.hammer]
     [goog.string :refer [unescapeEntities]]))
 
-(defn route-link [& route] 
-  (str "#" (prn-str route)))
+(declare route-link)
 
 ;; ## Styling
 ;;
@@ -198,6 +198,7 @@
 
 ;; ## Components
 ;; ### Component for remembering scroll position per route
+
 (defn restore-scroll [route]
   (set! js/document.body.scrollTop (get @(subscribe [:ui :scroll]) route 0)))
 
@@ -212,7 +213,7 @@
 
 (defn tabbar-button [id s]
   [:a {:href (route-link id)}
-   [:img {:src (str "assets/" id "-icon.svg")
+   [:img {:src (str "assets/" (name id) "-icon.svg")
           :alt s}]])
 
 
@@ -220,10 +221,10 @@
   [:div
    [:div.tabbar-spacer " "]
    [:div.tabbar
-    [tabbar-button "search" "Søg"]
-    [tabbar-button "work" "Materiale"]
-    [tabbar-button "library" "Bibliotek"]
-    [tabbar-button "status" "Status"]]])
+    [tabbar-button :search "Søg"]
+    [tabbar-button :work "Materiale"]
+    [tabbar-button :library "Bibliotek"]
+    [tabbar-button :status "Status"]]])
 
 ;; ### work-tiny
 
@@ -243,7 +244,7 @@
   (let [o @(subscribe [:work pid])
         keywords
         (map
-          (fn [kw] [:a {:href (route-link :search ["" [:subject kw]]) } kw])
+          (fn [kw] [:a {:href (route-link :search [:subject kw]) } kw])
           (:keywords o)
           )]
     [:div.work
@@ -316,7 +317,7 @@
            [work-item pid]]])
        results)
      show-history @(subscribe [:ui :show-history])
-     search-history @(subscribe [:history "search"])
+     search-history @(subscribe [:history :search])
      suggest (when show-history search-history)
      ]
     [:div.ui.container
@@ -328,7 +329,7 @@
         {:placeholder "Indtast søgning"
          :type :text
          :value query
-         :on-change #(dispatch-sync [:route "search"
+         :on-change #(dispatch-sync [:route :search
                                      [(-> % .-target .-value)]])
          }]
        [:button.ui.icon.button
@@ -406,7 +407,7 @@
         keywords (:keywords work)
         location (:location work)
         creator (:creator work)
-        work-history @(subscribe [:history "work"])]
+        work-history (map first @(subscribe [:history :work]))]
     [:div
      [:div
       {:style
@@ -418,8 +419,8 @@
      [:div.ui.container
       [:p]
       [:h1.center (:title work)]
-      [:p.center "af " 
-       [:a {:href (route-link :search ["" [:creator creator]])} creator]]
+      [:p.center "af "
+       [:a {:href (route-link :search  [:creator creator])} creator]]
       [:p.center
        [:img
         {:src (:cover-url work)
@@ -433,8 +434,8 @@
               (interpose
                 " "
                 (for [word keywords]
-                  [:a.ui.label 
-                   {:href (:route-link :search ["" [:subject word]])} 
+                  [:a.ui.label
+                   {:href (:route-link :search  [:subject word])}
                    word]))))
       (if language [:p [:em "Sprog: "] language] "")
       (if location [:p [:em "Opstilling: "] location] "")
@@ -474,7 +475,7 @@
         :zoom 13
         :markers
         (map (fn [[pos id]] {:pos pos
-                             :click #(dispatch-sync [:route "library" id])})
+                             :click #(dispatch-sync [:route :library id])})
              @(subscribe [:libraries]))]
        [:div.ui.container [:h1 (:name current-library)]]
        [:div.ui.container
@@ -603,25 +604,15 @@
           (js/setTimeout #(restore-scroll route) 0))
         [:div
          (case page
-           "search" [search id]
+           :search [search id]
            :work [work id]
-           "library" [library (or id "710100")]
-           "status" [status]
+           :library [library (or id "710100")]
+           :status [status]
            [search ""])]))))
-
-;; ## Execute and events
-
-(render [:div [app]])
 
 ;; ## Swipe gestures
 
-(def ordered-page-names (to-array ["search"  "work" "library" "status"]))
-
-(defn change-hash [newHash]
-  (.pushState js/history newHash newHash (str "#" newHash))
-  (.dispatchEvent js/window (js/HashChangeEvent. "hashchange")))
-
-(defonce routes #js ["search"  "work" "library" "status"])
+(defonce routes #js [:search :work :library :status])
 
 (defn change-route [delta]
   (let [n (+ delta (.indexOf routes (first @(subscribe [:route]))))
@@ -638,13 +629,15 @@
 
 ;; ## Routing
 
+(defn route-link [& route] (str "#" (prn-str route)))
+
 (defonce handle-hash
   (fn []
-    (log handle-hash)
-    (when-not (empty? js/location.hash)
-      (log 'here)
+    (log 'handle-hash)
+    (if (empty? js/location.hash)
+      (dispatch [:route])
       (dispatch (into [:route]
-               (cljs.reader/read-string 
+               (cljs.reader/read-string
                   (.slice js/location.hash 1)))))))
 
 (js/window.removeEventListener "hashchange" handle-hash)
@@ -655,4 +648,7 @@
   (ratom/run!
     (let [[page param :as route] @(subscribe [:route])]
     (log 'sync-hash page route)
-    (js/history.pushState nil nil (str "#" (pr-str route) )))))
+    (js/history.pushState nil nil (apply route-link route)))))
+;; ## Execute and events
+
+(render [:div [app]])

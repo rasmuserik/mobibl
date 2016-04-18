@@ -72,13 +72,14 @@
 
 (register-handler
   :route
-  (fn [db [_ page param]]
-    (let [param (or param (rest (get-in db [:route :history page])))
-          route [page param]]
+  (fn [db [_ page & params]]
+    (let [page (or page :search)
+          params (or params (first (get-in db [:route :history page])))
+          route (into [page] params)]
       (-> db
           (assoc-in [:route :history page]
-                    (into [param]
-                          (remove #{param}
+                    (into [params]
+                          (remove #{params}
                                   (get-in db [:route :history page]))))
           (assoc-in [:route :path] route)))))
 
