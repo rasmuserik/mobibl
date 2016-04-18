@@ -312,7 +312,7 @@
            [work-item pid]]])
        results)
      show-history @(subscribe [:ui :show-history])
-     search-history @(subscribe [:search-history])
+     search-history @(subscribe [:history "search"])
      suggest (when show-history search-history)
      ]
     [:div.ui.container
@@ -402,22 +402,15 @@
         keywords (:keywords work)
         location (:location work)
         creator (:creator work)
-        work-history @(subscribe [:work-history])
-        ]
-    (when (not= work-id (first work-history))
-      (dispatch [:latest-work work-id]))
+        work-history @(subscribe [:history "work"])]
     [:div
      [:div
       {:style
        {:height work-tiny-height
         :background-color "#777"
         :overflow :hidden}}
-      (into [:div
-             {:style
-              {:white-space :nowrap
-               :overflow-x :auto}
-              }
-             ] (map work-tiny work-history))]
+      (into [:div {:style {:white-space :nowrap :overflow-x :auto}}]
+            (map work-tiny work-history))]
      [:div.ui.container
       [:p]
       [:h1.center (:title work)]
@@ -427,12 +420,8 @@
         {:src (:cover-url work)
          :style
          {:max-height (* 0.5 (- js/document.body.clientHeight 50))
-          :max-width (* 0.8 (- js/document.body.clientWidth 20))
-
-          }
-         }]
-       ]
-      [:p.center [:a.ui.primary.button "Bestil"]  ]
+          :max-width (* 0.8 (- js/document.body.clientWidth 20))}}]]
+      [:p.center [:a.ui.primary.button "Bestil"]]
       [:p (:description work)]
       (if-not keywords ""
         (into [:p {:style {:line-height "2rem"}}]
@@ -454,14 +443,10 @@
                {:href (str "#work/" id)
                 :style
                 {:display :inline-block
-                 :height "6em"}
-                }
-               (work-item id)]]
-             )
-           (take 12 (rest (:related work))))
-         )]
-      [tabbar]
-      ]]))
+                 :height "6em"}}
+               (work-item id)]])
+           (take 12 (rest (:related work)))))]
+      [tabbar]]]))
 
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
@@ -657,17 +642,18 @@
                       0
                       (inc index)))))))))
 
-(addSwipeGestures)
+(defonce register-swipe (addSwipeGestures))
 
 
 ;; ## Routing
 
-(defn handle-hash []
+(defonce handle-hash
+  (fn []
   (let [[page id] (string/split (.slice js/location.hash 1) "/")]
     (if (neg? (.indexOf ordered-page-names page))
       ;; Default to the search page
       (change-hash "search")
-      (dispatch [:route page id]))))
+      (dispatch [:route page id])))))
 
 (js/window.removeEventListener "hashchange" handle-hash)
 (js/window.addEventListener "hashchange" handle-hash)
