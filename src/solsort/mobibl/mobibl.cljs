@@ -9,6 +9,8 @@
 ;;
 ;; - `:ui` everything related to the ui
 ;; - `:route` TODO everything about routing and history
+;;     - `:path` current route as a array
+;;     - `:history` history of routes, with duplicate removed
 ;; - `:backend` everything specific to certain backends (currently `requested`)
 ;; - `:data` TODO application specific data:
 ;;     - `:libraries` information about the libraries
