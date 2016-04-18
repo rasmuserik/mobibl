@@ -194,6 +194,18 @@
 (styling)
 
 ;; ## Components
+;; ### Component for remembering scroll position per route
+(defn restore-scroll [route]
+  (log 'restore-scroll route @(subscribe [:ui :scroll]))
+  (set! js/document.body.scrollTop (get @(subscribe [:ui :scroll]) route 0)))
+
+(defonce handle-scroll
+  (fn [] (dispatch [:ui :scroll
+                    (assoc (or @(subscribe [:ui :scroll]) {})
+                           @(subscribe [:route])
+                           js/document.body.scrollTop)])))
+(js/window.removeEventListener "scroll" handle-scroll)
+(js/window.addEventListener "scroll" handle-scroll)
 ;; ### Tab bar - menu in bottom of the screen
 
 (defn tabbar-button [id s]
@@ -597,17 +609,19 @@
 
 ;; ### Main App entry point
 (defn app []
-  (let [[page id _] @(subscribe [:route])]
-    (log 'here id)
-    ;; TODO Really annoying hack to scroll to position after page render.  Use
-    ;; component lifecycle to do this properly
-    [:div
-     (case page
-       "search" [search id]
-       "work" [work id]
-       "library" [library (or id "710100")]
-       "status" [status]
-       [search ""])]))
+  (let [prev-route (atom)]
+    (fn []
+      (let [[page id _ :as route] @(subscribe [:route])]
+        (when (not= @prev-route route)
+          (reset! prev-route route)
+          (js/setTimeout #(restore-scroll route) 0))
+        [:div
+         (case page
+           "search" [search id]
+           "work" [work id]
+           "library" [library (or id "710100")]
+           "status" [status]
+           [search ""])]))))
 
 ;; ## Execute and events
 
@@ -655,7 +669,7 @@
     (if (neg? (.indexOf ordered-page-names page))
       ;; Default to the search page
       (change-hash "search")
-      (dispatch [:route page id js/document.body.scrollTop]))))
+      (dispatch [:route page id]))))
 
 (js/window.removeEventListener "hashchange" handle-hash)
 (js/window.addEventListener "hashchange" handle-hash)

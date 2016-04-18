@@ -79,7 +79,6 @@
                  [id scroll] (if id
                                [id 0]
                                (get-in db [:current page]))]
-             (dispatch [:scroll scroll])
              (-> db
                  (assoc-in [:current prevPage] [prevId prevPageScroll])
                  (assoc-in [:current page] [id scroll])
@@ -134,13 +133,6 @@
                   (assoc-in db [:ui :facets]
                             (remove #{facet} (get-in db [:ui :facets] [])))))
 (register-sub :facets (fn [db [_ path]] (reaction (get-in @db [:ui :facets]))))
-
-;; TODO this is HTML5-specific, so should probably be moved into html5.cljs
-(register-handler
-  :scroll (fn [db [_ scroll]]
-            (js/setTimeout
-              #(set! js/document.body.scrollTop (or scroll 0)) 100)
-            db))
 
 ;; ## Libraries
 
