@@ -9,6 +9,8 @@
 ;;
 ;; - `:ui` everything related to the ui
 ;; - `:route` TODO everything about routing and history
+;;     - `:path` current route as a array
+;;     - `:history` history of routes, with duplicate removed
 ;; - `:backend` everything specific to certain backends (currently `requested`)
 ;; - `:data` TODO application specific data:
 ;;     - `:libraries` information about the libraries
@@ -52,43 +54,35 @@
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 (declare get-work default-work sample-lib)
 
-;; DEBUG: uncomment this to print db on reload
+;; ## DEBUG: uncomment this to print db on reload
 
-;(register-sub :db (fn [db] (reaction @db)))
-;(log 'db @(subscribe [:db]))
+(register-sub :db (fn [db] (reaction @db)))
+(log 'db @(subscribe [:db]))
 
 ;; ## Routing and history
 ;;
 ;;
-(register-sub :route (fn [db] (reaction (get-in @db [:route :path] [:search ""]))))
-
-(register-sub :work-history (fn [db _] (reaction (get @db :work-history []))))
 (register-sub
-  :search-history
-  (fn [db _] (reaction
-               [["filosofi" [[:creator "plato"] [:creator "socrates"]]]
-                ["ost" []]
-                ["Harry Potter" [[:type "dvd"] [:type "bog"]]]
-                ["hest" [[:year "2001"]]]])))
+  :route
+  (fn [db] (reaction (get-in @db [:route :path] [:search ""]))))
+
+(register-sub
+  :history
+  (fn [db [_ page]] (reaction (get-in @db [:route :history page] []))))
 
 (register-handler
-  :route (fn [db [_ page id prevPageScroll]]
-           (let [[prevPage prevId _] (get-in db [:route :path])
-                 [id scroll] (if id
-                               [id 0]
-                               (get-in db [:current page]))]
-             (dispatch [:scroll scroll])
-             (-> db
-                 (assoc-in [:current prevPage] [prevId prevPageScroll])
-                 (assoc-in [:current page] [id scroll])
-                 (assoc-in [:route :path] [page id])))))
+  :route
+  (fn [db [_ page & params]]
+    (let [page (or page :search)
+          params (or params (first (get-in db [:route :history page])))
+          route (into [page] params)]
+      (-> db
+          (assoc-in [:route :history page]
+                    (into [params]
+                          (remove #{params}
+                                  (get-in db [:route :history page]))))
+          (assoc-in [:route :path] route)))))
 
-(register-handler
-  :latest-work
-  (fn [db [_ id]]
-    (let [work-history (get-in db [:work-history] [])
-          work-history (into [id] (remove #(= % id) work-history))]
-      (assoc db :work-history work-history))))
 ;; ## Work
 ;;
 (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
@@ -105,7 +99,6 @@
     (when-not work (dispatch [:request-work id]))
     (merge default-work {:id id} work)))
 (def default-work {:title "Unknown Title" :creator "Unknown Creator"})
-
 
 ;; ## Search
 
@@ -133,13 +126,6 @@
                             (remove #{facet} (get-in db [:ui :facets] [])))))
 (register-sub :facets (fn [db [_ path]] (reaction (get-in @db [:ui :facets]))))
 
-;; TODO this is HTML5-specific, so should probably be moved into html5.cljs
-(register-handler
-  :scroll (fn [db [_ scroll]]
-            (js/setTimeout
-              #(set! js/document.body.scrollTop (or scroll 0)) 100)
-            db))
-
 ;; ## Libraries
 
 (register-sub
@@ -160,31 +146,32 @@
 
 ;; ### Sample library
 
-(dispatch-sync [:library
+(dispatch-sync
+  [:library
    ;; Simple representation of the libraries that are interesting for the user
    ;; including position on a map, opening hours and contact information.
    ;;
    ;; FIXME The above books in the works section are from different libraries,
    ;; ie. 775100 is Aarhus hovedbibliotek.
    ;;
-    {:id "710100"
-     :name "Københavns Hovedbibliotek"
-     :address
-     {:road "Krystalgade 15"
-      :city "1172 København K"
-      :country "Danmark"}
-     :email "bibliotek@kff.kk.dk"
-     :phone {:number "33663000"
-             :time "man-fre 10-17"}
-     :position [55.680887 12.573619]
-     ;; FIXME How to represent many opening hours for departments of a library?
-     ;; - these are delivered as a &lt;pre&gt;-formatted data
-     :hours
-     [{:title "Åbningstider"
-       :weekdays [[8 22] [8 20] [8 20] [8 20] [8 19] [8 17]]}
-      {:title "Betjening"
-       :weekdays [[12 17] [12 17] [12 17] [12 17] [12 17] [12 15]]}]}
-    ])
+   {:id "710100"
+    :name "Københavns Hovedbibliotek"
+    :address
+    {:road "Krystalgade 15"
+     :city "1172 København K"
+     :country "Danmark"}
+    :email "bibliotek@kff.kk.dk"
+    :phone {:number "33663000"
+            :time "man-fre 10-17"}
+    :position [55.680887 12.573619]
+    ;; FIXME How to represent many opening hours for departments of a library?
+    ;; - these are delivered as a &lt;pre&gt;-formatted data
+    :hours
+    [{:title "Åbningstider"
+      :weekdays [[8 22] [8 20] [8 20] [8 20] [8 19] [8 17]]}
+     {:title "Betjening"
+      :weekdays [[12 17] [12 17] [12 17] [12 17] [12 17] [12 15]]}]}
+   ])
 
 ;; ## User status
 

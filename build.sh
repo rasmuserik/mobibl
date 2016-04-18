@@ -18,6 +18,7 @@ cordova build
 cp -a platforms/browser/www/cordova* .
 cp -a platforms/browser/www/cordova* resources/public/
 
+
 # Manifest file
 #
 #echo "CACHE MANIFEST" > index.appcache
@@ -25,6 +26,9 @@ cp -a platforms/browser/www/cordova* resources/public/
 #find assets -type f >> index.appcache
 #echo "index.js" >> index.appcache
 #find */config.xml >> index.appcache
+
+npm install clean-css
+./node_modules/.bin/cleancss -o assets/style.css resources/css/*
 
 cat doc/intro.md doc/roadmap.md CONTRIBUTING.md LICENSE.md > README.md
 for SRC in main mock_data mobibl html5 bibapp_datasource
