@@ -74,14 +74,12 @@
                 ["hest" [[:year "2001"]]]])))
 
 (register-handler
-  :route (fn [db [_ page id prevPageScroll]]
-           (let [[prevPage prevId _] (get-in db [:route :path])
-                 [id scroll] (if id
-                               [id 0]
-                               (get-in db [:current page]))]
+  :route (fn [db [_ page id]]
+           (let [[prevPage prevId] (get-in db [:route :path])
+                 id (or id (get-in db [:current page]))]
              (-> db
-                 (assoc-in [:current prevPage] [prevId prevPageScroll])
-                 (assoc-in [:current page] [id scroll])
+                 (assoc-in [:current prevPage] prevId)
+                 (assoc-in [:current page] id)
                  (assoc-in [:route :path] [page id])))))
 
 (register-handler

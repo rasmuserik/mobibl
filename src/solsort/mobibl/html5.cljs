@@ -196,7 +196,6 @@
 ;; ## Components
 ;; ### Component for remembering scroll position per route
 (defn restore-scroll [route]
-  (log 'restore-scroll route @(subscribe [:ui :scroll]))
   (set! js/document.body.scrollTop (get @(subscribe [:ui :scroll]) route 0)))
 
 (defonce handle-scroll
@@ -326,8 +325,7 @@
          :type :text
          :value query
          :on-change #(dispatch-sync [:route "search"
-                                     [(-> % .-target .-value)]
-                                     js/document.body.scrollTop])
+                                     [(-> % .-target .-value)]])
          }]
        [:button.ui.icon.button
         {:class (if-not search-history "disabled"
@@ -641,7 +639,7 @@
     (.add hammer swipe)
     (.on hammer "swipeleft"
          (fn []
-           (let [[page id _] @(subscribe [:route])
+           (let [[page id] @(subscribe [:route])
                  index (.indexOf ordered-page-names page)]
              (change-hash
                (get ordered-page-names
@@ -651,7 +649,7 @@
 
     (.on hammer "swiperight"
          (fn []
-           (let [[page id _] @(subscribe [:route])
+           (let [[page id] @(subscribe [:route])
                  index (.indexOf ordered-page-names page)]
              (change-hash
                (get ordered-page-names
