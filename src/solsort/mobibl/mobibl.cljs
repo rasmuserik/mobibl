@@ -62,7 +62,9 @@
 ;; ## Routing and history
 ;;
 ;;
-(register-sub :route (fn [db] (reaction (get-in @db [:route :path] [:search ""]))))
+(register-sub
+  :route
+  (fn [db] (reaction (get-in @db [:route :path] [:search ""]))))
 
 (register-sub
   :history
