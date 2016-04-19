@@ -77,9 +77,14 @@
 (go
   (let [mockdata (<! (<ajax "mockdata.json"))]
     (when mockdata
-      (doall
-        (for [o mockdata]
-          (dispatch [:work (o "_id") (convert-bibentry o)]))))))
+      (doall (for [o mockdata]
+               (dispatch [:work (o "_id") (convert-bibentry o)]))))))
+(go
+  (let [facets (<! (<ajax "assets/sample-facets.json"))]
+    (dispatch [:facets :sample
+               (sort-by #(- (nth % 2))
+                        (map (fn [[type facet count :as f]]
+                               [(keyword type) facet count]) facets))])))
 ;; ## Library data
 (go
   (let [libraries (<! (<ajax "assets/libraries.json"))
@@ -89,7 +94,6 @@
                  libraries)]
 
     (dispatch [:libraries libgeo])
-    (log libraries)
     (doall
       (map #(dispatch
               [:library
@@ -97,8 +101,8 @@
                 :name (% "name")
                 :address
                 {:road(% "street")
-                :postcode (% "postcode")
-                :city (% "city")}
+                 :postcode (% "postcode")
+                 :city (% "city")}
                 :position [((% "geo") "lat")  ((% "geo") "lng")]}])
            libraries))))
 

@@ -268,7 +268,7 @@
     :year "pink"
     "" ))
 
-(defn facets [selected all]
+(defn show-facets [selected all]
   (let
     [all (remove
            (fn [[a b c]]
@@ -299,15 +299,13 @@
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
 (defn search [query]
-  (let [prev-query (atom)]
-    (fn [query]
       (let
         [results @(subscribe [:search query 0])
          results
          (map
            (fn [pid]
              [:a.column {:key pid :href (route-link :work pid)}
-              [:div 
+              [:div
                {:style {:height "9rem"
                         :color :black
                         :margin-bottom "1rem"
@@ -320,9 +318,11 @@
          search-str (first (filter string? query))
          active-facets (remove string? query)
          facet-history (or @(subscribe [:ui :facet-history]) [])
+         facets @(subscribe [:facets :sample])
          ]
-        (log search-str active-facets)
-        [:div.ui.container
+        (log 'facets search-str active-facets facets)
+        [:div
+         [:div.ui.container
          [:h1 "Mobiblby biblioteker"]
          [:div
           [:div.ui.search.fluid.input.action.left.icon
@@ -353,72 +353,53 @@
                           {:class (facet-color col)}
                           (str f)]
                          )
-                       ))))]
+                       ))))]]]
 
-          ;; Facet view
-          [:div 
-           (map (fn [[col s :as facet]]
-                  [:a.ui.small.button.condensed.bold
-                   {:on-click 
-                    (fn [] 
-                      (dispatch [:ui :facet-history
-                                 (conj facet-history facet)])
-                      (dispatch [:remove-facet [col s]]))
-                    :key (hash [col s])
-                    :class (facet-color col)} s])
-                active-facets)
-           (map (fn [[col s cnt]]
-                  [:a.ui.small.basic.button.condensed.bold
-                   {:on-click #(dispatch [:add-facet [col s]])
-                    :key (hash [col s])
-                    :class (facet-color col)} s " "
-                   [:span.small.regular " " cnt ""]])
-                facet-history)]
-
-          [facets
-           @(subscribe [:facets])
-           [[:creator "Jens Jensen" 412]
-            [:creator "Holger Danske" 231]
-            [:creator "H. C. Andersen" 518]
-            [:creator "Kumbel" 100]
-            [:creator "Mr. X" 93]
-            [:type "bog" 1541]
-            [:type "noder" 541]
-            [:type "cd" 341]
-            [:type "tidskriftsartikel" 641]
-            [:type "dvd" 300]
-            [:type "video" 144]
-            [:type "avisartikel" 381]
-            [:type "VHS" 1]
-            [:type "cd-rom" 41]
-            [:language "dansk" 913]
-            [:language "engelsk" 569]
-            [:language "blandede sprog" 319]
-            [:language "tysk" 293]
-            [:language "færøsk" 321]
-            [:language "persisk" 139]
-            [:subject "gæs" 49]
-            [:subject "filosofi" 332]
-            [:subject "kager" 232]
-            [:subject "engelske skuespillere" 32]
-            [:subject "åer" 132]
-            [:subject "tautologi" 123]
-            [:subject "sjove bøger" 400]
-            [:year "2000" 154]
-            [:year "2001" 49]
-            [:year "2002" 14]
-            [:year "2003" 293]
-            [:year "2004" 114]
-            [:year "2005" 239]
-            [:year "2006" 276]
-            [:year "2007" 481]
-            [:year "2008" 359]
-            ]]]
-         [:p]
-         [:div.ui.grid
+         ;; Facet view
+         [:div
+          {:style {:white-space :nowrap
+                   :overflow-y :hidden
+                   :overflow-x :auto
+                   :margin-top "1rem"
+                   :margin-bottom "1rem"
+                   :margin-left "1%"
+                   :width "99%"
+                   :display :inline-block
+                   }}
+          (merge
+            [:div]
+            (map (fn [[col s :as facet]]
+                   [:a.ui.small.button.condensed.bold
+                    {:on-click
+                     (fn []
+                       (dispatch [:ui :facet-history
+                                  (conj facet-history facet)])
+                       (dispatch [:remove-facet [col s]]))
+                     :key (hash [col s])
+                     :class (facet-color col)} s])
+                 active-facets)
+            (map (fn [[col s cnt]]
+                   [:a.ui.small.basic.button.condensed.bold
+                    {:on-click #(dispatch [:add-facet [col s]])
+                     :key (hash [col s])
+                     :class (facet-color col)} s " "
+                    [:span.small.regular " " cnt ""]])
+                 facet-history))
+          (merge
+            [:div]
+            (map (fn [[col s cnt]]
+                   (log 'facet col s cnt)
+                [:a.ui.small.basic.button.condensed.bold
+                         {:on-click #(dispatch [:add-facet [col s]])
+                          :key (hash [col s])
+                          :class (facet-color col)} s " "
+                         [:span.small.regular " " cnt ""]])
+                      facets))]
+         [:div.ui.container
+          [:div.ui.grid
           (merge [:div.stackable.doubling.four.column.row]
-                 results)]
-         [tabbar]]))))
+                 results)]]
+         [tabbar]]))
 
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
@@ -433,10 +414,10 @@
     [:div
      [:div
       {:style
-       {:height work-tiny-height
-        :background-color "#777"
-        :overflow :hidden}}
-      (into [:div {:style {:white-space :nowrap :overflow-x :auto}}]
+      {:background-color "#777"
+       :overflow-x :auto
+       :overflow-y :hidden}}
+      (into [:div {:style {:white-space :nowrap :height work-tiny-height}}]
             (map work-tiny work-history))]
      [:div.ui.container
       [:p]
@@ -483,7 +464,6 @@
 (def daynames ["Man" "Tir" "Ons" "Tor" "Fre" "Lør" "Søn"])
 
 (defn library [id]
-  (log 'lib id)
   (let [current-library @(subscribe [:library id])]
 
     (let [address (:address current-library)
@@ -620,13 +600,15 @@
 (defn app []
   (let [prev-route (atom)]
     (fn []
-      (let [[page & params  :as route] @(subscribe [:route])]
-        (when (not= @prev-route route)
+      (let [[page & params  :as route] @(subscribe [:route])
+            first-run (not= @prev-route route)
+            ]
+        (when first-run
           (reset! prev-route route)
           (js/setTimeout #(restore-scroll route) 0))
         [:div
          (case page
-           :search [search params]
+           :search [search params first-run]
            :work [work (first params)]
            :library [library (or (first params) "710100")]
            :status [status]
@@ -655,7 +637,6 @@
 
 (defonce handle-hash
   (fn []
-    (log 'handle-hash)
     (if (empty? js/location.hash)
       (dispatch [:route])
       (dispatch (into [:route]
@@ -669,7 +650,6 @@
 (defonce sync-hash
   (ratom/run!
     (let [[page param :as route] @(subscribe [:route])]
-      (log 'sync-hash page route)
       (js/history.pushState nil nil (apply route-link route)))))
 ;; ## Execute and events
 
