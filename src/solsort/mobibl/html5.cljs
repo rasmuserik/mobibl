@@ -258,9 +258,7 @@
                              (:keywords o))))
       [:div (:description o)]]]))
 
-;; ### Search
-;; <img width=20% align=top src=doc/wireframes/search.jpg>
-
+;; ### Facet view
 (defn facet-color [s]
   (case s
     :creator "orange"
@@ -269,6 +267,7 @@
     :subject "violet"
     :year "pink"
     "" ))
+
 (defn facets [selected all]
   (let
     [all (remove
@@ -294,32 +293,35 @@
                :key (hash [col s])
                :class (facet-color col)} s " "
               [:span.small.regular " " cnt ""]])
-           (reverse (sort-by #(nth % 2) all))) ))
+           (reverse (sort-by #(nth % 2) all))))))
 
-  )
+;; ### Search
+;; <img width=20% align=top src=doc/wireframes/search.jpg>
+
 (defn search [query]
-  (let
+  (let [prev-query (atom)]
+   (fn [query]
+    (let
     [results @(subscribe [:search query 0])
      results
      (map
        (fn [pid]
-         [:a.column
-          {:key pid
-           :href (route-link :work pid)}
-          [:div
-           {:style
-            {:height "9rem"
-             :color :black
-             :margin-bottom "1rem"
-             :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"
-             }
-            }
+         [:a.column {:key pid :href (route-link :work pid)}
+          [:div 
+           {:style {:height "9rem"
+                    :color :black
+                    :margin-bottom "1rem"
+                    :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"}}
            [work-item pid]]])
        results)
      show-history @(subscribe [:ui :show-history])
      search-history @(subscribe [:history :search])
      suggest (when show-history search-history)
+     search-str (first (filter string? query))
+     active-facets (remove string? query)
+     facet-history (or @(subscribe [:ui :facet-history]) [])
      ]
+    (log search-str active-facets)
     [:div.ui.container
      [:h1 "Mobiblby biblioteker"]
      [:div
@@ -352,6 +354,26 @@
                       (str f)]
                      )
                    ))))]
+
+      ;; Facet view
+      [:div 
+       (map (fn [[col s :as facet]]
+             [:a.ui.small.button.condensed.bold
+              {:on-click 
+               (fn [] 
+                 (dispatch [:ui :facet-history
+                            (conj facet-history facet)])
+                 (dispatch [:remove-facet [col s]]))
+               :key (hash [col s])
+               :class (facet-color col)} s])
+           active-facets)
+      (map (fn [[col s cnt]]
+             [:a.ui.small.basic.button.condensed.bold
+              {:on-click #(dispatch [:add-facet [col s]])
+               :key (hash [col s])
+               :class (facet-color col)} s " "
+              [:span.small.regular " " cnt ""]])
+           facet-history)]
 
       [facets
        @(subscribe [:facets])
@@ -396,7 +418,7 @@
      [:div.ui.grid
       (merge [:div.stackable.doubling.four.column.row]
              results)]
-     [tabbar]]))
+     [tabbar]]))))
 
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
@@ -598,15 +620,15 @@
 (defn app []
   (let [prev-route (atom)]
     (fn []
-      (let [[page id _ :as route] @(subscribe [:route])]
+      (let [[page & params  :as route] @(subscribe [:route])]
         (when (not= @prev-route route)
           (reset! prev-route route)
           (js/setTimeout #(restore-scroll route) 0))
         [:div
          (case page
-           :search [search id]
-           :work [work id]
-           :library [library (or id "710100")]
+           :search [search params]
+           :work [work (first params)]
+           :library [library (or (first params) "710100")]
            :status [status]
            [search ""])]))))
 
