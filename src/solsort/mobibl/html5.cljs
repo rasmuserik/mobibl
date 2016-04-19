@@ -244,7 +244,7 @@
   (let [o @(subscribe [:work pid])
         keywords
         (map
-          (fn [kw] [:a {:href (route-link :search [:subject kw]) } kw])
+          (fn [kw] [:a {:href (route-link :search "" [:subject kw]) } kw])
           (:keywords o)
           )]
     [:div.work
@@ -268,35 +268,23 @@
     :year "pink"
     "" ))
 
-(defn show-facets [selected all]
-  (let
-    [all (remove
-           (fn [[a b c]]
-             (some #{[a b]} selected))
-           all)]
-    (merge
-      [:div.condensed
-       {:style
-        {:height "6.9rem"
-         :overflow :hidden
-         :line-height "2.3rem"
-         :margin-bottom "0.4rem" }}]
-      (map (fn [[col s]]
-             [:a.ui.small.button.condensed.bold
-              {:on-click #(dispatch [:remove-facet [col s]])
-               :key (hash [col s])
-               :class (facet-color col)} s])
-           selected)
-      (map (fn [[col s cnt]]
-             [:a.ui.small.basic.button.condensed.bold
-              {:on-click #(dispatch [:add-facet [col s]])
-               :key (hash [col s])
-               :class (facet-color col)} s " "
-              [:span.small.regular " " cnt ""]])
-           (reverse (sort-by #(nth % 2) all))))))
-
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
+
+(defn facet [search-str active-facets]
+  (fn [[col s cnt :as facet]]
+                   [:a.ui.small.basic.button.condensed.bold
+                    {:on-click
+                     (fn []
+                       (let [facet-history
+         (or @(subscribe [:ui :facet-history]) [])]
+                       (dispatch [:ui :facet-history
+                                  (remove #{[col s]} facet-history)])
+                       (dispatch (into [:route :search search-str [col s]]
+                                       active-facets))))
+                     :key (hash [col s])
+                     :class (facet-color col)} s
+                     [:span.small.regular " " cnt ""]]))
 
 (defn search [query]
       (let
@@ -315,12 +303,11 @@
          show-history @(subscribe [:ui :show-history])
          search-history @(subscribe [:history :search])
          suggest (when show-history search-history)
-         search-str (first (filter string? query))
+         search-str (or (first (filter string? query)) "")
          active-facets (remove string? query)
          facet-history (or @(subscribe [:ui :facet-history]) [])
-         facets @(subscribe [:facets :sample])
-         ]
-        (log 'facets search-str active-facets facets)
+         facets @(subscribe [:facets :sample])]
+        (log 'search query search-str active-facets)
         [:div
          [:div.ui.container
          [:h1 "Mobiblby biblioteker"]
@@ -330,9 +317,10 @@
            [:input
             {:placeholder "Indtast søgning"
              :type :text
-             :value query
-             :on-change #(dispatch-sync [:route :search
-                                         [(-> % .-target .-value)]])
+             :value search-str
+             :on-change #(dispatch-sync (into [:route :search
+                                         (-> % .-target .-value)]
+                                              active-facets))
              }]
            [:button.ui.icon.button
             {:class (if-not search-history "disabled"
@@ -362,8 +350,8 @@
                    :overflow-x :auto
                    :margin-top "1rem"
                    :margin-bottom "1rem"
-                   :margin-left "1%"
-                   :width "99%"
+                   :margin-left "0.5%"
+                   :width "99.5%"
                    :display :inline-block
                    }}
           (merge
@@ -374,27 +362,16 @@
                      (fn []
                        (dispatch [:ui :facet-history
                                   (conj facet-history facet)])
-                       (dispatch [:remove-facet [col s]]))
+                       (dispatch (log (into [:route :search search-str]
+                                       (remove #{[col s]} active-facets)))))
                      :key (hash [col s])
                      :class (facet-color col)} s])
                  active-facets)
-            (map (fn [[col s cnt]]
-                   [:a.ui.small.basic.button.condensed.bold
-                    {:on-click #(dispatch [:add-facet [col s]])
-                     :key (hash [col s])
-                     :class (facet-color col)} s " "
-                    [:span.small.regular " " cnt ""]])
-                 facet-history))
+            (map (facet search-str active-facets) facet-history) 
+            )
           (merge
             [:div]
-            (map (fn [[col s cnt]]
-                   (log 'facet col s cnt)
-                [:a.ui.small.basic.button.condensed.bold
-                         {:on-click #(dispatch [:add-facet [col s]])
-                          :key (hash [col s])
-                          :class (facet-color col)} s " "
-                         [:span.small.regular " " cnt ""]])
-                      facets))]
+            (map (facet search-str active-facets) facets))]
          [:div.ui.container
           [:div.ui.grid
           (merge [:div.stackable.doubling.four.column.row]
@@ -423,7 +400,7 @@
       [:p]
       [:h1.center (:title work)]
       [:p.center "af "
-       [:a {:href (route-link :search  [:creator creator])} creator]]
+       [:a {:href (route-link :search "" [:creator creator])} creator]]
       [:p.center
        [:img
         {:src (:cover-url work)
@@ -438,7 +415,7 @@
                 " "
                 (for [word keywords]
                   [:a.ui.label
-                   {:href (:route-link :search  [:subject word])}
+                   {:href (route-link :search "" [:subject word])}
                    word]))))
       (if language [:p [:em "Sprog: "] language] "")
       (if location [:p [:em "Opstilling: "] location] "")
