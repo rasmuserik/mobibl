@@ -273,110 +273,109 @@
 
 (defn facet [search-str active-facets]
   (fn [[col s cnt :as facet]]
-                   [:a.ui.small.basic.button.condensed.bold
-                    {:on-click
-                     (fn []
-                       (let [facet-history
-         (or @(subscribe [:ui :facet-history]) [])]
-                       (dispatch [:ui :facet-history
-                                  (remove #{[col s]} facet-history)])
-                       (dispatch (into [:route :search search-str [col s]]
-                                       active-facets))))
-                     :key (hash [col s])
-                     :class (facet-color col)} s
-                     [:span.small.regular " " cnt ""]]))
+    [:a.ui.small.basic.button.condensed.bold
+     {:on-click
+      (fn []
+        (let [facet-history
+              (or @(subscribe [:ui :facet-history]) [])]
+          (dispatch [:ui :facet-history
+                     (remove #{[col s]} facet-history)])
+          (dispatch (into [:route :search search-str [col s]]
+                          active-facets))))
+      :key (hash [col s])
+      :class (facet-color col)} s
+     [:span.small.regular " " cnt ""]]))
 
 (defn search [query]
-      (let
-        [results @(subscribe [:search query 0])
-         results
-         (map
-           (fn [pid]
-             [:a.column {:key pid :href (route-link :work pid)}
-              [:div
-               {:style {:height "9rem"
-                        :color :black
-                        :margin-bottom "1rem"
-                        :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"}}
-               [work-item pid]]])
-           results)
-         show-history @(subscribe [:ui :show-history])
-         search-history @(subscribe [:history :search])
-         suggest (when show-history search-history)
-         search-str (or (first (filter string? query)) "")
-         active-facets (remove string? query)
-         facet-history (or @(subscribe [:ui :facet-history]) [])
-         facets @(subscribe [:facets :sample])]
-        (log 'search query search-str active-facets)
-        [:div
-         [:div.ui.container
-         [:h1 "Mobiblby biblioteker"]
-         [:div
-          [:div.ui.search.fluid.input.action.left.icon
-           [:i.search.icon]
-           [:input
-            {:placeholder "Indtast søgning"
-             :type :text
-             :value search-str
-             :on-change #(dispatch-sync (into [:route :search
-                                         (-> % .-target .-value)]
-                                              active-facets))
-             }]
-           [:button.ui.icon.button
-            {:class (if-not search-history "disabled"
-                      (if show-history "active" ""))
-             :on-click #(dispatch [:ui :show-history (not show-history)])}
-            [:i.caret.down.icon]]
-           (when suggest
-             (into [:div.results.transition.visible
-                    {:style {:display "block !important"}}]
-                   (for [[s facets] suggest]
-                     (into
-                       [:a.result
-                        {:href (route-link :search s)
-                         :on-click #(dispatch-sync [:ui :show-history false])}
-                        s " "]
-                       (for [[col f] facets]
-                         [:div.ui.small.label
-                          {:class (facet-color col)}
-                          (str f)]
-                         )
-                       ))))]]]
+  (let
+    [results @(subscribe [:search query 0])
+     results
+     (map
+       (fn [pid]
+         [:a.column {:key pid :href (route-link :work pid)}
+          [:div
+           {:style {:height "9rem"
+                    :color :black
+                    :margin-bottom "1rem"
+                    :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"}}
+           [work-item pid]]])
+       results)
+     show-history @(subscribe [:ui :show-history])
+     search-history @(subscribe [:history :search])
+     suggest (when show-history search-history)
+     search-str (or (first (filter string? query)) "")
+     active-facets (remove string? query)
+     facet-history (or @(subscribe [:ui :facet-history]) [])
+     facets @(subscribe [:facets :sample])]
+    (log 'search query search-str active-facets)
+    [:div
+     [:div.ui.container
+      [:h1 "Mobiblby biblioteker"]
+      [:div
+       [:div.ui.search.fluid.input.action.left.icon
+        [:i.search.icon]
+        [:input
+         {:placeholder "Indtast søgning"
+          :type :text
+          :value search-str
+          :on-change #(dispatch-sync (into [:route :search
+                                            (-> % .-target .-value)]
+                                           active-facets))
+          }]
+        [:button.ui.icon.button
+         {:class (if-not search-history "disabled"
+                   (if show-history "active" ""))
+          :on-click #(dispatch [:ui :show-history (not show-history)])}
+         [:i.caret.down.icon]]
+        (when suggest
+          (into [:div.results.transition.visible
+                 {:style {:display "block !important"}}]
+                (for [[s facets] suggest]
+                  (into
+                    [:a.result
+                     {:href (route-link :search s)
+                      :on-click #(dispatch-sync [:ui :show-history false])}
+                     s " "]
+                    (for [[col f] facets]
+                      [:div.ui.small.label
+                       {:class (facet-color col)}
+                       (str f)]
+                      )
+                    ))))]]]
 
-         ;; Facet view
-         [:div
-          {:style {:white-space :nowrap
-                   :overflow-y :hidden
-                   :overflow-x :auto
-                   :margin-top "1rem"
-                   :margin-bottom "1rem"
-                   :margin-left "0.5%"
-                   :width "99.5%"
-                   :display :inline-block
-                   }}
-          (merge
-            [:div]
-            (map (fn [[col s :as facet]]
-                   [:a.ui.small.button.condensed.bold
-                    {:on-click
-                     (fn []
-                       (dispatch [:ui :facet-history
-                                  (conj facet-history facet)])
-                       (dispatch (log (into [:route :search search-str]
-                                       (remove #{[col s]} active-facets)))))
-                     :key (hash [col s])
-                     :class (facet-color col)} s])
-                 active-facets)
-            (map (facet search-str active-facets) facet-history) 
-            )
-          (merge
-            [:div]
-            (map (facet search-str active-facets) facets))]
-         [:div.ui.container
-          [:div.ui.grid
-          (merge [:div.stackable.doubling.four.column.row]
-                 results)]]
-         [tabbar]]))
+     ;; Facet view
+     [:div
+      {:style {:white-space :nowrap
+               :overflow-y :hidden
+               :overflow-x :auto
+               :margin-top "1rem"
+               :margin-bottom "1rem"
+               :margin-left "0.5%"
+               :width "99.5%"
+               :display :inline-block
+               }}
+      (merge
+        [:div]
+        (map (fn [[col s :as facet]]
+               [:a.ui.small.button.condensed.bold
+                {:on-click
+                 (fn []
+                   (dispatch [:ui :facet-history
+                              (conj facet-history facet)])
+                   (dispatch (log (into [:route :search search-str]
+                                        (remove #{[col s]} active-facets)))))
+                 :key (hash [col s])
+                 :class (facet-color col)} s])
+             active-facets)
+        (map (facet search-str active-facets) facet-history))
+      (merge
+        [:div]
+        (map (facet search-str active-facets) facets))]
+     [:div.ui.container
+      [:div.ui.grid
+       (merge [:div.stackable.doubling.four.column.row]
+              results)]]
+     [tabbar]]))
 
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
@@ -391,9 +390,9 @@
     [:div
      [:div
       {:style
-      {:background-color "#777"
-       :overflow-x :auto
-       :overflow-y :hidden}}
+       {:background-color "#777"
+        :overflow-x :auto
+        :overflow-y :hidden}}
       (into [:div {:style {:white-space :nowrap :height work-tiny-height}}]
             (map work-tiny work-history))]
      [:div.ui.container
