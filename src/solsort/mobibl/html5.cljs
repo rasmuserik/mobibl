@@ -261,11 +261,24 @@
 ;; ### Facet view
 (defn facet-color [s]
   (case s
-    :creator "orange"
-    :type "olive"
-    :language "teal"
-    :subject "violet"
-    :year "pink"
+    :audience "red"
+    :audienceCategory "yellow"
+    :literaryForm "yellow"
+    :category "yellow"
+    :subject "orange"
+    :dk5 "orange"
+    :creator "olive"
+    :period "green"
+    :date "green"
+    :type "teal"
+    :fictionSubject "blue"
+    :musicSubject "blue"
+    :nonFictionSubject "blue"
+    :form "violet"
+    :genre "purple"
+    :genreCategory "purple"
+    :geographic "brown"
+    :level "gray"
     "" ))
 
 ;; ### Search
