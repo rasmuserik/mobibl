@@ -28,8 +28,7 @@ cp -a platforms/browser/www/cordova* resources/public/
 #find */config.xml >> index.appcache
 
 # build assets/style.css
-npm install purify-css
-./purifycss.js
+./build-css.sh
 
 cat doc/intro.md doc/roadmap.md CONTRIBUTING.md LICENSE.md > README.md
 for SRC in main mock_data mobibl html5 bibapp_datasource
