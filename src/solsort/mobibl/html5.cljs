@@ -8,7 +8,7 @@
     [cljs.reader]
     [solsort.util
      :refer
-     [<ajax <seq<! js-seq normalize-css load-style! put!close!
+     [<ajax <seq<! js-seq load-style! put!close!
       parse-json-or-nil log page-ready render dom->clj]]
     [reagent.core :as reagent :refer []]
     [re-frame.core :as re-frame
@@ -23,7 +23,6 @@
 
 ;; ## Styling
 ;;
-(load-style! normalize-css "style-reset")
 (def highlight "#326bc5")
 ;(def background fade from "#eaeaea" to "#ffffff")
 (def dark "#262626")
