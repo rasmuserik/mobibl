@@ -108,12 +108,17 @@
     (reaction (let [results (get-in @db [:search q page])]
                 (or results
                     (do (dispatch [:request-search q page]) []))))))
+(register-handler
+  :facets
+  (fn [db [_ query facets]] (assoc-in db [:facets query] facets)))
+(register-sub
+  :facets
+  (fn [db [_ query]] (reaction (get-in @db [:facets query] []))))
 
 ;; ## UI
 
 (register-handler
-  :ui (fn [db [_ id value]]
-        (assoc-in db [:ui id] value)))
+  :ui (fn [db [_ id value]] (assoc-in db [:ui id] value)))
 
 (register-sub :ui (fn [db [_ path]] (reaction (get-in @db [:ui path]))))
 (register-handler
@@ -124,7 +129,6 @@
   :remove-facet (fn [db [_ facet]]
                   (assoc-in db [:ui :facets]
                             (remove #{facet} (get-in db [:ui :facets] [])))))
-(register-sub :facets (fn [db [_ path]] (reaction (get-in @db [:ui :facets]))))
 
 ;; ## Libraries
 

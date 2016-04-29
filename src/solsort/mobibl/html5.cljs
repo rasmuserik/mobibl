@@ -244,7 +244,7 @@
   (let [o @(subscribe [:work pid])
         keywords
         (map
-          (fn [kw] [:a {:href (route-link :search [:subject kw]) } kw])
+          (fn [kw] [:a {:href (route-link :search "" [:subject kw]) } kw])
           (:keywords o)
           )]
     [:div.work
@@ -258,9 +258,7 @@
                              (:keywords o))))
       [:div (:description o)]]]))
 
-;; ### Search
-;; <img width=20% align=top src=doc/wireframes/search.jpg>
-
+;; ### Facet view
 (defn facet-color [s]
   (case s
     :creator "orange"
@@ -269,133 +267,114 @@
     :subject "violet"
     :year "pink"
     "" ))
-(defn facets [selected all]
-  (let
-    [all (remove
-           (fn [[a b c]]
-             (some #{[a b]} selected))
-           all)]
-    (merge
-      [:div.condensed
-       {:style
-        {:height "6.9rem"
-         :overflow :hidden
-         :line-height "2.3rem"
-         :margin-bottom "0.4rem" }}]
-      (map (fn [[col s]]
-             [:a.ui.small.button.condensed.bold
-              {:on-click #(dispatch [:remove-facet [col s]])
-               :key (hash [col s])
-               :class (facet-color col)} s])
-           selected)
-      (map (fn [[col s cnt]]
-             [:a.ui.small.basic.button.condensed.bold
-              {:on-click #(dispatch [:add-facet [col s]])
-               :key (hash [col s])
-               :class (facet-color col)} s " "
-              [:span.small.regular " " cnt ""]])
-           (reverse (sort-by #(nth % 2) all))) ))
 
-  )
+;; ### Search
+;; <img width=20% align=top src=doc/wireframes/search.jpg>
+
+(defn facet [search-str active-facets]
+  (fn [[col s cnt :as facet]]
+    [:a.ui.small.basic.button.condensed.bold
+     {:on-click
+      (fn []
+        (let [facet-history
+              (or @(subscribe [:ui :facet-history]) [])]
+          (dispatch [:ui :facet-history
+                     (remove #{[col s]} facet-history)])
+          (dispatch (into [:route :search search-str [col s]]
+                          active-facets))))
+      :key (hash [col s])
+      :class (facet-color col)} s
+     [:span.small.regular " " cnt ""]]))
+
 (defn search [query]
   (let
     [results @(subscribe [:search query 0])
      results
      (map
        (fn [pid]
-         [:a.column
-          {:key pid
-           :href (route-link :work pid)}
+         [:a.column {:key pid :href (route-link :work pid)}
           [:div
-           {:style
-            {:height "9rem"
-             :color :black
-             :margin-bottom "1rem"
-             :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"
-             }
-            }
+           {:style {:height "9rem"
+                    :color :black
+                    :margin-bottom "1rem"
+                    :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"}}
            [work-item pid]]])
        results)
      show-history @(subscribe [:ui :show-history])
      search-history @(subscribe [:history :search])
      suggest (when show-history search-history)
-     ]
-    [:div.ui.container
-     [:h1 "Mobiblby biblioteker"]
-     [:div
-      [:div.ui.search.fluid.input.action.left.icon
-       [:i.search.icon]
-       [:input
-        {:placeholder "Indtast søgning"
-         :type :text
-         :value query
-         :on-change #(dispatch-sync [:route :search
-                                     [(-> % .-target .-value)]])
-         }]
-       [:button.ui.icon.button
-        {:class (if-not search-history "disabled"
-                  (if show-history "active" ""))
-         :on-click #(dispatch [:ui :show-history (not show-history)])}
-        [:i.caret.down.icon]]
-       (when suggest
-         (into [:div.results.transition.visible
-                {:style {:display "block !important"}}]
-               (for [[s facets] suggest]
-                 (into
-                   [:a.result
-                    {:href (route-link :search s)
-                     :on-click #(dispatch-sync [:ui :show-history false])}
-                    s " "]
-                   (for [[col f] facets]
-                     [:div.ui.small.label
-                      {:class (facet-color col)}
-                      (str f)]
-                     )
-                   ))))]
+     search-str (or (first (filter string? query)) "")
+     active-facets (remove string? query)
+     facet-history (or @(subscribe [:ui :facet-history]) [])
+     facets @(subscribe [:facets :sample])]
+    (log 'search query search-str active-facets)
+    [:div
+     [:div.ui.container
+      [:h1 "Mobiblby biblioteker"]
+      [:div
+       [:div.ui.search.fluid.input.action.left.icon
+        [:i.search.icon]
+        [:input
+         {:placeholder "Indtast søgning"
+          :type :text
+          :value search-str
+          :on-change #(dispatch-sync (into [:route :search
+                                            (-> % .-target .-value)]
+                                           active-facets))
+          }]
+        [:button.ui.icon.button
+         {:class (if-not search-history "disabled"
+                   (if show-history "active" ""))
+          :on-click #(dispatch [:ui :show-history (not show-history)])}
+         [:i.caret.down.icon]]
+        (when suggest
+          (into [:div.results.transition.visible
+                 {:style {:display "block !important"}}]
+                (for [[s facets] suggest]
+                  (into
+                    [:a.result
+                     {:href (route-link :search s)
+                      :on-click #(dispatch-sync [:ui :show-history false])}
+                     s " "]
+                    (for [[col f] facets]
+                      [:div.ui.small.label
+                       {:class (facet-color col)}
+                       (str f)]
+                      )
+                    ))))]]]
 
-      [facets
-       @(subscribe [:facets])
-       [[:creator "Jens Jensen" 412]
-        [:creator "Holger Danske" 231]
-        [:creator "H. C. Andersen" 518]
-        [:creator "Kumbel" 100]
-        [:creator "Mr. X" 93]
-        [:type "bog" 1541]
-        [:type "noder" 541]
-        [:type "cd" 341]
-        [:type "tidskriftsartikel" 641]
-        [:type "dvd" 300]
-        [:type "video" 144]
-        [:type "avisartikel" 381]
-        [:type "VHS" 1]
-        [:type "cd-rom" 41]
-        [:language "dansk" 913]
-        [:language "engelsk" 569]
-        [:language "blandede sprog" 319]
-        [:language "tysk" 293]
-        [:language "færøsk" 321]
-        [:language "persisk" 139]
-        [:subject "gæs" 49]
-        [:subject "filosofi" 332]
-        [:subject "kager" 232]
-        [:subject "engelske skuespillere" 32]
-        [:subject "åer" 132]
-        [:subject "tautologi" 123]
-        [:subject "sjove bøger" 400]
-        [:year "2000" 154]
-        [:year "2001" 49]
-        [:year "2002" 14]
-        [:year "2003" 293]
-        [:year "2004" 114]
-        [:year "2005" 239]
-        [:year "2006" 276]
-        [:year "2007" 481]
-        [:year "2008" 359]
-        ]]]
-     [:p]
-     [:div.ui.grid
-      (merge [:div.stackable.doubling.four.column.row]
-             results)]
+     ;; Facet view
+     [:div
+      {:style {:white-space :nowrap
+               :overflow-y :hidden
+               :overflow-x :auto
+               :margin-top "1rem"
+               :margin-bottom "1rem"
+               :margin-left "0.5%"
+               :width "99.5%"
+               :display :inline-block
+               }}
+      (merge
+        [:div]
+        (map (fn [[col s :as facet]]
+               [:a.ui.small.button.condensed.bold
+                {:on-click
+                 (fn []
+                   (dispatch [:ui :facet-history
+                              (conj facet-history facet)])
+                   (dispatch (log (into [:route :search search-str]
+                                        (remove #{[col s]} active-facets)))))
+                 :key (hash [col s])
+                 :class (facet-color col)} s])
+             active-facets)
+        (map (facet search-str active-facets) facet-history))
+      (merge
+        [:div]
+        (map (facet search-str active-facets) facets))]
+     [:div.ui.container
+      [:div.ui.grid
+       (merge [:div.stackable.doubling.four.column.row]
+              results)]]
      [tabbar]]))
 
 ;; ### Work
@@ -411,16 +390,16 @@
     [:div
      [:div
       {:style
-       {:height work-tiny-height
-        :background-color "#777"
-        :overflow :hidden}}
-      (into [:div {:style {:white-space :nowrap :overflow-x :auto}}]
+       {:background-color "#777"
+        :overflow-x :auto
+        :overflow-y :hidden}}
+      (into [:div {:style {:white-space :nowrap :height work-tiny-height}}]
             (map work-tiny work-history))]
      [:div.ui.container
       [:p]
       [:h1.center (:title work)]
       [:p.center "af "
-       [:a {:href (route-link :search  [:creator creator])} creator]]
+       [:a {:href (route-link :search "" [:creator creator])} creator]]
       [:p.center
        [:img
         {:src (:cover-url work)
@@ -435,7 +414,7 @@
                 " "
                 (for [word keywords]
                   [:a.ui.label
-                   {:href (:route-link :search  [:subject word])}
+                   {:href (route-link :search "" [:subject word])}
                    word]))))
       (if language [:p [:em "Sprog: "] language] "")
       (if location [:p [:em "Opstilling: "] location] "")
@@ -461,7 +440,6 @@
 (def daynames ["Man" "Tir" "Ons" "Tor" "Fre" "Lør" "Søn"])
 
 (defn library [id]
-  (log 'lib id)
   (let [current-library @(subscribe [:library id])]
 
     (let [address (:address current-library)
@@ -598,15 +576,17 @@
 (defn app []
   (let [prev-route (atom)]
     (fn []
-      (let [[page id _ :as route] @(subscribe [:route])]
-        (when (not= @prev-route route)
+      (let [[page & params  :as route] @(subscribe [:route])
+            first-run (not= @prev-route route)
+            ]
+        (when first-run
           (reset! prev-route route)
           (js/setTimeout #(restore-scroll route) 0))
         [:div
          (case page
-           :search [search id]
-           :work [work id]
-           :library [library (or id "710100")]
+           :search [search params first-run]
+           :work [work (first params)]
+           :library [library (or (first params) "710100")]
            :status [status]
            [search ""])]))))
 
@@ -633,12 +613,11 @@
 
 (defonce handle-hash
   (fn []
-    (log 'handle-hash)
     (if (empty? js/location.hash)
       (dispatch [:route])
       (dispatch (into [:route]
-               (cljs.reader/read-string
-                  (.slice js/location.hash 1)))))))
+                      (cljs.reader/read-string
+                        (.slice js/location.hash 1)))))))
 
 (js/window.removeEventListener "hashchange" handle-hash)
 (js/window.addEventListener "hashchange" handle-hash)
@@ -647,8 +626,7 @@
 (defonce sync-hash
   (ratom/run!
     (let [[page param :as route] @(subscribe [:route])]
-    (log 'sync-hash page route)
-    (js/history.pushState nil nil (apply route-link route)))))
+      (js/history.pushState nil nil (apply route-link route)))))
 ;; ## Execute and events
 
 (render [:div [app]])
