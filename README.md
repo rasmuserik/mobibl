@@ -106,6 +106,8 @@ and should have the following structure:
 
 - `:ui` everything related to the ui
 - `:route` TODO everything about routing and history
+    - `:path` current route as a array
+    - `:history` history of routes, with duplicate removed
 - `:backend` everything specific to certain backends (currently `requested`)
 - `:data` TODO application specific data:
     - `:libraries` information about the libraries
@@ -149,43 +151,35 @@ And it should automatically load the list of libraries.
         [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
     (declare get-work default-work sample-lib)
 
-DEBUG: uncomment this to print db on reload
+## DEBUG: uncomment this to print db on reload
 
-    ;(register-sub :db (fn [db] (reaction @db)))
-    ;(log 'db @(subscribe [:db]))
+    (register-sub :db (fn [db] (reaction @db)))
+    (log 'db @(subscribe [:db]))
 
 ## Routing and history
 
 
-    (register-sub :route (fn [db] (reaction (get-in @db [:route :path] [:search ""]))))
-
-    (register-sub :work-history (fn [db _] (reaction (get @db :work-history []))))
     (register-sub
-      :search-history
-      (fn [db _] (reaction
-                   [["filosofi" [[:creator "plato"] [:creator "socrates"]]]
-                    ["ost" []]
-                    ["Harry Potter" [[:type "dvd"] [:type "bog"]]]
-                    ["hest" [[:year "2001"]]]])))
+      :route
+      (fn [db] (reaction (get-in @db [:route :path] [:search ""]))))
+
+    (register-sub
+      :history
+      (fn [db [_ page]] (reaction (get-in @db [:route :history page] []))))
 
     (register-handler
-      :route (fn [db [_ page id prevPageScroll]]
-               (let [[prevPage prevId _] (get-in db [:route :path])
-                     [id scroll] (if id
-                                   [id 0]
-                                   (get-in db [:current page]))]
-                 (dispatch [:scroll scroll])
-                 (-> db
-                     (assoc-in [:current prevPage] [prevId prevPageScroll])
-                     (assoc-in [:current page] [id scroll])
-                     (assoc-in [:route :path] [page id])))))
+      :route
+      (fn [db [_ page & params]]
+        (let [page (or page :search)
+              params (or params (first (get-in db [:route :history page])))
+              route (into [page] params)]
+          (-> db
+              (assoc-in [:route :history page]
+                        (into [params]
+                              (remove #{params}
+                                      (get-in db [:route :history page]))))
+              (assoc-in [:route :path] route)))))
 
-    (register-handler
-      :latest-work
-      (fn [db [_ id]]
-        (let [work-history (get-in db [:work-history] [])
-              work-history (into [id] (remove #(= % id) work-history))]
-          (assoc db :work-history work-history))))
 ## Work
 
     (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
@@ -202,7 +196,6 @@ DEBUG: uncomment this to print db on reload
         (when-not work (dispatch [:request-work id]))
         (merge default-work {:id id} work)))
     (def default-work {:title "Unknown Title" :creator "Unknown Creator"})
-
 
 ## Search
 
@@ -230,13 +223,6 @@ DEBUG: uncomment this to print db on reload
                                 (remove #{facet} (get-in db [:ui :facets] [])))))
     (register-sub :facets (fn [db [_ path]] (reaction (get-in @db [:ui :facets]))))
 
-TODO this is HTML5-specific, so should probably be moved into html5.cljs
-    (register-handler
-      :scroll (fn [db [_ scroll]]
-                (js/setTimeout
-                  #(set! js/document.body.scrollTop (or scroll 0)) 100)
-                db))
-
 ## Libraries
 
     (register-sub
@@ -257,31 +243,32 @@ TODO this is HTML5-specific, so should probably be moved into html5.cljs
 
 ### Sample library
 
-    (dispatch-sync [:library
+    (dispatch-sync
+      [:library
 Simple representation of the libraries that are interesting for the user
 including position on a map, opening hours and contact information.
 
 FIXME The above books in the works section are from different libraries,
 ie. 775100 is Aarhus hovedbibliotek.
 
-        {:id "710100"
-         :name "Københavns Hovedbibliotek"
-         :address
-         {:road "Krystalgade 15"
-          :city "1172 København K"
-          :country "Danmark"}
-         :email "bibliotek@kff.kk.dk"
-         :phone {:number "33663000"
-                 :time "man-fre 10-17"}
-         :position [55.680887 12.573619]
+       {:id "710100"
+        :name "Københavns Hovedbibliotek"
+        :address
+        {:road "Krystalgade 15"
+         :city "1172 København K"
+         :country "Danmark"}
+        :email "bibliotek@kff.kk.dk"
+        :phone {:number "33663000"
+                :time "man-fre 10-17"}
+        :position [55.680887 12.573619]
 FIXME How to represent many opening hours for departments of a library?
 - these are delivered as a &lt;pre&gt;-formatted data
-         :hours
-         [{:title "Åbningstider"
-           :weekdays [[8 22] [8 20] [8 20] [8 20] [8 19] [8 17]]}
-          {:title "Betjening"
-           :weekdays [[12 17] [12 17] [12 17] [12 17] [12 17] [12 15]]}]}
-        ])
+        :hours
+        [{:title "Åbningstider"
+          :weekdays [[8 22] [8 20] [8 20] [8 20] [8 19] [8 17]]}
+         {:title "Betjening"
+          :weekdays [[12 17] [12 17] [12 17] [12 17] [12 17] [12 15]]}]}
+       ])
 
 ## User status
 
@@ -309,6 +296,7 @@ TODO: also run on network reconnect, and after a while
         [cljs.core.async.macros :refer [go go-loop alt!]]
         [reagent.ratom :as ratom :refer  [reaction]])
       (:require
+        [cljs.reader]
         [solsort.util
          :refer
          [<ajax <seq<! js-seq normalize-css load-style! put!close!
@@ -321,6 +309,8 @@ TODO: also run on network reconnect, and after a while
         [solsort.mobibl.leaflet :refer [leaflet]]
         [cljsjs.hammer]
         [goog.string :refer [unescapeEntities]]))
+
+    (declare route-link)
 
 ## Styling
 
@@ -498,21 +488,34 @@ FIXME Not so nice to have the style for bib-map defined here
     (styling)
 
 ## Components
+### Component for remembering scroll position per route
+
+    (defn restore-scroll [route]
+      (set! js/document.body.scrollTop (get @(subscribe [:ui :scroll]) route 0)))
+
+    (defonce handle-scroll
+      (fn [] (dispatch [:ui :scroll
+                        (assoc (or @(subscribe [:ui :scroll]) {})
+                               @(subscribe [:route])
+                               js/document.body.scrollTop)])))
+    (js/window.removeEventListener "scroll" handle-scroll)
+    (js/window.addEventListener "scroll" handle-scroll)
 ### Tab bar - menu in bottom of the screen
 
     (defn tabbar-button [id s]
-      [:a {:href (str "#" id)}
-       [:img {:src (str "assets/" id "-icon.svg")
+      [:a {:href (route-link id)}
+       [:img {:src (str "assets/" (name id) "-icon.svg")
               :alt s}]])
+
 
     (defn tabbar []
       [:div
        [:div.tabbar-spacer " "]
        [:div.tabbar
-        [tabbar-button "search" "Søg"]
-        [tabbar-button "work" "Materiale"]
-        [tabbar-button "library" "Bibliotek"]
-        [tabbar-button "status" "Status"]]])
+        [tabbar-button :search "Søg"]
+        [tabbar-button :work "Materiale"]
+        [tabbar-button :library "Bibliotek"]
+        [tabbar-button :status "Status"]]])
 
 ### work-tiny
 
@@ -521,7 +524,7 @@ FIXME Not so nice to have the style for bib-map defined here
       (let  [o @(subscribe [:work pid])
              unit 13
              width (* 4.5 unit)]
-        [:a {:href (str "#work/" pid) :style {:color "#111"}}
+        [:a {:href (route-link :work pid) :style {:color "#111"}}
          [:div.center.tinywork
           [:img {:src (:cover-url o) :width "100%" :height "100%" } ]
           [:div.bold (:title o)]
@@ -532,7 +535,7 @@ FIXME Not so nice to have the style for bib-map defined here
       (let [o @(subscribe [:work pid])
             keywords
             (map
-              (fn [kw] [:a {:href (str "#search/" kw)} kw])
+              (fn [kw] [:a {:href (route-link :search [:subject kw]) } kw])
               (:keywords o)
               )]
         [:div.work
@@ -593,7 +596,7 @@ FIXME Not so nice to have the style for bib-map defined here
            (fn [pid]
              [:a.column
               {:key pid
-               :href (str "#work/" pid)}
+               :href (route-link :work pid)}
               [:div
                {:style
                 {:height "9rem"
@@ -605,7 +608,7 @@ FIXME Not so nice to have the style for bib-map defined here
                [work-item pid]]])
            results)
          show-history @(subscribe [:ui :show-history])
-         search-history @(subscribe [:search-history])
+         search-history @(subscribe [:history :search])
          suggest (when show-history search-history)
          ]
         [:div.ui.container
@@ -617,9 +620,8 @@ FIXME Not so nice to have the style for bib-map defined here
             {:placeholder "Indtast søgning"
              :type :text
              :value query
-             :on-change #(dispatch-sync [:route "search"
-                                         [(-> % .-target .-value)]
-                                         js/document.body.scrollTop])
+             :on-change #(dispatch-sync [:route :search
+                                         [(-> % .-target .-value)]])
              }]
            [:button.ui.icon.button
             {:class (if-not search-history "disabled"
@@ -632,7 +634,7 @@ FIXME Not so nice to have the style for bib-map defined here
                    (for [[s facets] suggest]
                      (into
                        [:a.result
-                        {:href (str "#search/" s)
+                        {:href (route-link :search s)
                          :on-click #(dispatch-sync [:ui :show-history false])}
                         s " "]
                        (for [[col f] facets]
@@ -696,45 +698,36 @@ FIXME Not so nice to have the style for bib-map defined here
             keywords (:keywords work)
             location (:location work)
             creator (:creator work)
-            work-history @(subscribe [:work-history])
-            ]
-        (when (not= work-id (first work-history))
-          (dispatch [:latest-work work-id]))
+            work-history (map first @(subscribe [:history :work]))]
         [:div
          [:div
           {:style
            {:height work-tiny-height
             :background-color "#777"
             :overflow :hidden}}
-          (into [:div
-                 {:style
-                  {:white-space :nowrap
-                   :overflow-x :auto}
-                  }
-                 ] (map work-tiny work-history))]
+          (into [:div {:style {:white-space :nowrap :overflow-x :auto}}]
+                (map work-tiny work-history))]
          [:div.ui.container
           [:p]
           [:h1.center (:title work)]
-          [:p.center "af " [:a {:href (str "#search/" creator)} creator]]
+          [:p.center "af "
+           [:a {:href (route-link :search  [:creator creator])} creator]]
           [:p.center
            [:img
             {:src (:cover-url work)
              :style
              {:max-height (* 0.5 (- js/document.body.clientHeight 50))
-              :max-width (* 0.8 (- js/document.body.clientWidth 20))
-
-              }
-             }]
-           ]
-          [:p.center [:a.ui.primary.button "Bestil"]  ]
+              :max-width (* 0.8 (- js/document.body.clientWidth 20))}}]]
+          [:p.center [:a.ui.primary.button "Bestil"]]
           [:p (:description work)]
           (if-not keywords ""
             (into [:p {:style {:line-height "2rem"}}]
                   (interpose
                     " "
                     (for [word keywords]
-                      [:a.ui.label {:href
-                                    (str "#search/" word)} word]))))
+                      [:a.ui.label
+                       {:href (:route-link :search  [:subject word])}
+                       word]))))
           (if language [:p [:em "Sprog: "] language] "")
           (if location [:p [:em "Opstilling: "] location] "")
           [:p.bold "Relaterede:"]
@@ -745,17 +738,13 @@ FIXME Not so nice to have the style for bib-map defined here
                (fn [id]
                  [:div.column
                   [:a.small
-                   {:href (str "#work/" id)
+                   {:href (route-link :work id)
                     :style
                     {:display :inline-block
-                     :height "6em"}
-                    }
-                   (work-item id)]]
-                 )
-               (take 12 (rest (:related work))))
-             )]
-          [tabbar]
-          ]]))
+                     :height "6em"}}
+                   (work-item id)]])
+               (take 12 (rest (:related work)))))]
+          [tabbar]]]))
 
 ### Library
 <img width=20% align=top src=doc/wireframes/library.jpg>
@@ -777,7 +766,7 @@ FIXME Not so nice to have the style for bib-map defined here
             :zoom 13
             :markers
             (map (fn [[pos id]] {:pos pos
-                                 :click #(dispatch-sync [:route "library" id])})
+                                 :click #(dispatch-sync [:route :library id])})
                  @(subscribe [:libraries]))]
            [:div.ui.container [:h1 (:name current-library)]]
            [:div.ui.container
@@ -834,7 +823,7 @@ FIXME Not so nice to have the style for bib-map defined here
                 :width "30%" }}]
              content)
        [:a
-        {:href (str "#work/" id)
+        {:href (route-link :work id)
          :style
          {:display :inline-block
           :font-size "70%"
@@ -863,11 +852,8 @@ FIXME Not so nice to have the style for bib-map defined here
                 (loan-entry
                   (:id ra)
                   [:div (:until ra)]
-                  [:div [:a {:href (str "#/location/" (:location ra))}
-                         (:location ra)]]
-                  [:div [:a {:href (str "#/creator/" "TODO-creator-id")}
-                         (:creator ra)]])
-                ))]
+                  ; TODO location to fetch
+                  )))]
            [:p
             [:h2.ui.left.header
              [:div.content
@@ -901,69 +887,62 @@ FIXME Not so nice to have the style for bib-map defined here
 
 ### Main App entry point
     (defn app []
-      (let [[page id _] @(subscribe [:route])]
-        (log 'here id)
-TODO Really annoying hack to scroll to position after page render.  Use
-component lifecycle to do this properly
-        [:div
-         (case page
-           "search" [search id]
-           "work" [work id]
-           "library" [library (or id "710100")]
-           "status" [status]
-           [search ""])]))
-
-## Execute and events
-
-    (render [:div [app]])
+      (let [prev-route (atom)]
+        (fn []
+          (let [[page id _ :as route] @(subscribe [:route])]
+            (when (not= @prev-route route)
+              (reset! prev-route route)
+              (js/setTimeout #(restore-scroll route) 0))
+            [:div
+             (case page
+               :search [search id]
+               :work [work id]
+               :library [library (or id "710100")]
+               :status [status]
+               [search ""])]))))
 
 ## Swipe gestures
 
-    (def ordered-page-names (to-array ["search"  "work" "library" "status"]))
+    (defonce routes #js [:search :work :library :status])
 
-    (defn change-hash [newHash]
-      (.pushState js/history newHash newHash (str "#" newHash))
-      (.dispatchEvent js/window (js/HashChangeEvent. "hashchange")))
-
+    (defn change-route [delta]
+      (let [n (+ delta (.indexOf routes (first @(subscribe [:route]))))
+            n (max 0 (min (dec (.-length routes)) n))]
+        (dispatch [:route (aget routes n)])))
     (defn addSwipeGestures []
       (let [hammer (js/Hammer.Manager. js/document.body)
             swipe  (js/Hammer.Swipe.)]
         (.add hammer swipe)
-        (.on hammer "swipeleft"
-             (fn []
-               (let [[page id _] @(subscribe [:route])
-                     index (.indexOf ordered-page-names page)]
-                 (change-hash
-                   (get ordered-page-names
-                        (if (zero? index)
-                          (dec (count ordered-page-names))
-                          (dec index)))))))
-
-        (.on hammer "swiperight"
-             (fn []
-               (let [[page id _] @(subscribe [:route])
-                     index (.indexOf ordered-page-names page)]
-                 (change-hash
-                   (get ordered-page-names
-                        (if (= index (dec (count ordered-page-names)))
-                          0
-                          (inc index)))))))))
-
-    (addSwipeGestures)
+        (.on hammer "swipeleft" #(change-route 1))
+        (.on hammer "swiperight" #(change-route -1))))
+    (defonce register-swipe (addSwipeGestures))
 
 
 ## Routing
 
-    (defn handle-hash []
-      (let [[page id] (string/split (.slice js/location.hash 1) "/")]
-        (if (neg? (.indexOf ordered-page-names page))
-Default to the search page
-          (change-hash "search")
-          (dispatch [:route page id js/document.body.scrollTop]))))
+    (defn route-link [& route] (str "#" (prn-str route)))
+
+    (defonce handle-hash
+      (fn []
+        (log 'handle-hash)
+        (if (empty? js/location.hash)
+          (dispatch [:route])
+          (dispatch (into [:route]
+                   (cljs.reader/read-string
+                      (.slice js/location.hash 1)))))))
 
     (js/window.removeEventListener "hashchange" handle-hash)
     (js/window.addEventListener "hashchange" handle-hash)
     (handle-hash)
+
+    (defonce sync-hash
+      (ratom/run!
+        (let [[page param :as route] @(subscribe [:route])]
+        (log 'sync-hash page route)
+        (js/history.pushState nil nil (apply route-link route)))))
+## Execute and events
+
+    (render [:div [app]])
 # BibApp Data Source (bibapp_datasource.cljs)
 
     (ns solsort.mobibl.bibapp-datasource

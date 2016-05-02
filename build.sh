@@ -27,8 +27,8 @@ cp -a platforms/browser/www/cordova* resources/public/
 #echo "index.js" >> index.appcache
 #find */config.xml >> index.appcache
 
-npm install clean-css
-./node_modules/.bin/cleancss -o assets/style.css resources/css/*
+# build assets/style.css
+./build-css.sh
 
 cat doc/intro.md doc/roadmap.md CONTRIBUTING.md LICENSE.md > README.md
 for SRC in main mock_data mobibl html5 bibapp_datasource
