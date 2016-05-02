@@ -16,8 +16,7 @@
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
     [solsort.mobibl.leaflet :refer [leaflet]]
-    [cljsjs.hammer]
-    [goog.string :refer [unescapeEntities]]))
+    [cljsjs.hammer]))
 
 (declare route-link)
 
@@ -99,11 +98,6 @@
       {".map"
        {:height (js/Math.min js/document.body.clientWidth
                              (* 0.6 js/document.body.clientHeight))}
-       "table.openhours th"
-       {:text-align "left"
-        :padding "0em 0.8em 0em 0em"}
-       "table.openhours tbody td"
-       {:text-align "center"}
        ".contact"
        {:padding "0em 0em 10em 0em"
         ".contact div span"
@@ -476,27 +470,8 @@
          [:div (:country address)]]
         [:div.open
          [:h2 "Åbningstider"]
-         [:table.openhours
-          [:thead
-           (into
-             [:tr [:th]]
-             (for [title (map :title hours)]
-               [:th title]))]
-          (into [:tbody]
-                (for [day (range 7)]
-                  (into [:tr
-                         [:th (get daynames day)]]
-                        (for [area (map :weekdays hours)
-                              :let [time (get area day)]]
-                          (into [:td]
-                                [(if (nil? time)
-                                   "Lukket"
-                                   (let [t0 (get time 0)
-                                         t1 (get time 1)]
-                                     (str (if (< t0 10)
-                                            (unescapeEntities "&nbsp;")
-                                            "")
-                                          t0 " - " t1)))])))))]]
+         [:div
+          "(blob of html describing opening hours)"]]
         [:div.contact
          [:h2 "Kontakt"]
          [:div
