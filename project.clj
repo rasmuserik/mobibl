@@ -3,24 +3,24 @@
 
   :dependencies
   [[org.clojure/clojure "1.8.0"]
-   [org.clojure/clojurescript "1.7.170"]
+   [org.clojure/clojurescript "1.8.51"]
    [org.clojure/core.async "0.2.374"]
-   [cljsjs/pouchdb "5.2.1-0"]
+   [cljsjs/localforage "1.3.1-0"]
+   [reagent "0.6.0-rc"]
    [cljsjs/showdown "0.4.0-1"]
-   [solsort/util "0.1.2"]
-   ; maybe use [secretary "1.2.3"]
+   [cljsjs/pouchdb "5.2.1-0"]
    [cljsjs/hammer "2.0.4-5"]
-   [reagent "0.5.1"]
-   [re-frame "0.6.0"]]
+   [re-frame "0.7.0"]
+   [binaryage/devtools "0.6.1"]]
 
   :plugins
-  [[lein-cljsbuild "1.1.1"]
+  [[lein-cljsbuild "1.1.3"]
    [lein-ancient "0.6.8"]
    [lein-figwheel "0.5.0-2"]
    [lein-bikeshed "0.2.0"]
    [lein-kibit "0.1.2"]]
 
-  :source-paths ["src/" "test/"]
+  :source-paths ["src/" "util/src/"]
 
   :clean-targets ^{:protect false}
   ["resources/public/out"
@@ -31,46 +31,37 @@
    "out/"
    "target/"]
 
-  ;:doo {:build "test"}
-
   :profiles
   {:dev
    {:dependencies
-    [[com.cemerick/piggieback "0.2.1"]
-     [org.clojure/tools.nrepl "0.2.10"]]
-    :repl-options
-    {:nrepl-middleware
-     [cemerick.piggieback/wrap-cljs-repl]}}}
+    [[figwheel-sidecar "0.5.4-3"]
+     [com.cemerick/piggieback "0.2.1"]]
+    :plugins
+    [[lein-figwheel "0.5.4-3"]
+     [cider/cider-nrepl "0.13.0-SNAPSHOT"]]
+    }}
 
   :cljsbuild
   {:builds
-   [{:id "dev"
-     :source-paths ["src/"]
-     :figwheel
-     {:websocket-host ~(.getHostAddress (java.net.InetAddress/getLocalHost))
-      ; :on-jsload ""
-      }
-     :compiler
-     {:main solsort.mobibl.main
-      :asset-path "out"
-      :output-to "resources/public/index.js"
-      :output-dir "resources/public/out"
-      :source-map-timestamp true }}
-    {:id "test"
-     :source-paths ["src" "test"]
-     :compiler
-     {:output-to "out/testable.js"
-      :main 'solsort.mobibl.runner
-      :source-map true
-      :optimizations :none}}
+   [
+
+    {:id "dev"
+      :source-paths ["src/" "util/src/"]
+      :figwheel
+      {:websocket-host :js-client-host}
+      :compiler
+      {:main solsort.mobibl.main
+       :asset-path "out"
+       :output-to "resources/public/index.js"
+       :output-dir "resources/public/out"
+       :source-map-timestamp true }}
     {:id "dist"
-     :source-paths ["src"]
+     :source-paths ["src" "util/src/"]
      :compiler
      {:output-to "index.js"
       :main solsort.mobibl.main
       :externs ["externs.js"]
       :optimizations :advanced
-      :pretty-print true}}]}
-  :figwheel
-  {:nrepl-port ~(read-string (or (System/getenv "FIGWHEEL_NREPL_PORT") "7888"))
-   :server-port ~(read-string (or (System/getenv "FIGWHEEL_SERVER_PORT") "3449"))})
+      :pretty-print false}}
+    ]}
+)
