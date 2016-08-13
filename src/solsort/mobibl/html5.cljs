@@ -6,6 +6,7 @@
     [reagent.ratom :as ratom :refer  [reaction]])
   (:require
     [cljs.reader]
+    [solsort.appdb :refer [db db! db-async!]]
     [solsort.util
      :refer
      [<ajax <seq<! js-seq load-style! put!close!
@@ -193,13 +194,13 @@
 ;; ### Component for remembering scroll position per route
 
 (defn restore-scroll [route]
-  (set! js/document.body.scrollTop (get @(subscribe [:ui :scroll]) route 0)))
+  (set! js/document.body.scrollTop (get (db [:ui :scroll]) route 0)))
 
 (defonce handle-scroll
-  (fn [] (dispatch [:ui :scroll
-                    (assoc (or @(subscribe [:ui :scroll]) {})
+  (fn [] (db-async! [:ui :scroll]
+                    (assoc (or (db [:ui :scroll]) {})
                            @(subscribe [:route])
-                           js/document.body.scrollTop)])))
+                           js/document.body.scrollTop))))
 (js/window.removeEventListener "scroll" handle-scroll)
 (js/window.addEventListener "scroll" handle-scroll)
 ;; ### Tab bar - menu in bottom of the screen
@@ -283,9 +284,9 @@
      {:on-click
       (fn []
         (let [facet-history
-              (or @(subscribe [:ui :facet-history]) [])]
-          (dispatch [:ui :facet-history
-                     (remove #{[col s]} facet-history)])
+              (or (db [:ui :facet-history]) [])]
+          (db-async! [:ui :facet-history]
+                    (remove #{[col s]} facet-history))
           (dispatch (into [:route :search search-str [col s]]
                           active-facets))))
       :key (hash [col s])
@@ -306,12 +307,12 @@
                     :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"}}
            [work-item pid]]])
        results)
-     show-history @(subscribe [:ui :show-history])
+     show-history (db [:ui :show-history])
      search-history @(subscribe [:history :search])
      suggest (when show-history search-history)
      search-str (or (first (filter string? query)) "")
      active-facets (remove string? query)
-     facet-history (or @(subscribe [:ui :facet-history]) [])
+     facet-history (or (db [:ui :facet-history]) [])
      facets @(subscribe [:facets :sample])]
     (log 'search query search-str active-facets)
     [:div
@@ -331,7 +332,7 @@
         [:button.ui.icon.button
          {:class (if-not search-history "disabled"
                    (if show-history "active" ""))
-          :on-click #(dispatch [:ui :show-history (not show-history)])}
+          :on-click #(db! [:ui :show-history] (not show-history))}
          [:i.caret.down.icon]]
         (when suggest
           (into [:div.results.transition.visible
@@ -340,7 +341,7 @@
                   (into
                     [:a.result
                      {:href (route-link :search s)
-                      :on-click #(dispatch-sync [:ui :show-history false])}
+                      :on-click #(db! [:ui :show-history] false)}
                      s " "]
                     (for [[col f] facets]
                       [:div.ui.small.label
@@ -366,8 +367,8 @@
                [:a.ui.small.button.condensed.bold
                 {:on-click
                  (fn []
-                   (dispatch [:ui :facet-history
-                              (conj facet-history facet)])
+                   (db-async! [:ui :facet-history]
+                             (conj facet-history facet))
                    (dispatch (log (into [:route :search search-str]
                                         (remove #{[col s]} active-facets)))))
                  :key (hash [col s])
