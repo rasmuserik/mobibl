@@ -203,6 +203,7 @@
                            js/document.body.scrollTop))))
 (js/window.removeEventListener "scroll" handle-scroll)
 (js/window.addEventListener "scroll" handle-scroll)
+
 ;; ### Tab bar - menu in bottom of the screen
 
 (defn tabbar-button [id s]

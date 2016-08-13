@@ -15,4 +15,4 @@
     ;;
     ;; The data source / connection to the server.
     ;;
-    [solsort.mobibl.bibapp-datasource]))
+    [solsort.mobibl.openplatform-datasource]))
