@@ -1,7 +1,7 @@
 (ns solsort.mobibl.leaflet
   (:require
     [reagent.core :as reagent]
-    [re-frame.core :as re-frame :refer [subscribe dispatch dispatch-sync]]
+    [solsort.appdb :refer [db db!]]
     [solsort.util :refer [log]]))
 
 (defonce default-marker-icons
@@ -45,11 +45,11 @@
          (.on @leaflet "moveend"
               #(let [pos (-> % .-target .getCenter)
                      zoom (-> % .-target .getZoom)]
-                 (dispatch-sync
-                   [:ui id
+                 (db!
+                   [:ui id]
                     (-> o
                         (assoc :pos [(.-lat pos) (.-lng pos)])
-                        (assoc :zoom zoom))])))
+                        (assoc :zoom zoom)))))
          (doall
            (for [m markers]
              (let [marker
@@ -63,15 +63,15 @@
          )
        :component-did-update (fn [component])
        :component-will-unmount
-       (fn [] (when gc (dispatch [:ui-remove id])))})))
+       (fn [] (when gc (db! [:ui id])))})))
 
 (defn ^:export leaflet [& {:keys [id gc pos pos0 zoom zoom0] :as args}]
   (let [newid (or id (str "leaflet" (.slice  (str  (js/Math.random)) 2)))
-        orig @(subscribe [:ui newid])
+        orig (db [:ui newid])
         o {:id newid
            :gc (if id gc true)
            :pos (or pos (:pos orig) pos0 [55.67 12.57])
            :zoom (or zoom (:zoom orig) zoom0 10)} ]
-    (dispatch-sync [:ui (:id o) (into args o)])
+    (db! [:ui (:id o)] (into args o))
     (fn [& {:as args}]
-      [leaflet-inner (merge @(subscribe [:ui newid])) args])))
+      [leaflet-inner (merge (db [:ui newid])) args])))
