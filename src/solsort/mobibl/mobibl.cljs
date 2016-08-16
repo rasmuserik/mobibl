@@ -59,30 +59,6 @@
 (register-sub :db (fn [db] (reaction @db)))
 (log 'db @(subscribe [:db]))
 
-;; ## Routing and history
-;;
-;;
-(register-sub
-  :route
-  (fn [db] (reaction (get-in @db [:route :path] [:search ""]))))
-
-(register-sub
-  :history
-  (fn [db [_ page]] (reaction (get-in @db [:route :history page] []))))
-
-(register-handler
-  :route
-  (fn [db [_ page & params]]
-    (let [page (or page :search)
-          params (or params (first (get-in db [:route :history page])))
-          route (into [page] params)]
-      (-> db
-          (assoc-in [:route :history page]
-                    (into [params]
-                          (remove #{params}
-                                  (get-in db [:route :history page]))))
-          (assoc-in [:route :path] route)))))
-
 ;; ## Work
 ;;
 (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))

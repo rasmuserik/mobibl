@@ -7,6 +7,8 @@
   (:require
     [cljs.reader]
     [solsort.appdb :refer [db db! db-async!]]
+    [solsort.query-route :as route]
+    [solsort.ui :refer [input]]
     [solsort.util
      :refer
      [<ajax <seq<! js-seq load-style! put!close!
@@ -18,8 +20,6 @@
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
     [solsort.mobibl.leaflet :refer [leaflet]]
     [cljsjs.hammer]))
-
-(declare route-link)
 
 ;; ## Styling
 ;;
@@ -193,21 +193,21 @@
 ;; ## Components
 ;; ### Component for remembering scroll position per route
 
-(defn restore-scroll [route]
-  (set! js/document.body.scrollTop (get (db [:ui :scroll]) route 0)))
+;; (defn restore-scroll [route]
+;;   (set! js/document.body.scrollTop (get (db [:ui :scroll]) route 0)))
 
-(defonce handle-scroll
-  (fn [] (db-async! [:ui :scroll]
-                    (assoc (or (db [:ui :scroll]) {})
-                           @(subscribe [:route])
-                           js/document.body.scrollTop))))
-(js/window.removeEventListener "scroll" handle-scroll)
-(js/window.addEventListener "scroll" handle-scroll)
+;; (defonce handle-scroll
+;;   (fn [] (db-async! [:ui :scroll]
+;;                     (assoc (or (db [:ui :scroll]) {})
+;;                            @(subscribe [:route])
+;;                            js/document.body.scrollTop))))
+;; (js/window.removeEventListener "scroll" handle-scroll)
+;; (js/window.addEventListener "scroll" handle-scroll)
 
 ;; ### Tab bar - menu in bottom of the screen
 
 (defn tabbar-button [id s]
-  [:a {:href (route-link id)}
+  [:a {:href (route/url {:page id})}
    [:img {:src (str "assets/" (name id) "-icon.svg")
           :alt s}]])
 
@@ -228,7 +228,7 @@
   (let  [o @(subscribe [:work pid])
          unit 13
          width (* 4.5 unit)]
-    [:a {:href (route-link :work pid) :style {:color "#111"}}
+    [:a {:href (route/url {:page "work" :pid pid}) :style {:color "#111"}}
      [:div.center.tinywork
       [:img {:src (:cover-url o) :width "100%" :height "100%" } ]
       [:div.bold (:title o)]
@@ -239,7 +239,7 @@
   (let [o @(subscribe [:work pid])
         keywords
         (map
-          (fn [kw] [:a {:href (route-link :search "" [:subject kw]) } kw])
+         (fn [kw] [:a {:href (route/url {:page "search" :q "" :facets kw}) } kw])
           (:keywords o)
           )]
     [:div.work
@@ -288,8 +288,9 @@
               (or (db [:ui :facet-history]) [])]
           (db-async! [:ui :facet-history]
                     (remove #{[col s]} facet-history))
-          (dispatch (into [:route :search search-str [col s]]
-                          active-facets))))
+          ((log 'active-facets active-facets)
+           (db! [:route :facets] (conj (db [:route :facets] []) [col s])))
+          ))
       :key (hash [col s])
       :class (facet-color col)} s
      [:span.small.regular " " cnt ""]]))
@@ -300,7 +301,7 @@
      results
      (map
        (fn [pid]
-         [:a.column {:key pid :href (route-link :work pid)}
+         [:a.column {:key pid :href (route/url {:page "work" :pid pid})}
           [:div
            {:style {:height "9rem"
                     :color :black
@@ -309,7 +310,7 @@
            [work-item pid]]])
        results)
      show-history (db [:ui :show-history])
-     search-history @(subscribe [:history :search])
+     search-history [] ; TODO
      suggest (when show-history search-history)
      search-str (or (first (filter string? query)) "")
      active-facets (remove string? query)
@@ -322,13 +323,8 @@
       [:div
        [:div.ui.search.fluid.input.action.left.icon
         [:i.search.icon]
-        [:input
+        [input [:route :q]
          {:placeholder "Indtast søgning"
-          :type :text
-          :value search-str
-          :on-change #(dispatch-sync (into [:route :search
-                                            (-> % .-target .-value)]
-                                           active-facets))
           }]
         [:button.ui.icon.button
          {:class (if-not search-history "disabled"
@@ -341,7 +337,7 @@
                 (for [[s facets] suggest]
                   (into
                     [:a.result
-                     {:href (route-link :search s)
+                     {:href (route/url {:page "search" :q s})
                       :on-click #(db! [:ui :show-history] false)}
                      s " "]
                     (for [[col f] facets]
@@ -370,8 +366,8 @@
                  (fn []
                    (db-async! [:ui :facet-history]
                              (conj facet-history facet))
-                   (dispatch (log (into [:route :search search-str]
-                                        (remove #{[col s]} active-facets)))))
+                   (db! [:route :facets] (remove #{[col s]} (db [:route :facets])))
+                   )
                  :key (hash [col s])
                  :class (facet-color col)} s])
              active-facets)
@@ -394,7 +390,8 @@
         keywords (:keywords work)
         location (:location work)
         creator (:creator work)
-        work-history (map first @(subscribe [:history :work]))]
+        work-history [] ; TODO 
+        ]
     [:div
      [:div
       {:style
@@ -407,7 +404,7 @@
       [:p]
       [:h1.center (:title work)]
       [:p.center "af "
-       [:a {:href (route-link :search "" [:creator creator])} creator]]
+       [:a {:href (route/url {:page "search" :facets [[:creator creator]]})} creator]]
       [:p.center
        [:img
         {:src (:cover-url work)
@@ -422,7 +419,7 @@
                 " "
                 (for [word keywords]
                   [:a.ui.label
-                   {:href (route-link :search "" [:subject word])}
+                   {:href (route/url {:page "search" :facets [[:subject word]]})}
                    word]))))
       (if language [:p [:em "Sprog: "] language] "")
       (if location [:p [:em "Opstilling: "] location] "")
@@ -434,7 +431,7 @@
            (fn [id]
              [:div.column
               [:a.small
-               {:href (route-link :work id)
+               {:href (route/url {:page "work" :pid id})
                 :style
                 {:display :inline-block
                  :height "6em"}}
@@ -461,7 +458,7 @@
         :zoom 13
         :markers
         (map (fn [[pos id]] {:pos pos
-                             :click #(dispatch-sync [:route :library id])})
+                             :click #(route/open {:page "library" :id id})})
              @(subscribe [:libraries]))]
        [:div.ui.container [:h1 (:name current-library)]]
        [:div.ui.container
@@ -499,7 +496,7 @@
             :width "30%" }}]
          content)
    [:a
-    {:href (route-link :work id)
+    {:href (route/url {:page "work" :pid id})
      :style
      {:display :inline-block
       :font-size "70%"
@@ -565,19 +562,13 @@
 (defn app []
   (let [prev-route (atom)]
     (fn []
-      (let [[page & params  :as route] @(subscribe [:route])
-            first-run (not= @prev-route route)
-            ]
-        (when first-run
-          (reset! prev-route route)
-          (js/setTimeout #(restore-scroll route) 0))
         [:div
-         (case page
-           :search [search params first-run]
-           :work [work (first params)]
-           :library [library (or (first params) "710100")]
-           :status [status]
-           [search ""])]))))
+         (case (db [:route :page] "search")
+           "search" [search (apply concat (db [:route :q] "") (db [:route :facets] []))false]
+           "work" [work (db [:route :pid])]
+           "library" [library (db [:route :id] "710100")]
+           "status" [status]
+           [search ""])])))
 
 ;; ## Swipe gestures
 
@@ -596,11 +587,7 @@
 (defonce register-swipe (addSwipeGestures))
 
 
-;; ## Routing
-
-(defn route-link [& route] (str "#" (prn-str route)))
-
-(defonce handle-hash
+#_(defonce handle-hash
   (fn []
     (if (empty? js/location.hash)
       (dispatch [:route])
@@ -608,14 +595,17 @@
                       (cljs.reader/read-string
                         (.slice js/location.hash 1)))))))
 
-(js/window.removeEventListener "hashchange" handle-hash)
-(js/window.addEventListener "hashchange" handle-hash)
-(handle-hash)
+;(js/window.removeEventListener "hashchange" handle-hash)
+;(js/window.addEventListener "hashchange" handle-hash)
+;(handle-hash)
 
-(defonce sync-hash
-  (ratom/run!
-    (let [[page param :as route] @(subscribe [:route])]
-      (js/history.pushState nil nil (apply route-link route)))))
 ;; ## Execute and events
 
-(render [:div [app]])
+;(render [:div [app]])
+(defn main []
+  [:div
+   ;[:h1 "hello"]
+   ;[input [:route :input]
+   [app]])
+(render [:div [main]])
+(db)
