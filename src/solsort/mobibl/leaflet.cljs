@@ -1,7 +1,7 @@
 (ns solsort.mobibl.leaflet
   (:require
     [reagent.core :as reagent]
-    [solsort.appdb :refer [db db!]]
+    [solsort.appdb :refer [db db! db-async!]]
     [solsort.util :refer [log]]))
 
 (defonce default-marker-icons
@@ -71,7 +71,8 @@
         o {:id newid
            :gc (if id gc true)
            :pos (or pos (:pos orig) pos0 [55.67 12.57])
-           :zoom (or zoom (:zoom orig) zoom0 10)} ]
-    (db! [:ui (:id o)] (into args o))
+           :zoom (or zoom (:zoom orig) zoom0 10)}
+        o (into args o)]
+    (db-async! [:ui newid] o)
     (fn [& {:as args}]
-      [leaflet-inner (merge (db [:ui newid])) args])))
+      [leaflet-inner (into (db [:ui newid] o) args)])))

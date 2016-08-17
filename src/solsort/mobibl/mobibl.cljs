@@ -296,9 +296,8 @@
       :class (facet-color col)} s
      [:span.small.regular " " cnt ""]]))
 
-(defn search-query []
-  (log 'search-query)
-  (log (str "\""
+(defn search-query "transform the search-route into cql" []
+  (str "\""
         (string/join
          "\" and \""
          (string/split
@@ -308,7 +307,7 @@
            "")
          #" +"
          ))
-        "\"")))
+        "\""))
 (defn search [query]
   (let
     [result-pids (get-search (search-query) 0)
@@ -332,7 +331,6 @@
      facet-history (or (db [:ui :facet-history]) [])
      facets [] ;@(subscribe [:facets :sample])
      ]
-    (log 'search (db [:route :q]) result-pids)
     [:div
      [:div.ui.container
       [:h1 "Mobibl"]
@@ -413,7 +411,6 @@
         )
       (do
         (db! [:history :works] (conj (remove #{(:pid work)} (db [:history :works] '())) (:pid work)))
-       (log 'work work-id work)
        [:div
         [:div
          {:style
@@ -425,8 +422,10 @@
         [:div.ui.container
          [:p]
          [:h1.center (:title work)]
-         [:p.center "af "
-          [:a (route/ahref {:page "search" :facets [[:creator creator]]}) creator]]
+         (if (empty? creator) 
+           ""
+             [:p.center "af "
+           [:a (route/ahref {:page "search" :facets [[:creator creator]]}) creator]])
          [:p.center
           (if-not (string/starts-with? (:cover-url work) "http")
             ""
@@ -474,7 +473,6 @@
 (defn bib->pos [bib] (geo->pos (get bib "geolocation")))
 (defn library [id]
   (let [bib (db [:libraries (db [:route :id] "715100")])]
-    (log 'bib bib)
     (let [address (:address bib)
           hours   (:hours bib)
           phone   (:phone bib)]
@@ -549,8 +547,6 @@
    [tabbar]])
 
 (defn old-status []
-  (log 'status)
-
   (let [arrived [] ;(subscribe [:arrived])
         borrowed   [] ;          (subscribe [:borrowed])
         reservations  [];       (subscribe [:reservations])
@@ -601,7 +597,6 @@
        ])))
 
 
-(log (prn-str (db [:route])))
 ;; ### Main App entry point
 (defn app []
   (let [prev-route (atom)]
@@ -609,7 +604,6 @@
       (let [page (db [:route :page] "search")]
         (db! [:route] (into (db [:history page] {}) (db [:route])))
         (db! [:history page] (db [:route]))
-        (log 'app (db [:route :page] "search"))
         [:div
          (case (db [:route :page] "search")
            "search" [search (apply concat (db [:route :q] "") (db [:route :facets] []))false]
