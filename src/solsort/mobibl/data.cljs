@@ -24,11 +24,25 @@
       (<! (<p (js/dbcOpenPlatform.connect clid clsec))))
     (js->clj (<! (<p  (.call (aget js/dbcOpenPlatform (name endpoint)) js/dbcOpenPlatform (clj->js o)) )))))
 
+(def facets ["subjectDBC0" "subjectDBCF" "subjectDBCN" "subjectDBCS" "subjectDK5Text" "subjectGenre" "language" "type" "creator" "contributor" "audience" "temporalDBCP"])
+(defn dkabm->data [o]
+  (letfn [(g [key] (first (get o key)))]
+    (log
+     {:title (g "dcTitle")
+      :cover-url (:cover-url o)
+      :creator (g "creator")
+      :keywords (apply concat (for [facet facets] (get o facet [])))
+      :location nil
+      :year (g "date")
+      :description (or (g "abstract") (g "description"))
+      :language (g "language")}
+     o)))
+
 (defn libraries []
   (db [:libraries] {}))
 (defn get-work [pid]
   (when-not (db [:work pid]) (db! [:work pid] {}))
-  (db [:work pid]))
+  (dkabm->data (db [:work pid])))
 (defn get-search [q page]
   (let [results (db [:search [q page]])]
     (when-not results (db! [:search-request] [q page]))
@@ -39,26 +53,17 @@
   (go
     (db! [:work id :status-work] :loading)
     (let [[o] (<! (<op :work {:pids [id]}))
-          o (into o
-                  {:title (first (o "dcTitle"))
-                   :creator (first (o "creator"))
-                   :keywords (get o "subjectDBCF" [])
-                   :related []
-                   :description (first (o "description"))
-                   :location nil-iter
-                   :status-work :loaded
-                   :language (first (o "language"))})]
-      (db! [:work id] (into o (db [:work id]))))))
+          o (into o {:status-work :loaded})]
+      (db! [:work id] (into (db [:work id] {}) o)))))
+
 (defn load-cover [id]
   (go
-    (log 'load-cover id)
     (db! [:work id :cover-url] "assets/loading.png")
     (db! [:work id :cover-url]
           (first
            (get (first (<! (<op :work {:pids [id] :fields ["coverUrlFull"]})))
                  "coverUrlFull"
                  ["assets/no-cover.png"])))
-    (log 'loaded-cover id (db [:work id]))
     ))
 (defn load-search [[q page]]
   (go
@@ -70,28 +75,22 @@
          (for [result results]
            (let [works (get result "collectionDetails")
                  collection (get result "collection")]
-             (log 'result (get result "collection"))
              (doall
               (for [work works]
                 (let [pid (first (get work "pid"))]
-                  (db! [:work pid] work)
-                  (log pid work))
-                ))
-             )
-           ))))))
+                  (db! [:work pid] work)))))))))))
 
 (defn load-libraries []
  (go
-   (log 'load-libraries
-        (db! [:libraries]
-             (into
-              {}
-              (map
-               (fn [o] [(get o "branchId") o])
-               (filter #(and
-                         (get % "geolocation")
-                         (= "Folkebibliotek" (get % "agencyType")))
-                (<! (<op :libraries {})))))))))
+   (db! [:libraries]
+        (into
+         {}
+         (map
+          (fn [o] [(get o "branchId") o])
+          (filter #(and
+                    (get % "geolocation")
+                    (= "Folkebibliotek" (get % "agencyType")))
+                  (<! (<op :libraries {}))))))))
 
 (defn needs-search [[q results]]
   (< (get results :wanted -1) (get results :requested -1)))
@@ -109,4 +108,3 @@
 (defonce -runner (run! (db) (throttled-sync)))
 (sync)
 (throttled-sync)
-(log (db))

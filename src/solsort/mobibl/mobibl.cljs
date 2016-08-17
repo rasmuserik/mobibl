@@ -335,7 +335,7 @@
     [:div
      [:div.ui.container
       [:h1 "Mobibl"]
-      [:p {:style {:color :red}} "Under udvikling, ikke funktionel endnu."]
+      [:p {:style {:color :red}} "Under udvikling, ikke fuldt funktionel endnu."]
       [:div
        [:div.ui.search.fluid.input.left.icon
         [:i.search.icon]
@@ -395,6 +395,7 @@
 
 ;; ### Work
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
+
 
 (defn work [work-id]
   (let [work (get-work work-id)
