@@ -12,10 +12,14 @@
     [clojure.walk :refer [keywordize-keys]]
     [reagent.core :as reagent :refer []]
     [clojure.data]
+    [solsort.appdb :refer [db db!]]
     [re-frame.core :as re-frame
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
+(defn work [pid]
+  (when-not (db [:work pid]) (db! [:work pid] {}))
+  (db [:work pid]))
 ;; ## Convert data from datasource to internal format
 ;;
 

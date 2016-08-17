@@ -34,7 +34,6 @@
 
 (def view-fields ["dcTitle" "creator" "coverUrlFull" "subjectDBCF" "description" "language"])
 (defn convert-op [o]
-  (log 'convert o)
    {:title (first (o "dcTitle"))
     :creator (first (o "creator"))
     :cover-url (first (o "coverUrlFull"))
@@ -43,7 +42,7 @@
     :description (first (o "description"))
     :location nil-iter
     :language (first (o "language"))})
-(go (log (<! (<op :work {:pids ["870970-basis:29820031" "870970-basis:45231402" "870970-basis:29146004"]}))))
+(go (<! (<op :work {:pids ["870970-basis:29820031" "870970-basis:45231402" "870970-basis:29146004"]})))
 
 (defn convert-bibentry [o]
   (let [isbn (str (first (o "isbn")))]

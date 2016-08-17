@@ -9,6 +9,7 @@
     [solsort.appdb :refer [db db! db-async!]]
     [solsort.query-route :as route]
     [solsort.ui :refer [input]]
+    [solsort.mobibl.data :refer [get-work get-search]]
     [solsort.util
      :refer
      [<ajax <seq<! js-seq load-style! put!close!
@@ -207,7 +208,7 @@
 ;; ### Tab bar - menu in bottom of the screen
 
 (defn tabbar-button [id s]
-  [:a {:href (route/url {:page id})}
+  [:a (route/ahref {:page (name id)})
    [:img {:src (str "assets/" (name id) "-icon.svg")
           :alt s}]])
 
@@ -225,10 +226,11 @@
 
 (def work-tiny-height (* 13 5.5))
 (defn work-tiny [pid]
-  (let  [o @(subscribe [:work pid])
+  (let  [o (get-work pid)
          unit 13
          width (* 4.5 unit)]
-    [:a {:href (route/url {:page "work" :pid pid}) :style {:color "#111"}}
+    [:a (route/ahref {:page "work" :pid pid}
+                     {:style {:color "#111"}})
      [:div.center.tinywork
       [:img {:src (:cover-url o) :width "100%" :height "100%" } ]
       [:div.bold (:title o)]
@@ -236,10 +238,11 @@
 
 ;; ### work-item
 (defn work-item [pid]
-  (let [o @(subscribe [:work pid])
+  (let [o (get-work pid)
         keywords
         (map
-         (fn [kw] [:a {:href (route/url {:page "search" :q "" :facets kw}) } kw])
+         (fn [kw]
+           [:a (route/ahref {:page "search" :q "" :facets kw}) kw])
           (:keywords o)
           )]
     [:div.work
@@ -295,20 +298,34 @@
       :class (facet-color col)} s
      [:span.small.regular " " cnt ""]]))
 
+(defn search-query []
+  (log 'search-query)
+  (log (str "\""
+        (string/join
+         "\" and \""
+         (string/split
+          (string/replace
+           (string/trim (db [:route :q] ""))
+           #"[\"]"
+           "")
+         #" +"
+         ))
+        "\"")))
 (defn search [query]
   (let
-    [results @(subscribe [:search query 0])
+    [result-pids (get-search (search-query) 0)
      results
      (map
        (fn [pid]
-         [:a.column {:key pid :href (route/url {:page "work" :pid pid})}
+         [:a.column (route/ahref {:page "work" :pid pid}
+                                 {:key pid})
           [:div
            {:style {:height "9rem"
                     :color :black
                     :margin-bottom "1rem"
                     :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"}}
            [work-item pid]]])
-       results)
+       result-pids)
      show-history (db [:ui :show-history])
      search-history [] ; TODO
      suggest (when show-history search-history)
@@ -316,21 +333,16 @@
      active-facets (remove string? query)
      facet-history (or (db [:ui :facet-history]) [])
      facets @(subscribe [:facets :sample])]
-    (log 'search query search-str active-facets)
+    (log 'search (db [:route :q]) result-pids)
     [:div
      [:div.ui.container
-      [:h1 "Mobiblby biblioteker"]
+      [:h1 "Mobibl"]
       [:div
-       [:div.ui.search.fluid.input.action.left.icon
+       [:div.ui.search.fluid.input.left.icon
         [:i.search.icon]
         [input [:route :q]
          {:placeholder "Indtast søgning"
           }]
-        [:button.ui.icon.button
-         {:class (if-not search-history "disabled"
-                   (if show-history "active" ""))
-          :on-click #(db! [:ui :show-history] (not show-history))}
-         [:i.caret.down.icon]]
         (when suggest
           (into [:div.results.transition.visible
                  {:style {:display "block !important"}}]
@@ -348,7 +360,7 @@
                     ))))]]]
 
      ;; Facet view
-     [:div
+     #_[:div
       {:style {:white-space :nowrap
                :overflow-y :hidden
                :overflow-x :auto
@@ -375,6 +387,7 @@
       (merge
         [:div]
         (map (facet search-str active-facets) facets))]
+     [:p]
      [:div.ui.container
       [:div.ui.grid
        (merge [:div.stackable.doubling.four.column.row]
@@ -385,13 +398,14 @@
 ;; <img width=20% align=top src=doc/wireframes/work.jpg>
 
 (defn work [work-id]
-  (let [work @(subscribe [:work work-id])
+  (let [work (get-work work-id)
         language (:language work)
         keywords (:keywords work)
         location (:location work)
         creator (:creator work)
         work-history [] ; TODO 
         ]
+    (log 'work work-id work)
     [:div
      [:div
       {:style
@@ -404,7 +418,7 @@
       [:p]
       [:h1.center (:title work)]
       [:p.center "af "
-       [:a {:href (route/url {:page "search" :facets [[:creator creator]]})} creator]]
+       [:a (route/ahref {:page "search" :facets [[:creator creator]]}) creator]]
       [:p.center
        [:img
         {:src (:cover-url work)
@@ -419,7 +433,7 @@
                 " "
                 (for [word keywords]
                   [:a.ui.label
-                   {:href (route/url {:page "search" :facets [[:subject word]]})}
+                   (route/ahref {:page "search" :facets [[:subject word]]})
                    word]))))
       (if language [:p [:em "Sprog: "] language] "")
       (if location [:p [:em "Opstilling: "] location] "")
@@ -431,10 +445,10 @@
            (fn [id]
              [:div.column
               [:a.small
-               {:href (route/url {:page "work" :pid id})
-                :style
-                {:display :inline-block
-                 :height "6em"}}
+               (route/ahref {:page "work" :pid id}
+                            {:style
+                             {:display :inline-block
+                              :height "6em"}})
                (work-item id)]])
            (take 12 (rest (:related work)))))]
       [tabbar]]]))
@@ -496,19 +510,21 @@
             :width "30%" }}]
          content)
    [:a
-    {:href (route/url {:page "work" :pid id})
-     :style
-     {:display :inline-block
-      :font-size "70%"
-      :vertical-align :top
-      :width "70%"
-      :height "4rem" } }
+    (route/ahref {:page "work" :pid id}
+                 {:style
+                  {:display :inline-block
+                   :font-size "70%"
+                   :vertical-align :top
+                   :width "70%"
+                   :height "4rem" } })
     [work-item id]]
    ]
 
   )
 
 (defn status []
+  (log 'status)
+
   (let [arrived (subscribe [:arrived])
         borrowed             (subscribe [:borrowed])
         reservations         (subscribe [:reservations])]
@@ -558,10 +574,12 @@
        ])))
 
 
+(log (prn-str (db [:route])))
 ;; ### Main App entry point
 (defn app []
   (let [prev-route (atom)]
     (fn []
+      (log 'app (db [:route :page] "search"))
         [:div
          (case (db [:route :page] "search")
            "search" [search (apply concat (db [:route :q] "") (db [:route :facets] []))false]

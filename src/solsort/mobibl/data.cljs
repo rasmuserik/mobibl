@@ -27,6 +27,10 @@
 (defn get-work [pid]
   (when-not (db [:work pid]) (db! [:work pid] {}))
   (db [:work pid]))
+(defn get-search [q page]
+  (let [results (db [:search [q page]])]
+    (when-not results (db! [:search-request] [q page]))
+    results))
 
 (def view-fields ["dcTitle" "creator" "coverUrlFull" "subjectDBCF" "description" "language"])
 (defn load-work [id]
@@ -43,7 +47,6 @@
                    :status-work :loaded
                    :language (first (o "language"))})]
       (db! [:work id] (into o (db [:work id]))))))
- 
 (defn load-cover [id]
   (go
     (log 'load-cover id)
@@ -55,11 +58,35 @@
                  ["assets/nocover"])))
     (log 'loaded-cover id (db [:work id]))
     ))
+(defn load-search [[q page]]
+  (go
+    (db! [:search [q page]] [])
+    (let [results (<! (<op :search {:fields ["pid" "collection" "collectionDetails"]:q q :limit 10 :offset (* 10 page)}))]
+      (when (coll? results)
+        (db! [:search [q page]] (map #(first (get % "pid")) results))
+        (doall
+         (for [result results]
+           (let [works (get result "collectionDetails")
+                 collection (get result "collection")]
+             (log 'result (get result "collection"))
+             (doall
+              (for [work works]
+                (let [pid (first (get work "pid"))]
+                  (db! [:work pid] work)
+                  (log pid work))
+                ))
+             )
+           ))))))
+
+(defn needs-search [[q results]]
+  (< (get results :wanted -1) (get results :requested -1)))
+
 (defn key2? [k] #(get (second %) k))
 (defn sync []
   (doall (map load-work (keys (remove (key2? :status-work) (db [:work])))))
   (doall (map load-cover (keys (remove (key2? :cover-url) (db [:work])))))
-  )
+  (when-not (db [:search (db [:search-request])])
+    (load-search (db [:search-request]))))
 
 (def throttled-sync (throttle sync 1000))
 (defonce -runner (run! (db) (throttled-sync)))

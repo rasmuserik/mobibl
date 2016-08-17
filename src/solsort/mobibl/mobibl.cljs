@@ -43,6 +43,7 @@
     [cljs.core.async.macros :refer [go go-loop alt!]]
     [reagent.ratom :as ratom :refer  [reaction]])
   (:require
+   [solsort.mobibl.data :refer [get-work]]
     [solsort.util
      :refer
      [<ajax <seq<! js-seq normalize-css load-style! put!close!
@@ -52,7 +53,7 @@
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
-(declare get-work default-work sample-lib)
+;; (declare get-work default-work sample-lib)
 
 ;; ## DEBUG: uncomment this to print db on reload
 
@@ -61,29 +62,23 @@
 
 ;; ## Work
 ;;
-(register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
-(register-sub :works (fn [db] (reaction (:works @db))))
+;; (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
+;; ;; (register-sub :works (fn [db] (reaction (:works @db))))
 
-(register-handler
-  :work (fn [db [_ id content]]
-          (assoc-in db [:works id]
-                    (merge (get-in db [:work id] {})
-                           content))))
+;; (register-handler
+;;   :work (fn [db [_ id content]]
+;;           (assoc-in db [:works id]
+;;                     (merge (get-in db [:work id] {})
+;;                            ;; content))))
 
-(defn get-work [db id]
-  (let [work (get-in db [:works id])]
-    (when-not work (dispatch [:request-work id]))
-    (merge default-work {:id id} work)))
-(def default-work {:title "Unknown Title" :creator "Unknown Creator"})
+;; (defn get-work [db id]
+;;   (let [work (get-in db [:works id])]
+;;     (when-not work (dispatch [:request-work id]))
+;;     (merge default-work {:id id} work)))
+;; (def default-work {:title "Unknown Title" :creator "Unknown Creator"})
 
 ;; ## Search
 
-(register-sub
-  :search
-  (fn [db [_ q page]]
-    (reaction (let [results (get-in @db [:search q page])]
-                (or results
-                    (do (dispatch [:request-search q page]) []))))))
 (register-handler
   :facets
   (fn [db [_ query facets]] (assoc-in db [:facets query] facets)))
@@ -160,7 +155,7 @@
   [db prop]
   (let [status-obj (get-in db [:status prop])
         res (for [so status-obj]
-              (merge so (get-work db (:id so))))]
+              (merge so (get-work (:id so))))]
     res))
 
 (register-sub :reservations
