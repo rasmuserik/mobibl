@@ -406,58 +406,64 @@
         creator (:creator work)
         work-history [] ; TODO 
         ]
-    (db! [:history :works] (conj (remove #{(:pid work)} (db [:history :works] '())) (:pid work)))
-    (log 'work work-id work)
-    [:div
-     [:div
-      {:style
-       {:background-color "#777"
-        :overflow-x :auto
-        :overflow-y :hidden}}
-      (into [:div {:style {:white-space :nowrap :height work-tiny-height}}]
-            (map work-tiny (db [:history :works])))]
-     [:div.ui.container
-      [:p]
-      [:h1.center (:title work)]
-      [:p.center "af "
-       [:a (route/ahref {:page "search" :facets [[:creator creator]]}) creator]]
-      [:p.center
-       (if-not (string/starts-with? (:cover-url work) "http")
-         ""
-        [:img
-         {:src (:cover-url work)
-          :style
-          {:max-height (* 0.5 (- js/document.body.clientHeight 50))
-           :max-width (* 0.8 (- js/document.body.clientWidth 20))}}])]
-      [:p.center [:a.ui.primary.button
-                  {:on-click #(js/alert "Bestilling ikke implementeret endnu")}
-                  "Bestil"]]
-      [:p (:description work)]
-      (if-not keywords ""
-        (into [:p {:style {:line-height "2rem"}}]
-              (interpose
-                " "
-                (for [word keywords]
-                  [:a.ui.label
-                   (route/ahref {:page "search" :facets [[:subject word]]})
-                   word]))))
-      (if language [:p [:em "Sprog: "] language] "")
-      (if location [:p [:em "Opstilling: "] location] "")
-      [:p.bold "Relaterede:"]
-      [:div.ui.grid
-       (into
-         [:div.stackable.four.column.doubling.row]
-         (map
-           (fn [id]
-             [:div.column
-              [:a.small
-               (route/ahref {:page "work" :pid id}
-                            {:style
-                             {:display :inline-block
-                              :height "6em"}})
-               (work-item id)]])
-           (take 12 (rest (:related work)))))]
-      [tabbar]]]))
+    (if-not (:title work)
+      (do
+        (db! [:route] {:page "search"})
+        [:div]
+        )
+      (do
+        (db! [:history :works] (conj (remove #{(:pid work)} (db [:history :works] '())) (:pid work)))
+       (log 'work work-id work)
+       [:div
+        [:div
+         {:style
+          {:background-color "#777"
+           :overflow-x :auto
+           :overflow-y :hidden}}
+         (into [:div {:style {:white-space :nowrap :height work-tiny-height}}]
+               (map work-tiny (db [:history :works])))]
+        [:div.ui.container
+         [:p]
+         [:h1.center (:title work)]
+         [:p.center "af "
+          [:a (route/ahref {:page "search" :facets [[:creator creator]]}) creator]]
+         [:p.center
+          (if-not (string/starts-with? (:cover-url work) "http")
+            ""
+            [:img
+             {:src (:cover-url work)
+              :style
+              {:max-height (* 0.5 (- js/document.body.clientHeight 50))
+               :max-width (* 0.8 (- js/document.body.clientWidth 20))}}])]
+         [:p.center [:a.ui.primary.button
+                     {:on-click #(js/alert "Bestilling ikke implementeret endnu")}
+                     "Bestil"]]
+         [:p (:description work)]
+         (if-not keywords ""
+                 (into [:p {:style {:line-height "2rem"}}]
+                       (interpose
+                        " "
+                        (for [word keywords]
+                          [:a.ui.label
+                           (route/ahref {:page "search" :facets [[:subject word]]})
+                           word]))))
+         (if language [:p [:em "Sprog: "] language] "")
+         (if location [:p [:em "Opstilling: "] location] "")
+         [:p.bold "Relaterede:"]
+         [:div.ui.grid
+          (into
+           [:div.stackable.four.column.doubling.row]
+           (map
+            (fn [id]
+              [:div.column
+               [:a.small
+                (route/ahref {:page "work" :pid id}
+                             {:style
+                              {:display :inline-block
+                               :height "6em"}})
+                (work-item id)]])
+            (take 12 (rest (:related work)))))]
+         [tabbar]]]))))
 
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
