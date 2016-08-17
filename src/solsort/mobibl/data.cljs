@@ -24,6 +24,8 @@
       (<! (<p (js/dbcOpenPlatform.connect clid clsec))))
     (js->clj (<! (<p  (.call (aget js/dbcOpenPlatform (name endpoint)) js/dbcOpenPlatform (clj->js o)) )))))
 
+(defn libraries []
+  (db [:libraries] {}))
 (defn get-work [pid]
   (when-not (db [:work pid]) (db! [:work pid] {}))
   (db [:work pid]))
@@ -78,18 +80,29 @@
              )
            ))))))
 
+(defn load-libraries []
+ (go
+   (log 'load-libraries
+        (db! [:libraries]
+             (into
+              {}
+              (map
+               (fn [o] [(get o "branchId") o])
+               (<! (<op :libraries {}))))))))
+
 (defn needs-search [[q results]]
   (< (get results :wanted -1) (get results :requested -1)))
-
 (defn key2? [k] #(get (second %) k))
+
 (defn sync []
   (doall (map load-work (keys (remove (key2? :status-work) (db [:work])))))
   (doall (map load-cover (keys (remove (key2? :cover-url) (db [:work])))))
+  (when (empty? (db [:libraries]))
+    (load-libraries))
   (when-not (db [:search (db [:search-request])])
     (load-search (db [:search-request]))))
 
 (def throttled-sync (throttle sync 1000))
 (defonce -runner (run! (db) (throttled-sync)))
-(log 'here)
 (sync)
 (throttled-sync)

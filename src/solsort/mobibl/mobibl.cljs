@@ -111,17 +111,17 @@
 (register-sub
   :library (fn [db [_ id]] (reaction (get-in @db [:libraries id] {}))))
 
-(register-handler
+#_(register-handler
   :library
   (fn [db [_ library]] (assoc-in db [:libraries (:id library)] library)))
 
-(register-handler
+#_(register-handler
   :libraries
   (fn [db [_ libraries]] (assoc-in db [:libraries :all] libraries)))
 
 ;; ### Sample library
 
-(dispatch-sync
+#_(dispatch-sync
   [:library
    ;; Simple representation of the libraries that are interesting for the user
    ;; including position on a map, opening hours and contact information.

@@ -332,7 +332,8 @@
      search-str (or (first (filter string? query)) "")
      active-facets (remove string? query)
      facet-history (or (db [:ui :facet-history]) [])
-     facets @(subscribe [:facets :sample])]
+     facets [] ;@(subscribe [:facets :sample])
+     ]
     (log 'search (db [:route :q]) result-pids)
     [:div
      [:div.ui.container
@@ -459,7 +460,8 @@
 (def daynames ["Man" "Tir" "Ons" "Tor" "Fre" "Lør" "Søn"])
 
 (defn library [id]
-  (let [current-library @(subscribe [:library id])]
+  (let [current-library {} ;@(subscribe [:library id])
+        ]
 
     (let [address (:address current-library)
           hours   (:hours current-library)
@@ -473,7 +475,8 @@
         :markers
         (map (fn [[pos id]] {:pos pos
                              :click #(route/open {:page "library" :id id})})
-             @(subscribe [:libraries]))]
+             [];@(subscribe [:libraries])
+             )]
        [:div.ui.container [:h1 (:name current-library)]]
        [:div.ui.container
         [:div.address
@@ -525,9 +528,10 @@
 (defn status []
   (log 'status)
 
-  (let [arrived (subscribe [:arrived])
-        borrowed             (subscribe [:borrowed])
-        reservations         (subscribe [:reservations])]
+  (let [arrived [] ;(subscribe [:arrived])
+        borrowed   [] ;          (subscribe [:borrowed])
+        reservations  [];       (subscribe [:reservations])
+        ]
     (fn []
       [:div.ui.container
        [:div.right.floated.ui.primary.button "Log ud"]
@@ -590,19 +594,19 @@
 
 ;; ## Swipe gestures
 
-(defonce routes #js [:search :work :library :status])
+;; (defonce routes #js [:search :work :library :status])
 
-(defn change-route [delta]
-  (let [n (+ delta (.indexOf routes (first @(subscribe [:route]))))
-        n (max 0 (min (dec (.-length routes)) n))]
-    (dispatch [:route (aget routes n)])))
-(defn addSwipeGestures []
-  (let [hammer (js/Hammer.Manager. js/document.body)
-        swipe  (js/Hammer.Swipe.)]
-    (.add hammer swipe)
-    (.on hammer "swipeleft" #(change-route 1))
-    (.on hammer "swiperight" #(change-route -1))))
-(defonce register-swipe (addSwipeGestures))
+;; (defn change-route [delta]
+;;   (let [n (+ delta (.indexOf routes (first @(subscribe [:route]))))
+;;         n (max 0 (min (dec (.-length routes)) n))]
+;;     (dispatch [:route (aget routes n)])))
+;; (defn addSwipeGestures []
+;;   (let [hammer (js/Hammer.Manager. js/document.body)
+;;         swipe  (js/Hammer.Swipe.)]
+;;     (.add hammer swipe)
+;;     (.on hammer "swipeleft" #(change-route 1))
+;;     (.on hammer "swiperight" #(change-route -1))))
+;; (defonce register-swipe (addSwipeGestures))
 
 
 #_(defonce handle-hash
