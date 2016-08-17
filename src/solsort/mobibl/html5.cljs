@@ -459,43 +459,49 @@
 
 (def daynames ["Man" "Tir" "Ons" "Tor" "Fre" "Lør" "Søn"])
 
+(defn geo->pos [geo] [(get geo "latitude") (get geo "longitude")])
+(defn bib->pos [bib] (geo->pos (get bib "geolocation")))
 (defn library [id]
-  (let [current-library {} ;@(subscribe [:library id])
-        ]
-
-    (let [address (:address current-library)
-          hours   (:hours current-library)
-          phone   (:phone current-library)]
+  (let [bib (db [:libraries (db [:route :id] "715100")])]
+    (log 'bib bib)
+    (let [address (:address bib)
+          hours   (:hours bib)
+          phone   (:phone bib)]
       [:div
-       [leaflet
-        :class "map"
-        :id "leafletdiv"
-        :pos0 (:position current-library)
-        :zoom 13
-        :markers
-        (map (fn [[pos id]] {:pos pos
-                             :click #(route/open {:page "library" :id id})})
-             [];@(subscribe [:libraries])
-             )]
-       [:div.ui.container [:h1 (:name current-library)]]
+       (if-not bib
+         [:div]
+         [leaflet
+         :class "map"
+         :id "leafletdiv"
+         :pos0 (bib->pos bib)
+         :zoom 12
+         :markers
+         (doall
+          (map (fn [[id bib]]
+                   {:pos (bib->pos bib)
+                    :click #(route/open {:page "library" :id id})})
+               (db [:libraries])
+               ))])
+       [:div.ui.container
+        [:h1 (first (get bib "branchShortName"))]]
        [:div.ui.container
         [:div.address
          [:h2 "Adresse"]
-         [:div (:road address)]
-         [:div (:city address)]
+         [:div (first (get bib "branchName"))]
+         [:div (get bib "postalAddress")]
+         [:div (get bib "postalCode") " " (get bib "city")]
          [:div (:country address)]]
         [:div.open
          [:h2 "Åbningstider"]
-         [:div
-          "(blob of html describing opening hours)"]]
+         [:pre (first (get bib "openingHours"))]]
         [:div.contact
          [:h2 "Kontakt"]
          [:div
           [:span "Email: "]
-          [:span (:email current-library)]]
+          [:span (get bib "branchEmail")]]
          [:div
           [:span "Telefon: "]
-          [:span (:number phone)]
+          [:span (get bib "branchPhone")]
           " "
           [:span (:time phone)]]]]
        [tabbar]

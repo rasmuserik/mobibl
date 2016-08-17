@@ -52,12 +52,12 @@
 (defn load-cover [id]
   (go
     (log 'load-cover id)
-    (db! [:work id :cover-url] "assets/loading")
+    (db! [:work id :cover-url] "assets/loading.png")
     (db! [:work id :cover-url]
           (first
            (get (first (<! (<op :work {:pids [id] :fields ["coverUrlFull"]})))
                  "coverUrlFull"
-                 ["assets/nocover"])))
+                 ["assets/no-cover.png"])))
     (log 'loaded-cover id (db [:work id]))
     ))
 (defn load-search [[q page]]
@@ -88,11 +88,14 @@
               {}
               (map
                (fn [o] [(get o "branchId") o])
-               (<! (<op :libraries {}))))))))
+               (filter #(and
+                         (get % "geolocation")
+                         (= "Folkebibliotek" (get % "agencyType")))
+                (<! (<op :libraries {})))))))))
 
 (defn needs-search [[q results]]
   (< (get results :wanted -1) (get results :requested -1)))
-(defn key2? [k] #(get (second %) k))
+(defn key2? [k] #(not (nil? (get (second %) k))))
 
 (defn sync []
   (doall (map load-work (keys (remove (key2? :status-work) (db [:work])))))
@@ -106,3 +109,4 @@
 (defonce -runner (run! (db) (throttled-sync)))
 (sync)
 (throttled-sync)
+(log (db))

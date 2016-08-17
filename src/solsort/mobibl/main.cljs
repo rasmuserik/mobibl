@@ -7,7 +7,7 @@
     ;;
     ;; The application database subscriptions and handlers.
     ;;
-    [solsort.mobibl.mobibl]
+   ; [solsort.mobibl.mobibl]
     ;;
     ;; The UI/views.
     ;;
