@@ -210,7 +210,6 @@
    [:img {:src (str "assets/" (name id) "-icon.svg")
           :alt s}]])
 
-
 (defn tabbar []
   [:div
    [:div.tabbar-spacer " "]
@@ -336,6 +335,7 @@
     [:div
      [:div.ui.container
       [:h1 "Mobibl"]
+      [:p {:style {:color :red}} "Under udvikling, ikke funktionel endnu."]
       [:div
        [:div.ui.search.fluid.input.left.icon
         [:i.search.icon]
@@ -424,7 +424,9 @@
          :style
          {:max-height (* 0.5 (- js/document.body.clientHeight 50))
           :max-width (* 0.8 (- js/document.body.clientWidth 20))}}]]
-      [:p.center [:a.ui.primary.button "Bestil"]]
+      [:p.center [:a.ui.primary.button
+                  {:on-click #(js/alert "Bestilling ikke implementeret endnu")}
+                  "Bestil"]]
       [:p (:description work)]
       (if-not keywords ""
         (into [:p {:style {:line-height "2rem"}}]
@@ -530,6 +532,12 @@
   )
 
 (defn status []
+  [:div.ui.container
+   [:h1 "Lånerstatus"]
+   [:p {:style {:color :red}} "Ikke implementeret endnu."]
+   [tabbar]])
+
+(defn old-status []
   (log 'status)
 
   (let [arrived [] ;(subscribe [:arrived])
@@ -539,7 +547,7 @@
     (fn []
       [:div.ui.container
        [:div.right.floated.ui.primary.button "Log ud"]
-       [:h1 "Låner status"]
+       [:h1 "Lånerstatus"]
        [:p
         [:h2 "Hjemkomne"]
         (into
