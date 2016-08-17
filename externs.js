@@ -34,4 +34,6 @@ Object.prototype.addLayer = function() {};
 Object.prototype.target = {};
 Object.prototype.lat = {};
 Object.prototype.lng = {};
-dbcOpenPlatform = {};
+var dbcOpenPlatform = {};
+dbcOpenPlatform.connected = function() {};
+dbcOpenPlatform.connect = function() {};
