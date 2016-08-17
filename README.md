@@ -94,7 +94,7 @@ The UI/views.
 
 The data source / connection to the server.
 
-        [solsort.mobibl.bibapp-datasource]))
+        [solsort.mobibl.openplatform-datasource]))
 # Core application logic and database (`mobibl.cljs`)
 
 This file contain the platform independent logic of the app.
@@ -140,6 +140,7 @@ And it should automatically load the list of libraries.
         [cljs.core.async.macros :refer [go go-loop alt!]]
         [reagent.ratom :as ratom :refer  [reaction]])
       (:require
+       [solsort.mobibl.data :refer [get-work]]
         [solsort.util
          :refer
          [<ajax <seq<! js-seq normalize-css load-style! put!close!
@@ -149,62 +150,32 @@ And it should automatically load the list of libraries.
          :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
         [clojure.string :as string :refer [replace split blank?]]
         [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
-    (declare get-work default-work sample-lib)
+(declare get-work default-work sample-lib)
 
 ## DEBUG: uncomment this to print db on reload
 
     (register-sub :db (fn [db] (reaction @db)))
     (log 'db @(subscribe [:db]))
 
-## Routing and history
-
-
-    (register-sub
-      :route
-      (fn [db] (reaction (get-in @db [:route :path] [:search ""]))))
-
-    (register-sub
-      :history
-      (fn [db [_ page]] (reaction (get-in @db [:route :history page] []))))
-
-    (register-handler
-      :route
-      (fn [db [_ page & params]]
-        (let [page (or page :search)
-              params (or params (first (get-in db [:route :history page])))
-              route (into [page] params)]
-          (-> db
-              (assoc-in [:route :history page]
-                        (into [params]
-                              (remove #{params}
-                                      (get-in db [:route :history page]))))
-              (assoc-in [:route :path] route)))))
-
 ## Work
 
-    (register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
-    (register-sub :works (fn [db] (reaction (:works @db))))
+(register-sub :work (fn [db [_ id]] (reaction (get-work @db id))))
+;; (register-sub :works (fn [db] (reaction (:works @db))))
 
-    (register-handler
-      :work (fn [db [_ id content]]
-              (assoc-in db [:works id]
-                        (merge (get-in db [:work id] {})
-                               content))))
+(register-handler
+  :work (fn [db [_ id content]]
+          (assoc-in db [:works id]
+                    (merge (get-in db [:work id] {})
+                           ;; content))))
 
-    (defn get-work [db id]
-      (let [work (get-in db [:works id])]
-        (when-not work (dispatch [:request-work id]))
-        (merge default-work {:id id} work)))
-    (def default-work {:title "Unknown Title" :creator "Unknown Creator"})
+(defn get-work [db id]
+  (let [work (get-in db [:works id])]
+    (when-not work (dispatch [:request-work id]))
+    (merge default-work {:id id} work)))
+(def default-work {:title "Unknown Title" :creator "Unknown Creator"})
 
 ## Search
 
-    (register-sub
-      :search
-      (fn [db [_ q page]]
-        (reaction (let [results (get-in @db [:search q page])]
-                    (or results
-                        (do (dispatch [:request-search q page]) []))))))
     (register-handler
       :facets
       (fn [db [_ query facets]] (assoc-in db [:facets query] facets)))
@@ -281,7 +252,7 @@ FIXME How to represent many opening hours for departments of a library?
       [db prop]
       (let [status-obj (get-in db [:status prop])
             res (for [so status-obj]
-                  (merge so (get-work db (:id so))))]
+                  (merge so (get-work (:id so))))]
         res))
 
     (register-sub :reservations
@@ -301,6 +272,10 @@ TODO: also run on network reconnect, and after a while
         [reagent.ratom :as ratom :refer  [reaction]])
       (:require
         [cljs.reader]
+        [solsort.appdb :refer [db db! db-async!]]
+        [solsort.query-route :as route]
+        [solsort.ui :refer [input]]
+        [solsort.mobibl.data :refer [get-work get-search]]
         [solsort.util
          :refer
          [<ajax <seq<! js-seq load-style! put!close!
@@ -312,8 +287,6 @@ TODO: also run on network reconnect, and after a while
         [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
         [solsort.mobibl.leaflet :refer [leaflet]]
         [cljsjs.hammer]))
-
-    (declare route-link)
 
 ## Styling
 
@@ -487,20 +460,21 @@ FIXME Not so nice to have the style for bib-map defined here
 ## Components
 ### Component for remembering scroll position per route
 
-    (defn restore-scroll [route]
-      (set! js/document.body.scrollTop (get @(subscribe [:ui :scroll]) route 0)))
+(defn restore-scroll [route]
+  (set! js/document.body.scrollTop (get (db [:ui :scroll]) route 0)))
 
-    (defonce handle-scroll
-      (fn [] (dispatch [:ui :scroll
-                        (assoc (or @(subscribe [:ui :scroll]) {})
-                               @(subscribe [:route])
-                               js/document.body.scrollTop)])))
-    (js/window.removeEventListener "scroll" handle-scroll)
-    (js/window.addEventListener "scroll" handle-scroll)
+(defonce handle-scroll
+  (fn [] (db-async! [:ui :scroll]
+                    (assoc (or (db [:ui :scroll]) {})
+                           @(subscribe [:route])
+                           js/document.body.scrollTop))))
+(js/window.removeEventListener "scroll" handle-scroll)
+(js/window.addEventListener "scroll" handle-scroll)
+
 ### Tab bar - menu in bottom of the screen
 
     (defn tabbar-button [id s]
-      [:a {:href (route-link id)}
+      [:a (route/ahref {:page (name id)})
        [:img {:src (str "assets/" (name id) "-icon.svg")
               :alt s}]])
 
@@ -518,10 +492,11 @@ FIXME Not so nice to have the style for bib-map defined here
 
     (def work-tiny-height (* 13 5.5))
     (defn work-tiny [pid]
-      (let  [o @(subscribe [:work pid])
+      (let  [o (get-work pid)
              unit 13
              width (* 4.5 unit)]
-        [:a {:href (route-link :work pid) :style {:color "#111"}}
+        [:a (route/ahref {:page "work" :pid pid}
+                         {:style {:color "#111"}})
          [:div.center.tinywork
           [:img {:src (:cover-url o) :width "100%" :height "100%" } ]
           [:div.bold (:title o)]
@@ -529,10 +504,11 @@ FIXME Not so nice to have the style for bib-map defined here
 
 ### work-item
     (defn work-item [pid]
-      (let [o @(subscribe [:work pid])
+      (let [o (get-work pid)
             keywords
             (map
-              (fn [kw] [:a {:href (route-link :search "" [:subject kw]) } kw])
+             (fn [kw]
+               [:a (route/ahref {:page "search" :q "" :facets kw}) kw])
               (:keywords o)
               )]
         [:div.work
@@ -578,64 +554,69 @@ FIXME Not so nice to have the style for bib-map defined here
          {:on-click
           (fn []
             (let [facet-history
-                  (or @(subscribe [:ui :facet-history]) [])]
-              (dispatch [:ui :facet-history
-                         (remove #{[col s]} facet-history)])
-              (dispatch (into [:route :search search-str [col s]]
-                              active-facets))))
+                  (or (db [:ui :facet-history]) [])]
+              (db-async! [:ui :facet-history]
+                        (remove #{[col s]} facet-history))
+              ((log 'active-facets active-facets)
+               (db! [:route :facets] (conj (db [:route :facets] []) [col s])))
+              ))
           :key (hash [col s])
           :class (facet-color col)} s
          [:span.small.regular " " cnt ""]]))
 
+    (defn search-query []
+      (log 'search-query)
+      (log (str "\""
+            (string/join
+             "\" and \""
+             (string/split
+              (string/replace
+               (string/trim (db [:route :q] ""))
+               #"[\"]"
+               "")
+             #" +"
+             ))
+            "\"")))
     (defn search [query]
       (let
-        [results @(subscribe [:search query 0])
+        [result-pids (get-search (search-query) 0)
          results
          (map
            (fn [pid]
-             [:a.column {:key pid :href (route-link :work pid)}
+             [:a.column (route/ahref {:page "work" :pid pid}
+                                     {:key pid})
               [:div
                {:style {:height "9rem"
                         :color :black
                         :margin-bottom "1rem"
                         :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"}}
                [work-item pid]]])
-           results)
-         show-history @(subscribe [:ui :show-history])
-         search-history @(subscribe [:history :search])
+           result-pids)
+         show-history (db [:ui :show-history])
+         search-history [] ; TODO
          suggest (when show-history search-history)
          search-str (or (first (filter string? query)) "")
          active-facets (remove string? query)
-         facet-history (or @(subscribe [:ui :facet-history]) [])
+         facet-history (or (db [:ui :facet-history]) [])
          facets @(subscribe [:facets :sample])]
-        (log 'search query search-str active-facets)
+        (log 'search (db [:route :q]) result-pids)
         [:div
          [:div.ui.container
-          [:h1 "Mobiblby biblioteker"]
+          [:h1 "Mobibl"]
           [:div
-           [:div.ui.search.fluid.input.action.left.icon
+           [:div.ui.search.fluid.input.left.icon
             [:i.search.icon]
-            [:input
+            [input [:route :q]
              {:placeholder "Indtast søgning"
-              :type :text
-              :value search-str
-              :on-change #(dispatch-sync (into [:route :search
-                                                (-> % .-target .-value)]
-                                               active-facets))
               }]
-            [:button.ui.icon.button
-             {:class (if-not search-history "disabled"
-                       (if show-history "active" ""))
-              :on-click #(dispatch [:ui :show-history (not show-history)])}
-             [:i.caret.down.icon]]
             (when suggest
               (into [:div.results.transition.visible
                      {:style {:display "block !important"}}]
                     (for [[s facets] suggest]
                       (into
                         [:a.result
-                         {:href (route-link :search s)
-                          :on-click #(dispatch-sync [:ui :show-history false])}
+                         {:href (route/url {:page "search" :q s})
+                          :on-click #(db! [:ui :show-history] false)}
                          s " "]
                         (for [[col f] facets]
                           [:div.ui.small.label
@@ -645,7 +626,7 @@ FIXME Not so nice to have the style for bib-map defined here
                         ))))]]]
 
 Facet view
-         [:div
+         #_[:div
           {:style {:white-space :nowrap
                    :overflow-y :hidden
                    :overflow-x :auto
@@ -661,10 +642,10 @@ Facet view
                    [:a.ui.small.button.condensed.bold
                     {:on-click
                      (fn []
-                       (dispatch [:ui :facet-history
-                                  (conj facet-history facet)])
-                       (dispatch (log (into [:route :search search-str]
-                                            (remove #{[col s]} active-facets)))))
+                       (db-async! [:ui :facet-history]
+                                 (conj facet-history facet))
+                       (db! [:route :facets] (remove #{[col s]} (db [:route :facets])))
+                       )
                      :key (hash [col s])
                      :class (facet-color col)} s])
                  active-facets)
@@ -672,6 +653,7 @@ Facet view
           (merge
             [:div]
             (map (facet search-str active-facets) facets))]
+         [:p]
          [:div.ui.container
           [:div.ui.grid
            (merge [:div.stackable.doubling.four.column.row]
@@ -682,12 +664,14 @@ Facet view
 <img width=20% align=top src=doc/wireframes/work.jpg>
 
     (defn work [work-id]
-      (let [work @(subscribe [:work work-id])
+      (let [work (get-work work-id)
             language (:language work)
             keywords (:keywords work)
             location (:location work)
             creator (:creator work)
-            work-history (map first @(subscribe [:history :work]))]
+            work-history [] ; TODO 
+            ]
+        (log 'work work-id work)
         [:div
          [:div
           {:style
@@ -700,7 +684,7 @@ Facet view
           [:p]
           [:h1.center (:title work)]
           [:p.center "af "
-           [:a {:href (route-link :search "" [:creator creator])} creator]]
+           [:a (route/ahref {:page "search" :facets [[:creator creator]]}) creator]]
           [:p.center
            [:img
             {:src (:cover-url work)
@@ -715,7 +699,7 @@ Facet view
                     " "
                     (for [word keywords]
                       [:a.ui.label
-                       {:href (route-link :search "" [:subject word])}
+                       (route/ahref {:page "search" :facets [[:subject word]]})
                        word]))))
           (if language [:p [:em "Sprog: "] language] "")
           (if location [:p [:em "Opstilling: "] location] "")
@@ -727,10 +711,10 @@ Facet view
                (fn [id]
                  [:div.column
                   [:a.small
-                   {:href (route-link :work id)
-                    :style
-                    {:display :inline-block
-                     :height "6em"}}
+                   (route/ahref {:page "work" :pid id}
+                                {:style
+                                 {:display :inline-block
+                                  :height "6em"}})
                    (work-item id)]])
                (take 12 (rest (:related work)))))]
           [tabbar]]]))
@@ -754,7 +738,7 @@ Facet view
             :zoom 13
             :markers
             (map (fn [[pos id]] {:pos pos
-                                 :click #(dispatch-sync [:route :library id])})
+                                 :click #(route/open {:page "library" :id id})})
                  @(subscribe [:libraries]))]
            [:div.ui.container [:h1 (:name current-library)]]
            [:div.ui.container
@@ -792,19 +776,21 @@ Facet view
                 :width "30%" }}]
              content)
        [:a
-        {:href (route-link :work id)
-         :style
-         {:display :inline-block
-          :font-size "70%"
-          :vertical-align :top
-          :width "70%"
-          :height "4rem" } }
+        (route/ahref {:page "work" :pid id}
+                     {:style
+                      {:display :inline-block
+                       :font-size "70%"
+                       :vertical-align :top
+                       :width "70%"
+                       :height "4rem" } })
         [work-item id]]
        ]
 
       )
 
     (defn status []
+      (log 'status)
+
       (let [arrived (subscribe [:arrived])
             borrowed             (subscribe [:borrowed])
             reservations         (subscribe [:reservations])]
@@ -854,23 +840,19 @@ Facet view
            ])))
 
 
+    (log (prn-str (db [:route])))
 ### Main App entry point
     (defn app []
       (let [prev-route (atom)]
         (fn []
-          (let [[page & params  :as route] @(subscribe [:route])
-                first-run (not= @prev-route route)
-                ]
-            (when first-run
-              (reset! prev-route route)
-              (js/setTimeout #(restore-scroll route) 0))
+          (log 'app (db [:route :page] "search"))
             [:div
-             (case page
-               :search [search params first-run]
-               :work [work (first params)]
-               :library [library (or (first params) "710100")]
-               :status [status]
-               [search ""])]))))
+             (case (db [:route :page] "search")
+               "search" [search (apply concat (db [:route :q] "") (db [:route :facets] []))false]
+               "work" [work (db [:route :pid])]
+               "library" [library (db [:route :id] "710100")]
+               "status" [status]
+               [search ""])])))
 
 ## Swipe gestures
 
@@ -889,11 +871,7 @@ Facet view
     (defonce register-swipe (addSwipeGestures))
 
 
-## Routing
-
-    (defn route-link [& route] (str "#" (prn-str route)))
-
-    (defonce handle-hash
+    #_(defonce handle-hash
       (fn []
         (if (empty? js/location.hash)
           (dispatch [:route])
@@ -901,17 +879,20 @@ Facet view
                           (cljs.reader/read-string
                             (.slice js/location.hash 1)))))))
 
-    (js/window.removeEventListener "hashchange" handle-hash)
-    (js/window.addEventListener "hashchange" handle-hash)
-    (handle-hash)
+    ;(js/window.removeEventListener "hashchange" handle-hash)
+    ;(js/window.addEventListener "hashchange" handle-hash)
+    ;(handle-hash)
 
-    (defonce sync-hash
-      (ratom/run!
-        (let [[page param :as route] @(subscribe [:route])]
-          (js/history.pushState nil nil (apply route-link route)))))
 ## Execute and events
 
-    (render [:div [app]])
+    ;(render [:div [app]])
+    (defn main []
+      [:div
+       ;[:h1 "hello"]
+       ;[input [:route :input]
+       [app]])
+    (render [:div [main]])
+    (db)
 # BibApp Data Source (bibapp_datasource.cljs)
 
     (ns solsort.mobibl.bibapp-datasource
@@ -926,10 +907,14 @@ Facet view
         [clojure.walk :refer [keywordize-keys]]
         [reagent.core :as reagent :refer []]
         [clojure.data]
+        [solsort.appdb :refer [db db!]]
         [re-frame.core :as re-frame
          :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
         [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 
+    (defn work [pid]
+      (when-not (db [:work pid]) (db! [:work pid] {}))
+      (db [:work pid]))
 ## Convert data from datasource to internal format
 
 
