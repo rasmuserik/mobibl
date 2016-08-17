@@ -247,11 +247,12 @@
      [:div [:div.fadeout]
       [:div.bold.large (:title o)]
       [:div.italic.large (:creator o)]
+      [:div (:description o)]
       (into
         [:div]
         (interpose ", " (map (fn [s] [:span.condensed.inline-block s])
                              (:keywords o))))
-      [:div (:description o)]]]))
+      ]]))
 
 ;; ### Facet view
 (defn facet-color [s]
@@ -405,6 +406,7 @@
         creator (:creator work)
         work-history [] ; TODO 
         ]
+    (db! [:history :works] (conj (remove #{(:pid work)} (db [:history :works] '())) (:pid work)))
     (log 'work work-id work)
     [:div
      [:div
@@ -413,18 +415,20 @@
         :overflow-x :auto
         :overflow-y :hidden}}
       (into [:div {:style {:white-space :nowrap :height work-tiny-height}}]
-            (map work-tiny work-history))]
+            (map work-tiny (db [:history :works])))]
      [:div.ui.container
       [:p]
       [:h1.center (:title work)]
       [:p.center "af "
        [:a (route/ahref {:page "search" :facets [[:creator creator]]}) creator]]
       [:p.center
-       [:img
-        {:src (:cover-url work)
-         :style
-         {:max-height (* 0.5 (- js/document.body.clientHeight 50))
-          :max-width (* 0.8 (- js/document.body.clientWidth 20))}}]]
+       (if-not (string/starts-with? (:cover-url work) "http")
+         ""
+        [:img
+         {:src (:cover-url work)
+          :style
+          {:max-height (* 0.5 (- js/document.body.clientHeight 50))
+           :max-width (* 0.8 (- js/document.body.clientWidth 20))}}])]
       [:p.center [:a.ui.primary.button
                   {:on-click #(js/alert "Bestilling ikke implementeret endnu")}
                   "Bestil"]]
@@ -596,14 +600,17 @@
 (defn app []
   (let [prev-route (atom)]
     (fn []
-      (log 'app (db [:route :page] "search"))
+      (let [page (db [:route :page] "search")]
+        (db! [:route] (into (db [:history page] {}) (db [:route])))
+        (db! [:history page] (db [:route]))
+        (log 'app (db [:route :page] "search"))
         [:div
          (case (db [:route :page] "search")
            "search" [search (apply concat (db [:route :q] "") (db [:route :facets] []))false]
            "work" [work (db [:route :pid])]
            "library" [library (db [:route :id] "710100")]
            "status" [status]
-           [search ""])])))
+           [search ""])]))))
 
 ;; ## Swipe gestures
 

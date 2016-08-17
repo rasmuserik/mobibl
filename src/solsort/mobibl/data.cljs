@@ -28,7 +28,8 @@
 (defn dkabm->data [o]
   (letfn [(g [key] (first (get o key)))]
     (log
-     {:title (g "dcTitle")
+     {:pid (g "pid")
+      :title (g "dcTitle")
       :cover-url (:cover-url o)
       :creator (g "creator")
       :keywords (apply concat (for [facet facets] (get o facet [])))
