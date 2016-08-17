@@ -7,5 +7,5 @@ before_install:
   - git submodule update --init --recursive
 script: 
   - lein2 cljsbuild once dist
-  - lein2 bikeshed
+#  - lein2 bikeshed
 #  - lein2 kibit

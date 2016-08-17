@@ -11,13 +11,8 @@ lein clean
 
 # build
 lein cljsbuild once dist 
-cordova prepare
-cordova build
-
-# copy cordova-web
-cp -a platforms/browser/www/cordova* .
-cp -a platforms/browser/www/cordova* resources/public/
-
+#cordova prepare
+#cordova build
 
 # Manifest file
 #
@@ -26,13 +21,3 @@ cp -a platforms/browser/www/cordova* resources/public/
 #find assets -type f >> index.appcache
 #echo "index.js" >> index.appcache
 #find */config.xml >> index.appcache
-
-# build assets/style.css
-./build-css.sh
-
-cat doc/intro.md doc/roadmap.md CONTRIBUTING.md LICENSE.md > README.md
-for SRC in main mock_data mobibl html5 bibapp_datasource
-do
-cat src/solsort/mobibl/${SRC}.cljs | 
-  sed -e "s/^[^/]/    \0/" | sed -e s'/^ *[;][;] \?//' >> README.md
-done
