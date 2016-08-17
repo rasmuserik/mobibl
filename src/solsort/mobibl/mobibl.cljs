@@ -402,11 +402,11 @@
         keywords (:keywords work)
         location (:location work)
         creator (:creator work)
-        work-history [] ; TODO 
         ]
     (if-not (:title work)
       (do
-        (db! [:route] {:page "search"})
+        (when-not (db [:route :pid])
+          (db! [:route] {:page "search"}))
         [:div]
         )
       (do
@@ -427,7 +427,7 @@
              [:p.center "af "
            [:a (route/ahref {:page "search" :facets [[:creator creator]]}) creator]])
          [:p.center
-          (if-not (string/starts-with? (:cover-url work) "http")
+          (if (string/starts-with? (log (:cover-url work) 'xxx) "assets/")
             ""
             [:img
              {:src (:cover-url work)
