@@ -50,7 +50,7 @@
       :figwheel
       {:websocket-host :js-client-host}
       :compiler
-      {:main solsort.mobibl.main
+      {:main solsort.mobibl.mobibl
        :asset-path "out"
        :output-to "resources/public/index.js"
        :output-dir "resources/public/out"
@@ -59,7 +59,7 @@
      :source-paths ["src" "util/src/"]
      :compiler
      {:output-to "index.js"
-      :main solsort.mobibl.main
+      :main solsort.mobibl.mobibl
       :externs ["externs.js"]
       :optimizations :advanced
       :pretty-print false}}
