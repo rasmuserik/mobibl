@@ -11,6 +11,7 @@ lein clean
 
 # build
 lein cljsbuild once dist 
+lein clean
 #cordova prepare
 #cordova build
 
