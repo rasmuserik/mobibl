@@ -40,17 +40,19 @@
      )))
 
 
+(def nils [nil nil nil nil nil nil nil nil nil nil])
 (defn libraries []
   (db [:libraries] {}))
 (defn- <suggester [s type]
   (go
-    (concat (map #(get % "term")
+    (concat (map #(assoc (clojure.walk/keywordize-keys %)
+                         :type type)
                  (let [suggestions  (<! (<op :suggest {:q s :type type}))]
                    (if (coll? suggestions) suggestions nil)
-                   )) (range 10))))
+                   )) nils)))
 (defn get-suggest [s]
   (when-not (db [:suggest s])
-    (db! [:suggest s] {:title (range 10) :subject (range 10) :creator (range 10)})
+    (db! [:suggest s] {:title nils :subject nils :creator nils})
     (go (db! [:suggest s :title] (<! (<suggester s "title"))))
     (go (db! [:suggest s :subject] (<! (<suggester s "subject"))))
     (go (db! [:suggest s :creator] (<! (<suggester s "creator")))))
@@ -95,13 +97,13 @@
   (go
     (db! [:facets q] {})
            (db! [:facets q] 
-                (log (transform-facets
+                (transform-facets
                   (log (<! (<op :facets
                                 {:fields ["creator" "subject" "language"
                                           "form" "date" "audience" "period"
                                           "type" "titleSeries" "partOf"]
                                  :q q
-                                 :limit 20})))))
+                                 :limit 20}))))
            )))
 (defn load-search [[q page]]
   (go

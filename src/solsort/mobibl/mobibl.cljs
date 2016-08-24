@@ -257,52 +257,62 @@
 ;; ### Facet view
 (defn facet-color [s]
   (case s
-    :audience "red"
-    :audienceCategory "yellow"
-    :literaryForm "yellow"
-    :category "yellow"
-    :subject "orange"
-    :dk5 "orange"
-    :creator "olive"
-    :period "green"
-    :date "green"
-    :type "teal"
-    :fictionSubject "blue"
-    :musicSubject "blue"
-    :nonFictionSubject "blue"
-    :form "violet"
-    :genre "purple"
-    :genreCategory "purple"
-    :geographic "brown"
-    :level "gray"
+    "audience" "red"
+    "audienceCategory" "yellow"
+    "literaryForm" "yellow"
+    "category" "yellow"
+    "subject" "orange"
+    "dk5" "orange"
+    "creator" "green"
+    "period" "green"
+    "date" "green"
+    "type" "teal"
+    "title" "violet"
+    "fictionSubject" "blue"
+    "musicSubject" "blue"
+    "nonFictionSubject" "blue"
+    "form" "violet"
+    "genre" "purple"
+    "genreCategory" "purple"
+    "geographic" "brown"
+    "level" "gray"
+    "language" "olive"
     "" ))
 
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
-(defn facet [search-str active-facets]
-  (fn [[col s cnt :as facet]]
+
+(log (db))
+(defn add-facet [o]
+  (let [o (select-keys o [:type :term])]
+    (db! [:history :facets]
+         (conj (remove #{o} (db [:history :facets] [])) o))
+    (db! [:route :facets] (conj (db [:route :facets]) o))))
+(defn selected-facet? [o]
+  (some #(= % (select-keys o [:type :term])) (db [:route :facets])))
+
+(defn active-facet [o]
+  [:a.ui.small.button.condensed.bold
+   {:on-click #(db! [:route :facets] (remove #{o} (db [:route :facets])))
+    :key (hash o)
+    :class (facet-color (:type o))}
+   (:term o)])
+(defn facet [o]
+  (if (contains? (db [:route :facets])
+                 (select-keys o [:type :term]))
+    ""
     [:a.ui.small.basic.button.condensed.bold
-     {:on-click
-      (fn []
-        (let [facet-history
-              (or (db [:ui :facet-history]) [])]
-          (db-async! [:ui :facet-history]
-                    (remove #{[col s]} facet-history))
-          ((log 'active-facets active-facets)
-           (db! [:route :facets] (conj (db [:route :facets] []) [col s])))
-          ))
-      :key (hash [col s])
-      :class (facet-color col)} s
-     [:span.small.regular " " cnt ""]]))
+     {:on-click #(add-facet o)
+      :key (hash o)
+      :class (facet-color (:type o))}
+     (:term o)
+     (if (:frequency o)
+       [:span.small.regular " " (str (:frequency o)) ""]
+       "")]))
 
 (defn suggestion-list [s]
-  [:div {:style {:height "2.3em"}}
-
-   (map (fn [o] [:span.ui.basic.button.small
-                 (route/ahref {:q o}
-                              {:key o})
-                 o]) (filter string? s))])
+    (map facet (remove nil? (remove selected-facet? s))))
 (defn search-query "transform the search-route into cql" []
   (str "\""
        (string/join
@@ -315,12 +325,19 @@
          #" +"
          ))
        "\""))
+
+(defn facets-div [l]
+  (into [:div {:style {:height "2.3em"}}] l))
 (defn suggestions []
   (let [s (get-suggest (db [:route :q] ""))]
     [:div
-     (suggestion-list
-      (distinct (interleave (:title s) (:creator s) (:subject s))))
-     (suggestion-list (distinct (map :term (get-facets (search-query)))))
+     [facets-div
+      (concat (map active-facet (db [:route :facets] []))
+              (suggestion-list (db [:history :facets])))]
+     [facets-div (suggestion-list
+       (distinct (interleave (:title s) (:creator s) (:subject s))))]
+     [facets-div (suggestion-list (keep-indexed #(if (even? %1) %2 nil) (distinct (get-facets (search-query)))))]
+     [facets-div (suggestion-list (keep-indexed #(if (odd? %1) %2 nil) (distinct (get-facets (search-query)))))]
      ]))
 (defn search [query]
   (let
