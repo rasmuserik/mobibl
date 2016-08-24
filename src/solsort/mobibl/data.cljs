@@ -39,8 +39,22 @@
       :language (g "language")}
      o)))
 
+
 (defn libraries []
   (db [:libraries] {}))
+(defn- <suggester [s type]
+  (go
+    (concat (map #(get % "term")
+                 (let [suggestions  (<! (<op :suggest {:q s :type type}))]
+                   (if (coll? suggestions) suggestions nil)
+                   )) (range 10))))
+(defn get-suggest [s]
+  (when-not (db [:suggest s])
+    (db! [:suggest s] {:title (range 10) :subject (range 10) :creator (range 10)})
+    (go (db! [:suggest s :title] (<! (<suggester s "title"))))
+    (go (db! [:suggest s :subject] (<! (<suggester s "subject"))))
+    (go (db! [:suggest s :creator] (<! (<suggester s "creator")))))
+  (db [:suggest s]))
 (defn get-work [pid]
   (when-not (db [:work pid]) (db! [:work pid] {}))
   (dkabm->data (db [:work pid])))
@@ -80,7 +94,6 @@
               (for [work works]
                 (let [pid (first (get work "pid"))]
                   (db! [:work pid] work)))))))))))
-
 (defn load-libraries []
  (go
    (db! [:libraries]

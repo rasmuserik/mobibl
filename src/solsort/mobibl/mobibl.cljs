@@ -7,7 +7,7 @@
     [solsort.appdb :refer [db db! db-async!]]
     [solsort.query-route :as route]
     [solsort.ui :refer [input]]
-    [solsort.mobibl.data :refer [get-work get-search]]
+    [solsort.mobibl.data :refer [get-work get-search get-suggest]]
     [solsort.util
      :refer
      [<ajax <seq<! js-seq load-style! put!close!
@@ -296,6 +296,19 @@
       :class (facet-color col)} s
      [:span.small.regular " " cnt ""]]))
 
+(defn suggestion-list [s]
+  [:div {:style {:height "2.3em"}}
+
+   (map (fn [o] [:span.ui.basic.button.small
+                 (route/ahref {:q o}
+                              {key o})
+                 o]) (filter string? s))])
+(defn suggestions []
+  (let [s (get-suggest (db [:route :q] ""))]
+    [:div
+     (suggestion-list
+      (distinct (interleave (:title s) (:creator s) (:subject s))))
+     ]))
 (defn search-query "transform the search-route into cql" []
   (str "\""
         (string/join
@@ -303,7 +316,7 @@
          (string/split
           (string/replace
            (string/trim (db [:route :q] ""))
-           #"[\"]"
+           #"[\"&]"
            "")
          #" +"
          ))
@@ -358,17 +371,18 @@
                     ))))]]]
 
      ;; Facet view
-     #_[:div
+     [:div
       {:style {:white-space :nowrap
                :overflow-y :hidden
                :overflow-x :auto
-               :margin-top "1rem"
+               :margin-top "0.2rem"
                :margin-bottom "1rem"
                :margin-left "0.5%"
                :width "99.5%"
                :display :inline-block
                }}
-      (merge
+      [suggestions]
+      #_(merge
         [:div]
         (map (fn [[col s :as facet]]
                [:a.ui.small.button.condensed.bold
@@ -382,7 +396,7 @@
                  :class (facet-color col)} s])
              active-facets)
         (map (facet search-str active-facets) facet-history))
-      (merge
+      #_(merge
         [:div]
         (map (facet search-str active-facets) facets))]
      [:p]
