@@ -27,7 +27,7 @@
 (def facets ["subjectDBC0" "subjectDBCF" "subjectDBCN" "subjectDBCS" "subjectDK5Text" "subjectGenre" "language" "type" "creator" "contributor" "audience" "temporalDBCP"])
 (defn dkabm->data [o]
   (letfn [(g [key] (first (get o key)))]
-    (log
+    (into o
      {:pid (g "pid")
       :title (g "dcTitle")
       :cover-url (:cover-url o)
@@ -37,7 +37,7 @@
       :year (g "date")
       :description (or (g "abstract") (g "description"))
       :language (g "language")}
-     o)))
+     )))
 
 
 (defn libraries []
@@ -62,6 +62,8 @@
   (let [results (db [:search [q page]])]
     (when-not results (db! [:search-request] [q page]))
     results))
+(defn get-facets [q]
+  (db [:facets q]))
 
 (def view-fields ["dcTitle" "creator" "coverUrlFull" "subjectDBCF" "description" "language"])
 (defn load-work [id]
@@ -80,6 +82,27 @@
                  "coverUrlFull"
                  ["assets/no-cover.png"])))
     ))
+(defn transform-facets [facets]
+  (reverse
+   (sort-by
+    :frequency
+    (apply
+     concat
+     (for [[k v] facets]
+       (for [facet v]
+         (assoc (clojure.walk/keywordize-keys facet) :type k)))))))
+(defn load-facets [q]
+  (go
+    (db! [:facets q] {})
+           (db! [:facets q] 
+                (log (transform-facets
+                  (log (<! (<op :facets
+                                {:fields ["creator" "subject" "language"
+                                          "form" "date" "audience" "period"
+                                          "type" "titleSeries" "partOf"]
+                                 :q q
+                                 :limit 20})))))
+           )))
 (defn load-search [[q page]]
   (go
     (db! [:search [q page]] [])
@@ -115,6 +138,8 @@
   (doall (map load-cover (keys (remove (key2? :cover-url) (db [:work])))))
   (when (empty? (db [:libraries]))
     (load-libraries))
+  (when-not (db [:facets (first (db [:search-request]))])
+    (load-facets (first (db [:search-request]))))
   (when-not (db [:search (db [:search-request])])
     (load-search (db [:search-request]))))
 

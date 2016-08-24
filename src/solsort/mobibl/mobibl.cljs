@@ -7,7 +7,7 @@
     [solsort.appdb :refer [db db! db-async!]]
     [solsort.query-route :as route]
     [solsort.ui :refer [input]]
-    [solsort.mobibl.data :refer [get-work get-search get-suggest]]
+    [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets]]
     [solsort.util
      :refer
      [<ajax <seq<! js-seq load-style! put!close!
@@ -301,26 +301,27 @@
 
    (map (fn [o] [:span.ui.basic.button.small
                  (route/ahref {:q o}
-                              {key o})
+                              {:key o})
                  o]) (filter string? s))])
+(defn search-query "transform the search-route into cql" []
+  (str "\""
+       (string/join
+        "\" and \""
+        (string/split
+         (string/replace
+          (string/trim (db [:route :q] ""))
+          #"[\"&]"
+          "")
+         #" +"
+         ))
+       "\""))
 (defn suggestions []
   (let [s (get-suggest (db [:route :q] ""))]
     [:div
      (suggestion-list
       (distinct (interleave (:title s) (:creator s) (:subject s))))
+     (suggestion-list (distinct (map :term (get-facets (search-query)))))
      ]))
-(defn search-query "transform the search-route into cql" []
-  (str "\""
-        (string/join
-         "\" and \""
-         (string/split
-          (string/replace
-           (string/trim (db [:route :q] ""))
-           #"[\"&]"
-           "")
-         #" +"
-         ))
-        "\""))
 (defn search [query]
   (let
     [result-pids (get-search (search-query) 0)
@@ -441,7 +442,7 @@
              [:p.center "af "
            [:a (route/ahref {:page "search" :facets [[:creator creator]]}) creator]])
          [:p.center
-          (if (string/starts-with? (log (:cover-url work) 'xxx) "assets/")
+          (if (string/starts-with? (:cover-url work) "assets/")
             ""
             [:img
              {:src (:cover-url work)
