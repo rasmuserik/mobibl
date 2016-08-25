@@ -17,7 +17,7 @@
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
-    [solsort.mobibl.leaflet :refer [leaflet]]
+    [solsort.mobibl.leaflet :refer [openstreetmap]]
     [cljsjs.hammer]))
 
 ;; ## Styling
@@ -528,9 +528,10 @@
           hours   (:hours bib)
           phone   (:phone bib)]
       [:div
-       (if-not bib
+       (if (or (not bib)
+               (empty? (db [:libraries])))
          [:div]
-         [leaflet
+         [openstreetmap
          {:class "map"
          :id "leafletdiv"
          :pos0 (bib->pos bib)
