@@ -65,14 +65,15 @@
        :component-will-unmount
        (fn [] (when gc (db! [:ui id])))})))
 
-(defn ^:export leaflet [& {:keys [id gc pos pos0 zoom zoom0] :as args}]
-  (let [newid (or id (str "leaflet" (.slice  (str  (js/Math.random)) 2)))
+(defn ^:export leaflet [{:keys [id gc pos pos0 zoom zoom0] :as params}]
+  (let [newid (or id ["leaflet" (.slice  (str  (js/Math.random)) 2)])
+        alt-id (log (if-not (coll? newid) [id]) 'alt-id)
         orig (db [:ui newid])
         o {:id newid
            :gc (if id gc true)
            :pos (or pos (:pos orig) pos0 [55.67 12.57])
            :zoom (or zoom (:zoom orig) zoom0 10)}
-        o (into args o)]
+        o (into params o)]
     (db-async! [:ui newid] o)
     (fn [& {:as args}]
-      [leaflet-inner (into (db [:ui newid] o) args)])))
+      [leaflet-inner (db [:ui newid] o)])))

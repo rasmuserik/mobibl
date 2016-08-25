@@ -531,7 +531,7 @@
        (if-not bib
          [:div]
          [leaflet
-         :class "map"
+         {:class "map"
          :id "leafletdiv"
          :pos0 (bib->pos bib)
          :zoom 12
@@ -540,8 +540,8 @@
           (map (fn [[id bib]]
                    {:pos (bib->pos bib)
                     :click #(route/open {:page "library" :id id})})
-               (db [:libraries])
-               ))])
+               (db [:libraries])))
+          }])
        [:div.ui.container
         [:h1 (first (get bib "branchShortName"))]]
        [:div.ui.container
