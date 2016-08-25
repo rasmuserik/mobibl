@@ -1,24 +1,24 @@
 (ns solsort.mobibl.mobibl
   (:require-macros
-    [cljs.core.async.macros :refer [go go-loop alt!]]
-    [reagent.ratom :as ratom :refer  [reaction]])
+   [cljs.core.async.macros :refer [go go-loop alt!]]
+   [reagent.ratom :as ratom :refer  [reaction]])
   (:require
-    [cljs.reader]
-    [solsort.appdb :refer [db db! db-async!]]
-    [solsort.query-route :as route]
-    [solsort.ui :refer [input]]
-    [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets]]
-    [solsort.util
-     :refer
-     [<ajax <seq<! js-seq load-style! put!close!
-      parse-json-or-nil log page-ready render dom->clj]]
-    [reagent.core :as reagent :refer []]
-    [re-frame.core :as re-frame
-     :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
-    [clojure.string :as string :refer [replace split blank?]]
-    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
-    [solsort.leaflet :refer [openstreetmap]]
-    [cljsjs.hammer]))
+   [cljs.reader]
+   [solsort.appdb :refer [db db! db-async!]]
+   [solsort.query-route :as route]
+   [solsort.ui :refer [input]]
+   [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets]]
+   [solsort.util
+    :refer
+    [<ajax <seq<! js-seq load-style! put!close!
+     parse-json-or-nil log page-ready render dom->clj]]
+   [reagent.core :as reagent :refer []]
+   [re-frame.core :as re-frame
+    :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
+   [clojure.string :as string :refer [replace split blank?]]
+   [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
+   [solsort.leaflet :refer [openstreetmap]]
+   [cljsjs.hammer]))
 
 ;; ## Styling
 ;;
@@ -44,140 +44,134 @@
                 24)
         unit-height (/ js/document.body.clientHeight 24)]
     (load-style!
-      {:body
-       {
-        ; :background "url(assets/background.jpg)"
+     {:body
+      {; :background "url(assets/background.jpg)"
         ; :background-color "#fbf8f4"
-        :font-family "\"Open Sans\", sans-serif"
-        :font-weight "300"}
-       ".bold" {:font-weight "bold !important"}
-       ".center" {:text-align :center}
-       ".inline-block" {:display :inline-block}
-       ".italic" {:font-style "italic !important"}
-       ".large" {:font-size "120% !important"}
-       ".small" {:font-size "80% !important"}
-       ".regular " {:font-weight "300 !important"}
-       ".condensed" {:font-family "\"Open Sans Condensed\" !important"}
-       }
-      "general styling")
+       :font-family "\"Open Sans\", sans-serif"
+       :font-weight "300"}
+      ".bold" {:font-weight "bold !important"}
+      ".center" {:text-align :center}
+      ".inline-block" {:display :inline-block}
+      ".italic" {:font-style "italic !important"}
+      ".large" {:font-size "120% !important"}
+      ".small" {:font-size "80% !important"}
+      ".regular " {:font-weight "300 !important"}
+      ".condensed" {:font-family "\"Open Sans Condensed\" !important"}}
+     "general styling")
     ;; ### Tabbar
     (load-style!
-      {".tabbar-spacer"
-       {:display :inline-block
-        :height 50
-        }
-       ".tabbar"
-       {:position :fixed
-        :box-sizing :border-box
-        :bottom 0
-        :text-align :center
-        :left 0
-        :width "100%"
+     {".tabbar-spacer"
+      {:display :inline-block
+       :height 50}
+      ".tabbar"
+      {:position :fixed
+       :box-sizing :border-box
+       :bottom 0
+       :text-align :center
+       :left 0
+       :width "100%"
         ;:background "url(assets/background.jpg)"
         ;:background-color "#fbf8f4"
-        :background-color "#ffffff"
-        :box-shadow "-1px 0px 5px rgba(0,0,0,1);"
-        :z-index "100"
-        }
-       ".tabbar a"
-       {:display :inline-block
-        :box-sizing :border-box
-        :width (* 0.25 (- js/document.body.clientWidth 100))
-        :text-align :center}
-       ".tabbar img"
-       {:padding 3
-        :height 44
-        :width 44}
-       }
-      "tabbar-styling")
+       :background-color "#ffffff"
+       :box-shadow "-1px 0px 5px rgba(0,0,0,1);"
+       :z-index "100"}
+      ".tabbar a"
+      {:display :inline-block
+       :box-sizing :border-box
+       :width (* 0.25 (- js/document.body.clientWidth 100))
+       :text-align :center}
+      ".tabbar img"
+      {:padding 3
+       :height 44
+       :width 44}}
+     "tabbar-styling")
     ;; ### Library view
     ;;
     ;; FIXME Not so nice to have the style for bib-map defined here
     ;;
     (load-style!
-      {".map"
-       {:height (js/Math.min js/document.body.clientWidth
-                             (* 0.6 js/document.body.clientHeight))}
-       ".contact"
-       {:padding "0em 0em 10em 0em"
-        ".contact div span"
-        {:margin "0em 1em 0em 0em"
-         :border "1px solid blue"}}}
-      "library-styling")))
+     {".map"
+      {:height (js/Math.min js/document.body.clientWidth
+                            (* 0.6 js/document.body.clientHeight))}
+      ".contact"
+      {:padding "0em 0em 10em 0em"
+       ".contact div span"
+       {:margin "0em 1em 0em 0em"
+        :border "1px solid blue"}}}
+     "library-styling")))
 
 ;; ### tinywork
 
 (let [unit 13
       width (* 4.5 unit)]
   (load-style!
-    {:.tinywork
-     {:display :inline-block
-      :white-space :normal
-      :font-size (* 0.8 unit)
-      :line-height (str unit "px")
-      :position :relative
-      :width width
-      :height (* 5.5 unit)
-      :text-shadow
-      (str "1px 0px 1px white,"
-           "0px 0px 1px white,"
-           "1px 1px 1px white,"
-           "0px 1px 1px white")}
-     ".tinywork > .bold"
-     {:display :inline-block
-      :position :absolute
-      :top 0
-      :left 0
-      :width width
-      :height (* 4 unit)
-      :background "rgba(255,255,255,0.4)"
-      :padding-bottom (* .25 unit)
-      :overflow :hidden}
-     ".tinywork > .condensed"
-     {:display :inline-block
-      :position :absolute
-      :text-align :left
-      :bottom 0
-      :left 0
-      :width width
-      :font-size (* 1 unit)
-      :white-space :nowrap
-      :padding (* .25 unit)
-      :height (* 1.5 unit)
-      :background "rgba(255,255,255,0.4)"
-      :overflow :hidden}
-     }
-    "tinywork-styling"))
+   {:.tinywork
+    {:display :inline-block
+     :white-space :normal
+     :font-size (* 0.8 unit)
+     :line-height (str unit "px")
+     :position :relative
+     :width width
+     :height (* 5.5 unit)
+     :text-shadow
+     (str "1px 0px 1px white,"
+          "0px 0px 1px white,"
+          "1px 1px 1px white,"
+          "0px 1px 1px white")}
+    ".tinywork > .bold"
+    {:display :inline-block
+     :position :absolute
+     :top 0
+     :left 0
+     :width width
+     :height (* 4 unit)
+     :background "rgba(255,255,255,0.4)"
+     :padding-bottom (* .25 unit)
+     :overflow :hidden}
+    ".tinywork > .condensed"
+    {:display :inline-block
+     :position :absolute
+     :text-align :left
+     :bottom 0
+     :left 0
+     :width width
+     :font-size (* 1 unit)
+     :white-space :nowrap
+     :padding (* .25 unit)
+     :height (* 1.5 unit)
+     :background "rgba(255,255,255,0.4)"
+     :overflow :hidden}}
+   "tinywork-styling"))
 
 ;; ### work
 
 (load-style!
-  {:.work
-   {:position :relative
-    :overflow "hidden"
-    :height "100%"
-    :width "100%"}
-   ".work > img"
-   {:max-width "33%"
-    :max-height "100%"
-    :box-sizing :border-box
-    :vertical-align :top}
-   ".work > div"
-   {:display :inline-block
-    :box-sizing :border-box
-    :width "66%"
-    :height "100%"
-    :vertical-align :top
-    :padding-left ".3em"
-    :overflow :hidden}
-   ".work .fadeout"
-   {:display :block
-    :position :absolute
-    :bottom "0px"
-    :height "33%"
-    :width "100%"
-    :background "linear-gradient(rgba(255,255,255,0), white)" }}
-  "work-styling")
+ {:.work
+  {:position :relative
+   :overflow "hidden"
+   :height "100%"
+   :width "100%"}
+  ".work > img"
+  {:max-width "33%"
+   :max-height "100%"
+   :box-sizing :border-box
+   :vertical-align :top}
+  ".work > div"
+  {:display :inline-block
+   :box-sizing :border-box
+   :width "66%"
+   :height "100%"
+   :vertical-align :top
+   :padding-left ".3em"
+   :overflow :hidden}
+  ".work .fadeout"
+  {:display :block
+   :position :absolute
+   :bottom "0px"
+   :height "33%"
+   :width "100%"
+   :background "linear-gradient(rgba(255,255,255,0), white)"}}
+ "work-styling")
 
 ;; ### Actually apply styling
 ;;
@@ -229,7 +223,7 @@
     [:a (route/ahref {:page "work" :pid pid}
                      {:style {:color "#111"}})
      [:div.center.tinywork
-      [:img {:src (:cover-url o) :width "100%" :height "100%" } ]
+      [:img {:src (:cover-url o) :width "100%" :height "100%"}]
       [:div.bold (:title o)]
       [:div.condensed (:creator o)]]]))
 
@@ -240,19 +234,17 @@
         (map
          (fn [kw]
            [:a (route/ahref {:page "search" :q "" :facets kw}) kw])
-          (:keywords o)
-          )]
+         (:keywords o))]
     [:div.work
-     [:img {:src (:cover-url o) }]
+     [:img {:src (:cover-url o)}]
      [:div [:div.fadeout]
       [:div.bold.large (:title o)]
       [:div.italic.large (:creator o)]
       [:div (:description o)]
       (into
-        [:div]
-        (interpose ", " (map (fn [s] [:span.condensed.inline-block s])
-                             (:keywords o))))
-      ]]))
+       [:div]
+       (interpose ", " (map (fn [s] [:span.condensed.inline-block s])
+                            (:keywords o))))]]))
 
 ;; ### Facet view
 (defn facet-color [s]
@@ -277,7 +269,7 @@
     "geographic" "brown"
     "level" "gray"
     "language" "olive"
-    "" ))
+    ""))
 
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
@@ -311,18 +303,17 @@
        "")]))
 
 (defn suggestion-list [s]
-    (map facet (remove nil? (remove selected-facet? s))))
+  (map facet (remove nil? (remove selected-facet? s))))
 (defn cql-cleanup [s]
   (string/replace
    (string/trim s)
    #"[\"&]"
-   "")
-  )
+   ""))
 (defn search-query "transform the search-route into cql" []
   (let [q (map #(str "\"" % "\"")
-                (string/split
-                  (cql-cleanup (db [:route :q] ""))
-                 #" +"))
+               (string/split
+                (cql-cleanup (db [:route :q] ""))
+                #" +"))
         q (if (= "\"\"" (first q)) [] q)
         facets (db [:route :facets] [])
         facets (map #(assoc % :cql
@@ -336,8 +327,8 @@
         facets (vals (group-by :type facets))
         facets (map
                 #(str "("
-                     (string/join " or " (map :cql %))
-                     ")")
+                      (string/join " or " (map :cql %))
+                      ")")
                 facets)
         cql (string/join " and " (concat q facets))
         cql (if (and (empty? q) (= 1 (count facets)))
@@ -354,33 +345,32 @@
       (concat (map active-facet (db [:route :facets] []))
               (suggestion-list (db [:history :facets])))]
      [facets-div (suggestion-list
-                   (distinct (interleave (:title s) (:creator s) (:subject s))))]
+                  (distinct (interleave (:title s) (:creator s) (:subject s))))]
      [facets-div (suggestion-list (keep-indexed #(if (even? %1) %2 nil) (distinct (get-facets (search-query)))))]
-     [facets-div (suggestion-list (keep-indexed #(if (odd? %1) %2 nil) (distinct (get-facets (search-query)))))]
-     ]))
+     [facets-div (suggestion-list (keep-indexed #(if (odd? %1) %2 nil) (distinct (get-facets (search-query)))))]]))
 (defn search [query]
   (let
-    [result-pids (get-search (search-query) 0)
-     results
-     (map
-       (fn [pid]
-         [:a.column (route/ahref {:page "work" :pid pid}
-                                 {:key pid})
-          [:div
-           {:style {:height "9rem"
-                    :color :black
-                    :margin-bottom "1rem"
-                    :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"}}
-           [work-item pid]]])
-       result-pids)
-     show-history (db [:ui :show-history])
-     search-history [] ; TODO
-     suggest (when show-history search-history)
-     search-str (or (first (filter string? query)) "")
-     active-facets (remove string? query)
-     facet-history (or (db [:ui :facet-history]) [])
-     facets [] ;@(subscribe [:facets :sample])
-     ]
+   [result-pids (get-search (search-query) 0)
+    results
+    (map
+     (fn [pid]
+       [:a.column (route/ahref {:page "work" :pid pid}
+                               {:key pid})
+        [:div
+         {:style {:height "9rem"
+                  :color :black
+                  :margin-bottom "1rem"
+                  :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"}}
+         [work-item pid]]])
+     result-pids)
+    show-history (db [:ui :show-history])
+    search-history [] ; TODO
+    suggest (when show-history search-history)
+    search-str (or (first (filter string? query)) "")
+    active-facets (remove string? query)
+    facet-history (or (db [:ui :facet-history]) [])
+    facets [] ;@(subscribe [:facets :sample])
+]
     [:div
      [:div.ui.container
       [:h1 "Mobibl"]
@@ -389,23 +379,20 @@
        [:div.ui.search.fluid.input.left.icon
         [:i.search.icon]
         [input [:route :q]
-         {:placeholder "Indtast søgning"
-          }]
+         {:placeholder "Indtast søgning"}]
         (when suggest
           (into [:div.results.transition.visible
                  {:style {:display "block !important"}}]
                 (for [[s facets] suggest]
                   (into
-                    [:a.result
-                     {:href (route/url {:page "search" :q s})
-                      :on-click #(db! [:ui :show-history] false)}
-                     s " "]
-                    (for [[col f] facets]
-                      [:div.ui.small.label
-                       {:class (facet-color col)}
-                       (str f)]
-                      )
-                    ))))]]]
+                   [:a.result
+                    {:href (route/url {:page "search" :q s})
+                     :on-click #(db! [:ui :show-history] false)}
+                    s " "]
+                   (for [[col f] facets]
+                     [:div.ui.small.label
+                      {:class (facet-color col)}
+                      (str f)])))))]]]
 
      ;; Facet view
      [:div
@@ -416,26 +403,24 @@
                :margin-bottom "1rem"
                :margin-left "0.5%"
                :width "99.5%"
-               :display :inline-block
-               }}
+               :display :inline-block}}
       [suggestions]
       #_(merge
-        [:div]
-        (map (fn [[col s :as facet]]
-               [:a.ui.small.button.condensed.bold
-                {:on-click
-                 (fn []
-                   (db-async! [:ui :facet-history]
-                             (conj facet-history facet))
-                   (db! [:route :facets] (remove #{[col s]} (db [:route :facets])))
-                   )
-                 :key (hash [col s])
-                 :class (facet-color col)} s])
-             active-facets)
-        (map (facet search-str active-facets) facet-history))
+         [:div]
+         (map (fn [[col s :as facet]]
+                [:a.ui.small.button.condensed.bold
+                 {:on-click
+                  (fn []
+                    (db-async! [:ui :facet-history]
+                               (conj facet-history facet))
+                    (db! [:route :facets] (remove #{[col s]} (db [:route :facets]))))
+                  :key (hash [col s])
+                  :class (facet-color col)} s])
+              active-facets)
+         (map (facet search-str active-facets) facet-history))
       #_(merge
-        [:div]
-        (map (facet search-str active-facets) facets))]
+         [:div]
+         (map (facet search-str active-facets) facets))]
      [:p]
      [:div.ui.container
       [:div.ui.grid
@@ -452,68 +437,66 @@
         language (:language work)
         keywords (:keywords work)
         location (:location work)
-        creator (:creator work)
-        ]
+        creator (:creator work)]
     (if-not (:title work)
       (do
         (when-not (db [:route :pid])
           (db! [:route] {:page "search"}))
-        [:div]
-        )
+        [:div])
       (do
         (db! [:history :works] (conj (remove #{(:pid work)} (db [:history :works] '())) (:pid work)))
-       [:div
         [:div
-         {:style
-          {:background-color "#777"
-           :overflow-x :auto
-           :overflow-y :hidden}}
-         (into [:div {:style {:white-space :nowrap :height work-tiny-height}}]
-               (map work-tiny (db [:history :works])))]
-        [:div.ui.container
-         [:p]
-         [:h1.center (:title work)]
-         (if (empty? creator) 
-           ""
-             [:p.center "af "
-           [:a (route/ahref {:page "search" :facets [[:creator creator]]}) creator]])
-         [:p.center
-          (if (string/starts-with? (:cover-url work) "assets/")
+         [:div
+          {:style
+           {:background-color "#777"
+            :overflow-x :auto
+            :overflow-y :hidden}}
+          (into [:div {:style {:white-space :nowrap :height work-tiny-height}}]
+                (map work-tiny (db [:history :works])))]
+         [:div.ui.container
+          [:p]
+          [:h1.center (:title work)]
+          (if (empty? creator) 
             ""
-            [:img
-             {:src (:cover-url work)
-              :style
-              {:max-height (* 0.5 (- js/document.body.clientHeight 50))
-               :max-width (* 0.8 (- js/document.body.clientWidth 20))}}])]
-         [:p.center [:a.ui.primary.button
-                     {:on-click #(js/alert "Bestilling ikke implementeret endnu")}
-                     "Bestil"]]
-         [:p (:description work)]
-         (if-not keywords ""
-                 (into [:p {:style {:line-height "2rem"}}]
-                       (interpose
-                        " "
-                        (for [word keywords]
-                          [:a.ui.label
-                           (route/ahref {:page "search" :facets [[:subject word]]})
-                           word]))))
-         (if language [:p [:em "Sprog: "] language] "")
-         (if location [:p [:em "Opstilling: "] location] "")
-         [:p.bold "Relaterede:"]
-         [:div.ui.grid
-          (into
-           [:div.stackable.four.column.doubling.row]
-           (map
-            (fn [id]
-              [:div.column
-               [:a.small
-                (route/ahref {:page "work" :pid id}
-                             {:style
-                              {:display :inline-block
-                               :height "6em"}})
-                (work-item id)]])
-            (take 12 (rest (:related work)))))]
-         [tabbar]]]))))
+            [:p.center "af "
+             [:a (route/ahref {:page "search" :facets [[:creator creator]]}) creator]])
+          [:p.center
+           (if (string/starts-with? (:cover-url work) "assets/")
+             ""
+             [:img
+              {:src (:cover-url work)
+               :style
+               {:max-height (* 0.5 (- js/document.body.clientHeight 50))
+                :max-width (* 0.8 (- js/document.body.clientWidth 20))}}])]
+          [:p.center [:a.ui.primary.button
+                      {:on-click #(js/alert "Bestilling ikke implementeret endnu")}
+                      "Bestil"]]
+          [:p (:description work)]
+          (if-not keywords ""
+                  (into [:p {:style {:line-height "2rem"}}]
+                        (interpose
+                         " "
+                         (for [word keywords]
+                           [:a.ui.label
+                            (route/ahref {:page "search" :facets [[:subject word]]})
+                            word]))))
+          (if language [:p [:em "Sprog: "] language] "")
+          (if location [:p [:em "Opstilling: "] location] "")
+          [:p.bold "Relaterede:"]
+          [:div.ui.grid
+           (into
+            [:div.stackable.four.column.doubling.row]
+            (map
+             (fn [id]
+               [:div.column
+                [:a.small
+                 (route/ahref {:page "work" :pid id}
+                              {:style
+                               {:display :inline-block
+                                :height "6em"}})
+                 (work-item id)]])
+             (take 12 (rest (:related work)))))]
+          [tabbar]]]))))
 
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
@@ -532,17 +515,16 @@
                (empty? (db [:libraries])))
          [:div]
          [openstreetmap
-         {:class "map"
-         :db ["leafletdiv"]
-         :pos0 (bib->pos bib)
-         :zoom 12
-         :markers
-         (doall
-          (map (fn [[id bib]]
+          {:class "map"
+           :db ["leafletdiv"]
+           :pos0 (bib->pos bib)
+           :zoom 12
+           :markers
+           (doall
+            (map (fn [[id bib]]
                    {:pos (bib->pos bib)
                     :click #(route/open {:page "library" :id id})})
-               (db [:libraries])))
-          }])
+                 (db [:libraries])))}])
        [:div.ui.container
         [:h1 (first (get bib "branchShortName"))]]
        [:div.ui.container
@@ -565,8 +547,7 @@
           [:span (get bib "branchPhone")]
           " "
           [:span (:time phone)]]]]
-       [tabbar]
-       ])))
+       [tabbar]])))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
@@ -577,7 +558,7 @@
           {:style
            {:display :inline-block
             :vertical-align :top
-            :width "30%" }}]
+            :width "30%"}}]
          content)
    [:a
     (route/ahref {:page "work" :pid id}
@@ -586,11 +567,8 @@
                    :font-size "70%"
                    :vertical-align :top
                    :width "70%"
-                   :height "4rem" } })
-    [work-item id]]
-   ]
-
-  )
+                   :height "4rem"}})
+    [work-item id]]])
 
 (defn status []
   [:div.ui.container
@@ -602,7 +580,7 @@
   (let [arrived [] ;(subscribe [:arrived])
         borrowed   [] ;          (subscribe [:borrowed])
         reservations  [];       (subscribe [:reservations])
-        ]
+]
     (fn []
       [:div.ui.container
        [:div.right.floated.ui.primary.button "Log ud"]
@@ -610,14 +588,14 @@
        [:p
         [:h2 "Hjemkomne"]
         (into
-          [:div]
-          (for
-            [ra @arrived]
-            (loan-entry
-              (:id ra)
-              [:div (:until ra)]
+         [:div]
+         (for
+          [ra @arrived]
+           (loan-entry
+            (:id ra)
+            [:div (:until ra)]
               ; TODO location to fetch
-              )))]
+)))]
        [:p
         [:h2.ui.left.header
          [:div.content
@@ -626,28 +604,21 @@
             :min-width "8rem"}} "Hjemlån"]
          [:div.ui.button "Forny alle"]]
         (into
-          [:div]
-          (for [b @borrowed]
-            (loan-entry
-              (:id b)
-              [:div (:until b)]
-              [:div.ui.small.button "Forny"]
-              )
-            ))]
+         [:div]
+         (for [b @borrowed]
+           (loan-entry
+            (:id b)
+            [:div (:until b)]
+            [:div.ui.small.button "Forny"])))]
        [:p
         [:h2 "Bestillinger"]
         (into
-          [:div]
-          (for [r @reservations]
-            (loan-entry
-              (:id r)
-              [:div.ui.small.button "Slet"]
-              )
-            ))
-        ]
-       [tabbar]
-       ])))
-
+         [:div]
+         (for [r @reservations]
+           (loan-entry
+            (:id r)
+            [:div.ui.small.button "Slet"])))]
+       [tabbar]])))
 
 ;; ### Main App entry point
 (defn app []
@@ -658,7 +629,7 @@
         (db! [:history page] (db [:route]))
         [:div
          (case (db [:route :page] "search")
-           "search" [search (apply concat (db [:route :q] "") (db [:route :facets] []))false]
+           "search" [search (apply concat (db [:route :q] "") (db [:route :facets] [])) false]
            "work" [work (db [:route :pid])]
            "library" [library (db [:route :id] "710100")]
            "status" [status]
@@ -682,12 +653,12 @@
 
 
 #_(defonce handle-hash
-  (fn []
-    (if (empty? js/location.hash)
-      (dispatch [:route])
-      (dispatch (into [:route]
-                      (cljs.reader/read-string
-                        (.slice js/location.hash 1)))))))
+    (fn []
+      (if (empty? js/location.hash)
+        (dispatch [:route])
+        (dispatch (into [:route]
+                        (cljs.reader/read-string
+                         (.slice js/location.hash 1)))))))
 
 ;(js/window.removeEventListener "hashchange" handle-hash)
 ;(js/window.addEventListener "hashchange" handle-hash)
