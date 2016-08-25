@@ -53,9 +53,10 @@
 (defn get-suggest [s]
   (when-not (db [:suggest s])
     (db! [:suggest s] {:title nils :subject nils :creator nils})
-    (go (db! [:suggest s :title] (<! (<suggester s "title"))))
-    (go (db! [:suggest s :subject] (<! (<suggester s "subject"))))
-    (go (db! [:suggest s :creator] (<! (<suggester s "creator")))))
+    (when-not (= "" s)
+      (go (db! [:suggest s :title] (<! (<suggester s "title"))))
+      (go (db! [:suggest s :subject] (<! (<suggester s "subject"))))
+      (go (db! [:suggest s :creator] (<! (<suggester s "creator"))))))
   (db [:suggest s]))
 (defn get-work [pid]
   (when-not (db [:work pid]) (db! [:work pid] {}))

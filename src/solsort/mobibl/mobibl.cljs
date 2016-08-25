@@ -282,8 +282,6 @@
 ;; ### Search
 ;; <img width=20% align=top src=doc/wireframes/search.jpg>
 
-
-(log (db))
 (defn add-facet [o]
   (let [o (select-keys o [:type :term])]
     (db! [:history :facets]
@@ -298,6 +296,7 @@
     :key (hash o)
     :class (facet-color (:type o))}
    (:term o)])
+
 (defn facet [o]
   (if (contains? (db [:route :facets])
                  (select-keys o [:type :term]))
@@ -313,18 +312,38 @@
 
 (defn suggestion-list [s]
     (map facet (remove nil? (remove selected-facet? s))))
+(defn cql-cleanup [s]
+  (string/replace
+   (string/trim s)
+   #"[\"&]"
+   "")
+  )
 (defn search-query "transform the search-route into cql" []
-  (str "\""
-       (string/join
-        "\" and \""
-        (string/split
-         (string/replace
-          (string/trim (db [:route :q] ""))
-          #"[\"&]"
-          "")
-         #" +"
-         ))
-       "\""))
+  (let [q (map #(str "\"" % "\"")
+                (string/split
+                  (cql-cleanup (db [:route :q] ""))
+                 #" +"))
+        q (if (= "\"\"" (first q)) [] q)
+        facets (db [:route :facets] [])
+        facets (map #(assoc % :cql
+                            (str (if (= "title" (:type %))
+                                   "ti"
+                                   (str "facet." (name (:type %))))
+                                 "=\""
+                                 (cql-cleanup (:term %))
+                                 "\""))
+                    facets)
+        facets (vals (group-by :type facets))
+        facets (map
+                #(str "("
+                     (string/join " or " (map :cql %))
+                     ")")
+                facets)
+        cql (string/join " and " (concat q facets))
+        cql (if (and (empty? q) (= 1 (count facets)))
+              (.slice cql 1 -1)
+              cql)]
+    cql))
 
 (defn facets-div [l]
   (into [:div {:style {:height "2.3em"}}] l))
@@ -335,7 +354,7 @@
       (concat (map active-facet (db [:route :facets] []))
               (suggestion-list (db [:history :facets])))]
      [facets-div (suggestion-list
-       (distinct (interleave (:title s) (:creator s) (:subject s))))]
+                   (distinct (interleave (:title s) (:creator s) (:subject s))))]
      [facets-div (suggestion-list (keep-indexed #(if (even? %1) %2 nil) (distinct (get-facets (search-query)))))]
      [facets-div (suggestion-list (keep-indexed #(if (odd? %1) %2 nil) (distinct (get-facets (search-query)))))]
      ]))
