@@ -533,7 +533,7 @@
          [:div]
          [openstreetmap
          {:class "map"
-         :id "leafletdiv"
+         :db ["leafletdiv"]
          :pos0 (bib->pos bib)
          :zoom 12
          :markers
