@@ -17,7 +17,7 @@
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [clojure.string :as string :refer [replace split blank?]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
-    [solsort.mobibl.leaflet :refer [openstreetmap]]
+    [solsort.leaflet :refer [openstreetmap]]
     [cljsjs.hammer]))
 
 ;; ## Styling
