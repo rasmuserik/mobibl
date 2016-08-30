@@ -482,8 +482,8 @@
                             word]))))
           (if language [:p [:em "Sprog: "] language] "")
           (if location [:p [:em "Opstilling: "] location] "")
-          [:p.bold "Relaterede:"]
-          [:div.ui.grid
+          #_[:p.bold "Relaterede:"]
+          #_[:div.ui.grid
            (into
             [:div.stackable.four.column.doubling.row]
             (map
@@ -496,6 +496,22 @@
                                 :height "6em"}})
                  (work-item id)]])
              (take 12 (rest (:related work)))))]
+          [:div
+           [:h3 "Data"]]
+          [:table
+           (into
+                 [:tbody]
+                 (for [[k v] (sort (filter #(string? (first %)) work))]
+                  [:tr
+                   [:th {:style {:font-size "70%"
+                                 :text-align :right
+                                 :vertical-align :top
+                                 :padding-right 5}} k]
+                   (into [:td {:style {:padding-bottom 5}}]
+                         (interpose ", "
+                                    (map (fn [s] [:span (str s)]) v)))
+                   ]
+                  ))]
           [tabbar]]]))))
 
 ;; ### Library
