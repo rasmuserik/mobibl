@@ -96,7 +96,7 @@
          (assoc (clojure.walk/keywordize-keys facet) :type k)))))))
 (defn load-facets [q]
   (go
-    (db! [:facets q] {})
+    (db! [:facets q] [])
            (db! [:facets q] 
                 (transform-facets
                   (log (<! (<op :facets

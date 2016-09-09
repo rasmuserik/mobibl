@@ -6,6 +6,7 @@
    [cljs.reader]
    [solsort.appdb :refer [db db! db-async!]]
    [solsort.query-route :as route]
+   [solsort.mobibl.work :refer [work-tiny work-item work]]
    [solsort.ui :refer [input]]
    [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets]]
    [solsort.util
@@ -100,79 +101,6 @@
         :border "1px solid blue"}}}
      "library-styling")))
 
-;; ### tinywork
-
-(let [unit 13
-      width (* 4.5 unit)]
-  (load-style!
-   {:.tinywork
-    {:display :inline-block
-     :white-space :normal
-     :font-size (* 0.8 unit)
-     :line-height (str unit "px")
-     :position :relative
-     :width width
-     :height (* 5.5 unit)
-     :text-shadow
-     (str "1px 0px 1px white,"
-          "0px 0px 1px white,"
-          "1px 1px 1px white,"
-          "0px 1px 1px white")}
-    ".tinywork > .bold"
-    {:display :inline-block
-     :position :absolute
-     :top 0
-     :left 0
-     :width width
-     :height (* 4 unit)
-     :background "rgba(255,255,255,0.4)"
-     :padding-bottom (* .25 unit)
-     :overflow :hidden}
-    ".tinywork > .condensed"
-    {:display :inline-block
-     :position :absolute
-     :text-align :left
-     :bottom 0
-     :left 0
-     :width width
-     :font-size (* 1 unit)
-     :white-space :nowrap
-     :padding (* .25 unit)
-     :height (* 1.5 unit)
-     :background "rgba(255,255,255,0.4)"
-     :overflow :hidden}}
-   "tinywork-styling"))
-
-;; ### work
-
-(load-style!
- {:.work
-  {:position :relative
-   :overflow "hidden"
-   :height "100%"
-   :width "100%"}
-  ".work > img"
-  {:max-width "33%"
-   :max-height "100%"
-   :box-sizing :border-box
-   :vertical-align :top}
-  ".work > div"
-  {:display :inline-block
-   :box-sizing :border-box
-   :width "66%"
-   :height "100%"
-   :vertical-align :top
-   :padding-left ".3em"
-   :overflow :hidden}
-  ".work .fadeout"
-  {:display :block
-   :position :absolute
-   :bottom "0px"
-   :height "33%"
-   :width "100%"
-   :background "linear-gradient(rgba(255,255,255,0), white)"}}
- "work-styling")
-
 ;; ### Actually apply styling
 ;;
 ; re-layout on rotation etc.
@@ -213,39 +141,6 @@
     [tabbar-button :library "Bibliotek"]
     [tabbar-button :status "Status"]]])
 
-;; ### work-tiny
-
-(def work-tiny-height (* 13 5.5))
-(defn work-tiny [pid]
-  (let  [o (get-work pid)
-         unit 13
-         width (* 4.5 unit)]
-    [:a (route/ahref {:page "work" :pid pid}
-                     {:style {:color "#111"}})
-     [:div.center.tinywork
-      [:img {:src (:cover-url o) :width "100%" :height "100%"}]
-      [:div.bold (:title o)]
-      [:div.condensed (:creator o)]]]))
-
-;; ### work-item
-(defn work-item [pid]
-  (let [o (get-work pid)
-        keywords
-        (map
-         (fn [kw]
-           [:a (route/ahref {:page "search" :q "" :facets kw}) kw])
-         (:keywords o))]
-    [:div.work
-     [:img {:src (:cover-url o)}]
-     [:div [:div.fadeout]
-      [:div.bold.large (:title o)]
-      [:div.italic.large (:creator o)]
-      [:div (:description o)]
-      (into
-       [:div]
-       (interpose ", " (map (fn [s] [:span.condensed.inline-block s])
-                            (:keywords o))))]]))
-
 ;; ### Facet view
 (defn facet-color [s]
   (case s
@@ -280,11 +175,11 @@
          (conj (remove #{o} (db [:history :facets] [])) o))
     (db! [:route :facets] (conj (db [:route :facets]) o))))
 (defn selected-facet? [o]
-  (some #(= % (select-keys o [:type :term])) (db [:route :facets])))
+  (some #(= % (select-keys o [:type :term])) (db [:route :facets] [])))
 
 (defn active-facet [o]
   [:a.ui.small.button.condensed.bold
-   {:on-click #(db! [:route :facets] (remove #{o} (db [:route :facets])))
+   {:on-click #(db! [:route :facets] (remove #{o} (db [:route :facets] [])))
     :key (hash o)
     :class (facet-color (:type o))}
    (:term o)])
@@ -303,7 +198,7 @@
        "")]))
 
 (defn suggestion-list [s]
-  (map facet (remove nil? (remove selected-facet? s))))
+  (map facet (remove selected-facet? (remove nil? s))))
 (defn cql-cleanup [s]
   (string/replace
    (string/trim s)
@@ -337,17 +232,18 @@
     cql))
 
 (defn facets-div [l]
+  (log 'facet-div l)
   (into [:div {:style {:height "2.3em"}}] l))
 (defn suggestions []
   (let [s (get-suggest (db [:route :q] ""))]
     [:div
-     [facets-div
-      (concat (map active-facet (db [:route :facets] []))
-              (suggestion-list (db [:history :facets])))]
-     [facets-div (suggestion-list
-                  (distinct (interleave (:title s) (:creator s) (:subject s))))]
-     [facets-div (suggestion-list (keep-indexed #(if (even? %1) %2 nil) (distinct (get-facets (search-query)))))]
-     [facets-div (suggestion-list (keep-indexed #(if (odd? %1) %2 nil) (distinct (get-facets (search-query)))))]]))
+      [facets-div
+       (concat (map active-facet (db [:route :facets] []))
+               (suggestion-list (db [:history :facets])))]
+      [facets-div (suggestion-list
+                   (distinct (interleave (:title s) (:creator s) (:subject s))))]
+      [facets-div (suggestion-list (keep-indexed #(if (even? %1) %2 nil) (distinct (get-facets (search-query)))))]
+      [facets-div (suggestion-list (keep-indexed #(if (odd? %1) %2 nil) (distinct (get-facets (search-query)))))]]))
 (defn search [query]
   (let
    [result-pids (get-search (search-query) 0)
@@ -426,93 +322,7 @@
       [:div.ui.grid
        (merge [:div.stackable.doubling.four.column.row]
               results)]]
-     [tabbar]]))
-
-;; ### Work
-;; <img width=20% align=top src=doc/wireframes/work.jpg>
-
-
-(defn work [work-id]
-  (let [work (get-work work-id)
-        language (:language work)
-        keywords (:keywords work)
-        location (:location work)
-        creator (:creator work)]
-    (if-not (:title work)
-      (do
-        (when-not (db [:route :pid])
-          (db! [:route] {:page "search"}))
-        [:div])
-      (do
-        (db! [:history :works] (conj (remove #{(:pid work)} (db [:history :works] '())) (:pid work)))
-        [:div
-         [:div
-          {:style
-           {:background-color "#777"
-            :overflow-x :auto
-            :overflow-y :hidden}}
-          (into [:div {:style {:white-space :nowrap :height work-tiny-height}}]
-                (map work-tiny (db [:history :works])))]
-         [:div.ui.container
-          [:p]
-          [:h1.center (:title work)]
-          (if (empty? creator) 
-            ""
-            [:p.center "af "
-             [:a (route/ahref {:page "search" :facets [[:creator creator]]}) creator]])
-          [:p.center
-           (if (string/starts-with? (:cover-url work) "assets/")
-             ""
-             [:img
-              {:src (:cover-url work)
-               :style
-               {:max-height (* 0.5 (- js/document.body.clientHeight 50))
-                :max-width (* 0.8 (- js/document.body.clientWidth 20))}}])]
-          [:p.center [:a.ui.primary.button
-                      {:on-click #(js/alert "Bestilling ikke implementeret endnu")}
-                      "Bestil"]]
-          [:p (:description work)]
-          (if-not keywords ""
-                  (into [:p {:style {:line-height "2rem"}}]
-                        (interpose
-                         " "
-                         (for [word keywords]
-                           [:a.ui.label
-                            (route/ahref {:page "search" :facets [[:subject word]]})
-                            word]))))
-          (if language [:p [:em "Sprog: "] language] "")
-          (if location [:p [:em "Opstilling: "] location] "")
-          #_[:p.bold "Relaterede:"]
-          #_[:div.ui.grid
-           (into
-            [:div.stackable.four.column.doubling.row]
-            (map
-             (fn [id]
-               [:div.column
-                [:a.small
-                 (route/ahref {:page "work" :pid id}
-                              {:style
-                               {:display :inline-block
-                                :height "6em"}})
-                 (work-item id)]])
-             (take 12 (rest (:related work)))))]
-          [:div
-           [:h3 "Data"]]
-          [:table
-           (into
-                 [:tbody]
-                 (for [[k v] (sort (filter #(string? (first %)) work))]
-                  [:tr
-                   [:th {:style {:font-size "70%"
-                                 :text-align :right
-                                 :vertical-align :top
-                                 :padding-right 5}} k]
-                   (into [:td {:style {:padding-bottom 5}}]
-                         (interpose ", "
-                                    (map (fn [s] [:span (str s)]) v)))
-                   ]
-                  ))]
-          [tabbar]]]))))
+     ]))
 
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
@@ -563,7 +373,7 @@
           [:span (get bib "branchPhone")]
           " "
           [:span (:time phone)]]]]
-       [tabbar]])))
+       ])))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
@@ -590,7 +400,7 @@
   [:div.ui.container
    [:h1 "Lånerstatus"]
    [:p {:style {:color :red}} "Ikke implementeret endnu."]
-   [tabbar]])
+   ])
 
 (defn old-status []
   (let [arrived [] ;(subscribe [:arrived])
@@ -633,8 +443,7 @@
          (for [r @reservations]
            (loan-entry
             (:id r)
-            [:div.ui.small.button "Slet"])))]
-       [tabbar]])))
+            [:div.ui.small.button "Slet"])))]])))
 
 ;; ### Main App entry point
 (defn app []
@@ -649,7 +458,8 @@
            "work" [work (db [:route :pid])]
            "library" [library (db [:route :id] "710100")]
            "status" [status]
-           [search ""])]))))
+           [search ""])
+         [tabbar]]))))
 
 ;; ## Swipe gestures
 
