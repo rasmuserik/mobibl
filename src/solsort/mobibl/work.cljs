@@ -4,8 +4,8 @@
    [reagent.ratom :as ratom :refer  [reaction]])
   (:require
    [cljs.reader]
-   [solsort.appdb :refer [db db! db-async!]]
-   [solsort.query-route :as route]
+   [solsort.toolbox.appdb :refer [db db! db-async!]]
+   [solsort.toolbox.query-route :as route]
    [solsort.mobibl.data :refer [get-work]]
    [solsort.util
     :refer

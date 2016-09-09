@@ -4,10 +4,10 @@
    [reagent.ratom :as ratom :refer  [reaction]])
   (:require
    [cljs.reader]
-   [solsort.appdb :refer [db db! db-async!]]
-   [solsort.query-route :as route]
+   [solsort.toolbox.appdb :refer [db db! db-async!]]
+   [solsort.toolbox.query-route :as route]
    [solsort.mobibl.work :refer [work-tiny work-item work]]
-   [solsort.ui :refer [input]]
+   [solsort.toolbox.ui :refer [input]]
    [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets]]
    [solsort.util
     :refer
@@ -18,7 +18,7 @@
     :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
    [clojure.string :as string :refer [replace split blank?]]
    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]
-   [solsort.leaflet :refer [openstreetmap]]
+   [solsort.toolbox.leaflet :refer [openstreetmap]]
    [cljsjs.hammer]))
 
 ;; ## Styling
@@ -274,8 +274,8 @@
       [:div
        [:div.ui.search.fluid.input.left.icon
         [:i.search.icon]
-        [input [:route :q]
-         {:placeholder "Indtast søgning"}]
+        [input {:db [:route :q]
+         :placeholder "Indtast søgning"}]
         (when suggest
           (into [:div.results.transition.visible
                  {:style {:display "block !important"}}]
@@ -340,17 +340,17 @@
        (if (or (not bib)
                (empty? (db [:libraries])))
          [:div]
-         [openstreetmap
-          {:class "map"
-           :db ["leafletdiv"]
-           :pos0 (bib->pos bib)
-           :zoom 12
-           :markers
-           (doall
-            (map (fn [[id bib]]
-                   {:pos (bib->pos bib)
-                    :click #(route/open {:page "library" :id id})})
-                 (db [:libraries])))}])
+         (into
+          [openstreetmap
+           {:class "map"
+            :db ["leafletdiv"]
+            :pos0 (bib->pos bib)
+            :zoom 12}]
+            (doall
+             (map (fn [[id bib]]
+                    [:marker  {:pos (bib->pos bib)
+                               :click #(route/open {:page "library" :id id})}])
+                  (db [:libraries])))))
        [:div.ui.container
         [:h1 (first (get bib "branchShortName"))]]
        [:div.ui.container
