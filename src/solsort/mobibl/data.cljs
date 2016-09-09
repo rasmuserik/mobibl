@@ -99,12 +99,12 @@
     (db! [:facets q] [])
            (db! [:facets q] 
                 (transform-facets
-                  (log (<! (<op :facets
+                  (<! (<op :facets
                                 {:fields ["creator" "subject" "language"
                                           "form" "date" "audience" "period"
                                           "type" "titleSeries" "partOf"]
                                  :q q
-                                 :limit 20}))))
+                                 :limit 20})))
            )))
 (defn load-search [[q page]]
   (go
