@@ -345,7 +345,7 @@
            {:class "map"
             :db ["leafletdiv"]
             :pos0 (bib->pos bib)
-            :zoom 12}]
+            :zoom0 12}]
             (doall
              (map (fn [[id bib]]
                     [:marker  {:pos (bib->pos bib)
