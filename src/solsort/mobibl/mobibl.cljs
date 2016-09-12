@@ -131,7 +131,6 @@
   [:a (route/ahref {:page (name id)})
    [:img {:src (str "assets/" (name id) "-icon.svg")
           :alt s}]])
-
 (defn tabbar []
   [:div
    [:div.tabbar-spacer " "]
@@ -236,13 +235,13 @@
 (defn suggestions []
   (let [s (get-suggest (db [:route :q] ""))]
     [:div
-      [facets-div
-       (concat (map active-facet (db [:route :facets] []))
-               (suggestion-list (db [:history :facets])))]
-      [facets-div (suggestion-list
-                   (distinct (interleave (:title s) (:creator s) (:subject s))))]
-      [facets-div (suggestion-list (keep-indexed #(if (even? %1) %2 nil) (distinct (get-facets (search-query)))))]
-      [facets-div (suggestion-list (keep-indexed #(if (odd? %1) %2 nil) (distinct (get-facets (search-query)))))]]))
+     [facets-div
+      (concat (map active-facet (db [:route :facets] []))
+              (suggestion-list (db [:history :facets])))]
+     [facets-div (suggestion-list
+                  (distinct (interleave (:title s) (:creator s) (:subject s))))]
+     [facets-div (suggestion-list (keep-indexed #(if (even? %1) %2 nil) (distinct (get-facets (search-query)))))]
+     [facets-div (suggestion-list (keep-indexed #(if (odd? %1) %2 nil) (distinct (get-facets (search-query)))))]]))
 (defn search [query]
   (let
    [result-pids (get-search (search-query) 0)
@@ -274,7 +273,7 @@
        [:div.ui.search.fluid.input.left.icon
         [:i.search.icon]
         [input {:db [:route :q]
-         :placeholder "Indtast søgning"}]
+                :placeholder "Indtast søgning"}]
         (when suggest
           (into [:div.results.transition.visible
                  {:style {:display "block !important"}}]
@@ -320,14 +319,10 @@
      [:div.ui.container
       [:div.ui.grid
        (merge [:div.stackable.doubling.four.column.row]
-              results)]]
-     ]))
+              results)]]]))
 
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
-
-(def daynames ["Man" "Tir" "Ons" "Tor" "Fre" "Lør" "Søn"])
-
 (defn geo->pos [geo] [(get geo "latitude") (get geo "longitude")])
 (defn bib->pos [bib] (geo->pos (get bib "geolocation")))
 (defn library-map []
@@ -352,8 +347,7 @@
        (if (or (not bib)
                (empty? (db [:libraries])))
          [:div]
-         [library-map]
-         )
+         [library-map])
        [:div.ui.container
         [:h1 (first (get bib "branchShortName"))]]
        [:div.ui.container
@@ -375,8 +369,7 @@
           [:span "Telefon: "]
           [:span (get bib "branchPhone")]
           " "
-          [:span (:time phone)]]]]
-       ])))
+          [:span (:time phone)]]]]])))
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
@@ -398,15 +391,14 @@
                    :width "70%"
                    :height "4rem"}})
     [work-item id]]])
-
 (defn login []
   [:div.ui.container
    [:br]
    [:p
-     [:div.ui.fluid.labeled.input
-      [:div.ui.label "Lånernummer"]
-      [input {:type "password"
-              :db [:login :user]}]]]
+    [:div.ui.fluid.labeled.input
+     [:div.ui.label "Lånernummer"]
+     [input {:type "password"
+             :db [:login :user]}]]]
    [:p
     [:div.ui.fluid.labeled.input
      [:div.ui.label "Pin"]
@@ -415,27 +407,26 @@
    [:p {:style {:text-align :right}}
     [:span.primary.ui.button
      {:class (if (db [:login :progress]) "loading" "")
-      :on-click do-login
-      }
-     "Log ind"]
-    ]
+      :on-click do-login}
+     "Log ind"]]
    [:p
-     [select {:class "ui fluid search dropdown"
-              :db [:route :library]
-              :options 
-              (sort (map (fn [[k v]] [(str
-                                       (get v "agencyName") ": "
-                                       (first (get v "branchName")) 
-                                       ) k])
-                         (db [:libraries])))}]]
-   [library-map]
-   ]
-  )
+    "Du skal være oprettet som låner på biblioteket for at kunne logge ind:"
+    [select {:class "ui fluid search dropdown"
+             :db [:route :library]
+             :options 
+             (sort (map (fn [[k v]] [(str
+                                      (get v "agencyName") ": "
+                                      (first (get v "branchName"))) k])
+                        (db [:libraries])))}]]
+   [library-map]])
 (defn status []
   (if-not (get-user)
     [login]
     [:div.ui.container
-     [:h1 "Lånerstatus"]
+     [:h1 "Lånerstatus \u00a0 "
+      [:span {:style {:font-size "50%"
+                      :white-space :nowrap}}
+       (get (db [:libraries (db [:login :library])]) "agencyName")]]
      [:p {:style {:text-align :right}}
       [:span.red.ui.button
        {:class (if (db [:login :progress]) "loading" "")
@@ -444,14 +435,12 @@
           (db! [:login :user] nil)
           (db! [:login :pin] nil)
           (do-login))}
-       "Log ud"]
-      ]
+       "Log ud"]]
      [:p {:style {:color :red}} "Ikke fuldt implementeret endnu."]
      [:p
       [:strong "Afhentningsbibliotek: "]
       [:a (route/ahref {:page "library" :library (db [:login :library])})
-       (first (get (db [:libraries (db [:login :library])]) "branchName"))
-       ]]
+       (first (get (db [:libraries (db [:login :library])]) "branchName"))]]
      [:hr]
      (into
       [:div
@@ -467,52 +456,49 @@
       (map
        (fn [order]
          [:div (prn-str order)])
-       (db [:user "orders"])))
-     ]
-    ))
-
-(defn old-status []
-  (let [arrived [] ;(subscribe [:arrived])
-        borrowed   [] ;          (subscribe [:borrowed])
-        reservations  [];       (subscribe [:reservations])
+       (db [:user "orders"])))]))
+#_(defn old-status []
+    (let [arrived [] ;(subscribe [:arrived])
+          borrowed   [] ;          (subscribe [:borrowed])
+          reservations  [];       (subscribe [:reservations])
 ]
-    (fn []
-      [:div.ui.container
-       [:div.right.floated.ui.primary.button "Log ud"]
-       [:h1 "Lånerstatus"]
-       [:p
-        [:h2 "Hjemkomne"]
-        (into
-         [:div]
-         (for
-          [ra @arrived]
-           (loan-entry
-            (:id ra)
-            [:div (:until ra)]
+      (fn []
+        [:div.ui.container
+         [:div.right.floated.ui.primary.button "Log ud"]
+         [:h1 "Lånerstatus"]
+         [:p
+          [:h2 "Hjemkomne"]
+          (into
+           [:div]
+           (for
+            [ra @arrived]
+             (loan-entry
+              (:id ra)
+              [:div (:until ra)]
               ; TODO location to fetch
 )))]
-       [:p
-        [:h2.ui.left.header
-         [:div.content
-          {:style
-           {:width "30%"
-            :min-width "8rem"}} "Hjemlån"]
-         [:div.ui.button "Forny alle"]]
-        (into
-         [:div]
-         (for [b @borrowed]
-           (loan-entry
-            (:id b)
-            [:div (:until b)]
-            [:div.ui.small.button "Forny"])))]
-       [:p
-        [:h2 "Bestillinger"]
-        (into
-         [:div]
-         (for [r @reservations]
-           (loan-entry
-            (:id r)
-            [:div.ui.small.button "Slet"])))]])))
+         [:p
+          [:h2.ui.left.header
+           [:div.content
+            {:style
+             {:width "30%"
+              :min-width "8rem"}} "Hjemlån"]
+           [:div.ui.button "Forny alle"]]
+          (into
+           [:div]
+           (for [b @borrowed]
+             (loan-entry
+              (:id b)
+              [:div (:until b)]
+              [:div.ui.small.button "Forny"])))]
+         [:p
+          [:h2 "Bestillinger"]
+          (into
+           [:div]
+           (for [r @reservations]
+             (loan-entry
+              (:id r)
+              [:div.ui.small.button "Slet"])))]])))
 
 ;; ### Main App entry point
 (defn app []
@@ -545,8 +531,6 @@
 ;;     (.on hammer "swipeleft" #(change-route 1))
 ;;     (.on hammer "swiperight" #(change-route -1))))
 ;; (defonce register-swipe (addSwipeGestures))
-
-
 #_(defonce handle-hash
     (fn []
       (if (empty? js/location.hash)
@@ -554,7 +538,6 @@
         (dispatch (into [:route]
                         (cljs.reader/read-string
                          (.slice js/location.hash 1)))))))
-
 ;(js/window.removeEventListener "hashchange" handle-hash)
 ;(js/window.addEventListener "hashchange" handle-hash)
 ;(handle-hash)
@@ -562,10 +545,5 @@
 ;; ## Execute and events
 
 ;(render [:div [app]])
-(defn main []
-  [:div
-   ;[:h1 "hello"]
-   ;[input [:route :input]
-   [app]])
-(render [:div [main]])
-(db)
+
+(render [:div [app]])

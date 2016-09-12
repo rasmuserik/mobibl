@@ -1,21 +1,21 @@
 (ns solsort.mobibl.data
   (:require-macros
-    [cljs.core.async.macros :refer [go go-loop alt!]]
-    [solsort.toolbox.macros :refer [<?]]
-    [reagent.ratom :as ratom :refer  [reaction run!]])
+   [cljs.core.async.macros :refer [go go-loop alt!]]
+   [solsort.toolbox.macros :refer [<?]]
+   [reagent.ratom :as ratom :refer  [reaction run!]])
   (:require
-    [solsort.util
-     :refer
-     [<p <load-script <ajax <seq<! js-seq normalize-css load-style! put!close!
-      parse-json-or-nil log page-ready render dom->clj]]
-    [solsort.toolbox.misc :refer [throttle]]
-    [clojure.walk :refer [keywordize-keys]]
-    [reagent.core :as reagent :refer []]
-    [clojure.data]
-    [solsort.toolbox.appdb :refer [db db! db-async!]]
-    [re-frame.core :as re-frame
-     :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
-    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
+   [solsort.util
+    :refer
+    [<p <load-script <ajax <seq<! js-seq normalize-css load-style! put!close!
+     parse-json-or-nil log page-ready render dom->clj]]
+   [solsort.toolbox.misc :refer [throttle]]
+   [clojure.walk :refer [keywordize-keys]]
+   [reagent.core :as reagent :refer []]
+   [clojure.data]
+   [solsort.toolbox.appdb :refer [db db! db-async!]]
+   [re-frame.core :as re-frame
+    :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
+   [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 (defonce clid "a36227da-e477-491e-b4a2-ccd9df365cf9")
 (defonce clsec "YfO7hc8OJ+vUGh9GhMZhJw06cyHxNi48fwWnVLJGPrPHvkZaYYj0cboM")
 (defn <op [endpoint o]
@@ -24,7 +24,7 @@
       (<! (<load-script "https://openplatform.dbc.dk/v1/dbc_openplatform.min.js")))
     (when-not (js/dbcOpenPlatform.connected)
       (<! (<p (js/dbcOpenPlatform.connect clid clsec))))
-    (js->clj (<! (<p  (.call (aget js/dbcOpenPlatform (name endpoint)) js/dbcOpenPlatform (clj->js o)) )))))
+    (js->clj (<! (<p  (.call (aget js/dbcOpenPlatform (name endpoint)) js/dbcOpenPlatform (clj->js o)))))))
 
 (defn <load-user []
   (go (db! [:user] (try (<? (<op :user {}))
@@ -45,8 +45,7 @@
                     (get (db [:libraries (db [:route :library])]) "agencyId"))
                (db [:login :pin]))))
       (catch js/Error e
-        (<! (<p (js/dbcOpenPlatform.connect clid clsec))))
-      )
+        (<! (<p (js/dbcOpenPlatform.connect clid clsec)))))
     (<! (<load-user))
     (db! [:login :progress] nil)))
 
@@ -54,17 +53,15 @@
 (defn dkabm->data [o]
   (letfn [(g [key] (first (get o key)))]
     (into o
-     {:pid (g "pid")
-      :title (g "dcTitle")
-      :cover-url (:cover-url o)
-      :creator (g "creator")
-      :keywords (apply concat (for [facet facets] (get o facet [])))
-      :location nil
-      :year (g "date")
-      :description (or (g "abstract") (g "description"))
-      :language (g "language")}
-     )))
-
+          {:pid (g "pid")
+           :title (g "dcTitle")
+           :cover-url (:cover-url o)
+           :creator (g "creator")
+           :keywords (apply concat (for [facet facets] (get o facet [])))
+           :location nil
+           :year (g "date")
+           :description (or (g "abstract") (g "description"))
+           :language (g "language")})))
 
 (def nils [nil nil nil nil nil nil nil nil nil nil])
 (defn libraries []
@@ -74,8 +71,7 @@
     (concat (map #(assoc (clojure.walk/keywordize-keys %)
                          :type type)
                  (let [suggestions  (<! (<op :suggest {:q s :type type}))]
-                   (if (coll? suggestions) suggestions nil)
-                   )) nils)))
+                   (if (coll? suggestions) suggestions nil))) nils)))
 (defn get-suggest [s]
   (when-not (db [:suggest s])
     (db! [:suggest s] {:title nils :subject nils :creator nils})
@@ -106,11 +102,10 @@
   (go
     (db! [:work id :cover-url] "assets/loading.png")
     (db! [:work id :cover-url]
-          (first
-           (get (first (<! (<op :work {:pids [id] :fields ["coverUrlFull"]})))
-                 "coverUrlFull"
-                 ["assets/no-cover.png"])))
-    ))
+         (first
+          (get (first (<! (<op :work {:pids [id] :fields ["coverUrlFull"]})))
+               "coverUrlFull"
+               ["assets/no-cover.png"])))))
 (defn transform-facets [facets]
   (reverse
    (sort-by
@@ -121,24 +116,22 @@
        (for [facet v]
          (assoc (clojure.walk/keywordize-keys facet) :type k)))))))
 
-
 (defn load-facets [q]
   (when-not (empty? q)
     (go
-     (db! [:facets q] [])
-     (db! [:facets q]
-          (transform-facets
-           (<? (<op :facets
-                    {:fields ["creator" "subject" "language"
-                              "form" "date" "audience" "period"
-                              "type" "titleSeries" "partOf"]
-                     :q q
-                     :limit 20})))
-          ))))
+      (db! [:facets q] [])
+      (db! [:facets q]
+           (transform-facets
+            (<? (<op :facets
+                     {:fields ["creator" "subject" "language"
+                               "form" "date" "audience" "period"
+                               "type" "titleSeries" "partOf"]
+                      :q q
+                      :limit 20})))))))
 (defn load-search [[q page]]
   (go
     (db! [:search [q page]] [])
-    (let [results (<! (<op :search {:fields ["pid" "collection" "collectionDetails"]:q q :limit 10 :offset (* 10 page)}))]
+    (let [results (<! (<op :search {:fields ["pid" "collection" "collectionDetails"] :q q :limit 10 :offset (* 10 page)}))]
       (when (coll? results)
         (db! [:search [q page]] (map #(first (get % "pid")) results))
         (doall
@@ -150,16 +143,16 @@
                 (let [pid (first (get work "pid"))]
                   (db! [:work pid] work)))))))))))
 (defn load-libraries []
- (go
-   (db! [:libraries]
-        (into
-         {}
-         (map
-          (fn [o] [(get o "branchId") o])
-          (filter #(and
-                    (get % "geolocation")
-                    (= "Folkebibliotek" (get % "agencyType")))
-                  (<! (<op :libraries {}))))))))
+  (go
+    (db! [:libraries]
+         (into
+          {}
+          (map
+           (fn [o] [(get o "branchId") o])
+           (filter #(and
+                     (get % "geolocation")
+                     (= "Folkebibliotek" (get % "agencyType")))
+                   (<! (<op :libraries {}))))))))
 
 (defn needs-search [[q results]]
   (< (get results :wanted -1) (get results :requested -1)))
