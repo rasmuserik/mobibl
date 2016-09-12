@@ -50,7 +50,7 @@
     (db! [:login :progress] nil)))
 (defn do-order [pids]
   (go
-    (<! (<op :order {:pids pids :library (db [:login :library])}))
+    (<! (<op :order {:pids pids :library (db [:login :library]) :expires (str (+ (.getFullYear (js/Date.)) 2) "-01-01")}))
     (<! (timeout 5000))
     (db! [:route :page] "status")))
 
