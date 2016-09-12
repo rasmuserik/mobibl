@@ -331,8 +331,21 @@
 
 (defn geo->pos [geo] [(get geo "latitude") (get geo "longitude")])
 (defn bib->pos [bib] (geo->pos (get bib "geolocation")))
+(defn library-map []
+  (into
+   [openstreetmap
+    {:class "map"
+     :db ["leafletdiv"]
+     :zoom0 11}]
+   (doall
+    (map (fn [[id bib]]
+           [:marker  {:pos (bib->pos bib)
+                      :on-click
+                      #(db! [:route :library] id)
+                      #_#(route/open {:page "library" :library id})}])
+         (db [:libraries])))))
 (defn library [id]
-  (let [bib (db [:libraries (db [:route :id] "715100")])]
+  (let [bib (db [:libraries (db [:route :library] "715100")])]
     (let [address (:address bib)
           hours   (:hours bib)
           phone   (:phone bib)]
@@ -340,17 +353,8 @@
        (if (or (not bib)
                (empty? (db [:libraries])))
          [:div]
-         (into
-          [openstreetmap
-           {:class "map"
-            :db ["leafletdiv"]
-            :pos0 (bib->pos bib)
-            :zoom0 12}]
-            (doall
-             (map (fn [[id bib]]
-                    [:marker  {:pos (bib->pos bib)
-                               :click #(route/open {:page "library" :id id})}])
-                  (db [:libraries])))))
+         [library-map]
+         )
        [:div.ui.container
         [:h1 (first (get bib "branchShortName"))]]
        [:div.ui.container
@@ -456,7 +460,7 @@
          (case (db [:route :page] "search")
            "search" [search (apply concat (db [:route :q] "") (db [:route :facets] [])) false]
            "work" [work (db [:route :pid])]
-           "library" [library (db [:route :id] "710100")]
+           "library" [library (db [:route :library] "710100")]
            "status" [status]
            [search ""])
          [tabbar]]))))
