@@ -349,6 +349,8 @@
         ]
     (db-async! [:scroll (db [:route :page])] pos)
     (db! [:scroll :need] (if (<= (+ pos h1 scoll-at) h2) a (inc a)))))
+(defonce init-scroll
+  (js/setInterval #(scroll-watcher) 3000))
 (aset js/window "onscroll" scroll-watcher)
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
