@@ -143,7 +143,7 @@
           (if (empty? creator) 
             ""
             [:p.center "af "
-             [:a (route/ahref {:page "search" :facets [[:creator creator]]}) creator]])
+             [:a (route/ahref {:page "search" :q "" :facets [{:type "creator" :term creator}]}) creator]])
           [:p.center
            (if (string/starts-with? (:cover-url work) "assets/")
              ""
@@ -162,7 +162,7 @@
                          " "
                          (for [word keywords]
                            [:a.ui.label
-                            (route/ahref {:page "search" :facets [[:subject word]]})
+                            ;(route/ahref {:page "search" :facets [[:subject word]]})
                             word]))))
           (if language [:p [:em "Sprog: "] language] "")
           (if location [:p [:em "Opstilling: "] location] "")

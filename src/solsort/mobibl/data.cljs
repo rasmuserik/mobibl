@@ -1,12 +1,14 @@
 (ns solsort.mobibl.data
   (:require-macros
     [cljs.core.async.macros :refer [go go-loop alt!]]
+    [solsort.toolbox.macros :refer [<?]]
     [reagent.ratom :as ratom :refer  [reaction run!]])
   (:require
     [solsort.util
      :refer
-     [<p <load-script throttle <ajax <seq<! js-seq normalize-css load-style! put!close!
+     [<p <load-script <ajax <seq<! js-seq normalize-css load-style! put!close!
       parse-json-or-nil log page-ready render dom->clj]]
+    [solsort.toolbox.misc :refer [throttle]]
     [clojure.walk :refer [keywordize-keys]]
     [reagent.core :as reagent :refer []]
     [clojure.data]
@@ -94,18 +96,27 @@
      (for [[k v] facets]
        (for [facet v]
          (assoc (clojure.walk/keywordize-keys facet) :type k)))))))
+(def load-user
+  (throttle
+   #(go (db! [:user] (try (<? (<op :user {}))
+                          (catch js/Error e nil))))
+   3000))
+(defn get-user []
+  (load-user) (db [:user]))
+
 (defn load-facets [q]
-  (go
-    (db! [:facets q] [])
-           (db! [:facets q] 
-                (transform-facets
-                  (<! (<op :facets
-                                {:fields ["creator" "subject" "language"
-                                          "form" "date" "audience" "period"
-                                          "type" "titleSeries" "partOf"]
-                                 :q q
-                                 :limit 20})))
-           )))
+  (when-not (empty? q)
+    (go
+     (db! [:facets q] [])
+     (db! [:facets q]
+          (transform-facets
+           (<? (<op :facets
+                    {:fields ["creator" "subject" "language"
+                              "form" "date" "audience" "period"
+                              "type" "titleSeries" "partOf"]
+                     :q q
+                     :limit 20})))
+          ))))
 (defn load-search [[q page]]
   (go
     (db! [:search [q page]] [])

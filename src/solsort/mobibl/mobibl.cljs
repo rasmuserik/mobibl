@@ -7,8 +7,8 @@
    [solsort.toolbox.appdb :refer [db db! db-async!]]
    [solsort.toolbox.query-route :as route]
    [solsort.mobibl.work :refer [work-tiny work-item work]]
-   [solsort.toolbox.ui :refer [input]]
-   [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets]]
+   [solsort.toolbox.ui :refer [input select]]
+   [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets get-user]]
    [solsort.util
     :refer
     [<ajax <seq<! js-seq load-style! put!close!
@@ -232,7 +232,6 @@
     cql))
 
 (defn facets-div [l]
-  (log 'facet-div l)
   (into [:div {:style {:height "2.3em"}}] l))
 (defn suggestions []
   (let [s (get-suggest (db [:route :q] ""))]
@@ -399,12 +398,45 @@
                    :width "70%"
                    :height "4rem"}})
     [work-item id]]])
-
-(defn status []
+(defn login []
   [:div.ui.container
-   [:h1 "Lånerstatus"]
-   [:p {:style {:color :red}} "Ikke implementeret endnu."]
-   ])
+   [:br]
+   [:p
+     [:div.ui.fluid.labeled.input
+      [:div.ui.label "Lånernummer"]
+      [input {:type "password"
+              :db [:login :user]}]]]
+   [:p
+    [:div.ui.fluid.labeled.input
+     [:div.ui.label "Pin"]
+     [input {:type "password"
+             :db [:login :pin]}]]]
+   [:p {:style {:text-align :right}}
+    [:span.primary.ui.button
+     {:class (if (db [:login :progress])
+               "loading"
+               "")
+      :on-click #(db! [:login :progress] (not (db [:login :progress])))}
+     "Log ind"]
+    ]
+   [:p
+     [select {:class "ui fluid search dropdown"
+              :db [:route :library]
+              :options 
+              (sort (map (fn [[k v]] [(str
+                                       (get v "agencyName") ": "
+                                       (first (get v "branchName")) 
+                                       ) k])
+                         (db [:libraries])))}]]
+   [library-map]
+   ]
+  )
+(defn status []
+  (if-not (get-user)
+    [login]
+    [:div.ui.container
+     [:h1 "Lånerstatus"]
+     [:p {:style {:color :red}} "Ikke implementeret endnu."]]))
 
 (defn old-status []
   (let [arrived [] ;(subscribe [:arrived])
