@@ -8,7 +8,7 @@
    [solsort.toolbox.query-route :as route]
    [solsort.mobibl.work :refer [work-tiny work-item work]]
    [solsort.toolbox.ui :refer [input select]]
-   [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets get-user]]
+   [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets get-user do-login]]
    [solsort.util
     :refer
     [<ajax <seq<! js-seq load-style! put!close!
@@ -398,6 +398,7 @@
                    :width "70%"
                    :height "4rem"}})
     [work-item id]]])
+
 (defn login []
   [:div.ui.container
    [:br]
@@ -413,10 +414,9 @@
              :db [:login :pin]}]]]
    [:p {:style {:text-align :right}}
     [:span.primary.ui.button
-     {:class (if (db [:login :progress])
-               "loading"
-               "")
-      :on-click #(db! [:login :progress] (not (db [:login :progress])))}
+     {:class (if (db [:login :progress]) "loading" "")
+      :on-click do-login
+      }
      "Log ind"]
     ]
    [:p
@@ -436,7 +436,40 @@
     [login]
     [:div.ui.container
      [:h1 "Lånerstatus"]
-     [:p {:style {:color :red}} "Ikke implementeret endnu."]]))
+     [:p {:style {:text-align :right}}
+      [:span.red.ui.button
+       {:class (if (db [:login :progress]) "loading" "")
+        :on-click
+        (fn []
+          (db! [:login :user] nil)
+          (db! [:login :pin] nil)
+          (do-login))}
+       "Log ud"]
+      ]
+     [:p {:style {:color :red}} "Ikke fuldt implementeret endnu."]
+     [:p
+      [:strong "Afhentningsbibliotek: "]
+      [:a (route/ahref {:page "library" :library (db [:login :library])})
+       (first (get (db [:libraries (db [:login :library])]) "branchName"))
+       ]]
+     [:hr]
+     (into
+      [:div
+       [:h2 "Lån"]]
+      (map
+       (fn [loan]
+         [:div (prn-str loan)])
+       (db [:user "loans"])))
+     [:hr]
+     (into
+      [:div
+       [:h2 "Bestillinger"]]
+      (map
+       (fn [order]
+         [:div (prn-str order)])
+       (db [:user "orders"])))
+     ]
+    ))
 
 (defn old-status []
   (let [arrived [] ;(subscribe [:arrived])

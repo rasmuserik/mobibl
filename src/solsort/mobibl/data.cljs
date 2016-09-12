@@ -12,7 +12,7 @@
     [clojure.walk :refer [keywordize-keys]]
     [reagent.core :as reagent :refer []]
     [clojure.data]
-    [solsort.toolbox.appdb :refer [db db!]]
+    [solsort.toolbox.appdb :refer [db db! db-async!]]
     [re-frame.core :as re-frame
      :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
     [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
@@ -25,6 +25,30 @@
     (when-not (js/dbcOpenPlatform.connected)
       (<! (<p (js/dbcOpenPlatform.connect clid clsec))))
     (js->clj (<! (<p  (.call (aget js/dbcOpenPlatform (name endpoint)) js/dbcOpenPlatform (clj->js o)) )))))
+
+(defn <load-user []
+  (go (db! [:user] (try (<? (<op :user {}))
+                        (catch js/Error e nil)))))
+(def load-user (throttle <load-user 2000))
+(defn get-user []
+  (load-user)
+  (db [:user]))
+
+(defn do-login []
+  (go
+    (db! [:login :progress] true)
+    (db! [:login :library] (db [:route :library]))
+    (try
+      (<? (<p (js/dbcOpenPlatform.connect
+               clid clsec
+               (str (db [:login :user] "") "@"
+                    (get (db [:libraries (db [:route :library])]) "agencyId"))
+               (db [:login :pin]))))
+      (catch js/Error e
+        (<! (<p (js/dbcOpenPlatform.connect clid clsec))))
+      )
+    (<! (<load-user))
+    (db! [:login :progress] nil)))
 
 (def facets ["subjectDBC0" "subjectDBCF" "subjectDBCN" "subjectDBCS" "subjectDK5Text" "subjectGenre" "language" "type" "creator" "contributor" "audience" "temporalDBCP"])
 (defn dkabm->data [o]
@@ -96,13 +120,7 @@
      (for [[k v] facets]
        (for [facet v]
          (assoc (clojure.walk/keywordize-keys facet) :type k)))))))
-(def load-user
-  (throttle
-   #(go (db! [:user] (try (<? (<op :user {}))
-                          (catch js/Error e nil))))
-   3000))
-(defn get-user []
-  (load-user) (db [:user]))
+
 
 (defn load-facets [q]
   (when-not (empty? q)
