@@ -60,7 +60,7 @@
      :compiler
      {:output-to "index.js"
       :main solsort.mobibl.mobibl
-      :externs ["externs.js"]
+      :externs ["util/externs.js"]
       :optimizations :advanced
       :pretty-print false}}
     ]}
