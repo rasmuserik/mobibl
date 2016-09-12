@@ -153,7 +153,7 @@
                {:max-height (* 0.5 (- js/document.body.clientHeight 50))
                 :max-width (* 0.8 (- js/document.body.clientWidth 20))}}])]
           [:p.center [:a.ui.primary.button
-                      {:on-click #(js/alert "Bestilling ikke implementeret endnu")}
+                      (route/ahref {:page "order" :pid work-id})
                       "Bestil"]]
           [:p (:description work)]
           (if-not keywords ""

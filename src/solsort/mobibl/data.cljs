@@ -48,6 +48,11 @@
         (<! (<p (js/dbcOpenPlatform.connect clid clsec)))))
     (<! (<load-user))
     (db! [:login :progress] nil)))
+(defn do-order [pids]
+  (go
+    (<! (<op :order {:pids pids :library (db [:login :library])}))
+    (<! (timeout 5000))
+    (db! [:route :page] "status")))
 
 (def facets ["subjectDBC0" "subjectDBCF" "subjectDBCN" "subjectDBCS" "subjectDK5Text" "subjectGenre" "language" "type" "creator" "contributor" "audience" "temporalDBCP"])
 (defn dkabm->data [o]

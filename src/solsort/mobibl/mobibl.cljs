@@ -8,7 +8,7 @@
    [solsort.toolbox.query-route :as route]
    [solsort.mobibl.work :refer [work-tiny work-item work]]
    [solsort.toolbox.ui :refer [input select]]
-   [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets get-user do-login]]
+   [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets get-user do-login do-order]]
    [solsort.util
     :refer
     [<ajax <seq<! js-seq load-style! put!close!
@@ -500,6 +500,16 @@
               (:id r)
               [:div.ui.small.button "Slet"])))]])))
 
+(defn order []
+   (if-not (get-user)
+     [login]
+     (do
+       (do-order (or (db [:route :pids]) [(db [:route :pid])]))
+      [:div.ui.container
+       [:div.ui.active.inverted.dimmer
+        [:div.ui.large.text.loader "Bestiller"]]])
+     )
+  )
 ;; ### Main App entry point
 (defn app []
   (let [prev-route (atom)]
@@ -513,6 +523,7 @@
            "work" [work (db [:route :pid])]
            "library" [library (db [:route :library] "710100")]
            "status" [status]
+           "order" [order]
            [search ""])
          [tabbar]]))))
 
