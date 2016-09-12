@@ -54,6 +54,8 @@
     (<! (timeout 5000))
     (db! [:route :page] "status")))
 
+(db! [:search ["" 0]] [])
+(db! [:search [nil nil]] [])
 (def facets ["subjectDBC0" "subjectDBCF" "subjectDBCN" "subjectDBCS" "subjectDK5Text" "subjectGenre" "language" "type" "creator" "contributor" "audience" "temporalDBCP"])
 (defn dkabm->data [o]
   (letfn [(g [key] (first (get o key)))]

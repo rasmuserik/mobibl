@@ -261,6 +261,7 @@
             [work-item pid]]])
         result-pids)]
     results))
+(db! [:search ["" 0]] [])
 (defn search [query]
   (let
    [show-history (db [:ui :show-history])
@@ -270,7 +271,8 @@
     active-facets (remove string? query)
     facet-history (or (db [:ui :facet-history]) [])
     facets [] ;@(subscribe [:facets :sample])
-    pages (search-pages (search-query))]
+    pages (search-pages (search-query))
+    all-loaded (= [] (db [:search [(search-query) pages]]))]
     (db! [:scroll :loaded] pages)
     [:div
      [:div.ui.container
@@ -325,14 +327,19 @@
      [:p]
      [:div.ui.container
       [:div.ui.grid
-       (apply conj [:div.stackable.doubling.four.column.row]
-              (apply concat (for [n (range (db [:scroll :need] 1))]
-                              (search-results n))))]
-      (if (not= (db [:scroll :need]) pages)
+       (doall (apply conj [:div.stackable.doubling.four.column.row]
+               (apply concat (for [n 
+                                   (range
+                                    (max 1
+                                          (if (= (inc pages) (db [:scroll :need]))
+                                            (inc pages) pages)))
+                                   ]
+                               (search-results n)))))]
+      (if all-loaded
+        ""
         [:div.ui.active.centered.inline.loader]
-        "")
+        )
       ]]))
-
 (defn scroll-watcher []
   (let [pos js/window.scrollY
         h1 js/window.innerHeight
@@ -340,10 +347,8 @@
         a (search-pages (search-query))
         scoll-at h1; number of pixels from bottom before requesting more results
         ]
-    (db! [:scroll (db [:route :page])] pos)
-    (db! [:scroll :need] (if (<= (+ pos h1 scoll-at) h2) a (inc a))))
-  (log (db [:scroll]))
-  )
+    (db-async! [:scroll (db [:route :page])] pos)
+    (db! [:scroll :need] (if (<= (+ pos h1 scoll-at) h2) a (inc a)))))
 (aset js/window "onscroll" scroll-watcher)
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
