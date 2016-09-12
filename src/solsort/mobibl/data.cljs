@@ -92,6 +92,7 @@
   (let [results (db [:search [q page]])]
     (when-not results (db! [:search-request] [q page]))
     results))
+
 (defn get-facets [q]
   (db [:facets q]))
 

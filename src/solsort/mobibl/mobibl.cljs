@@ -229,6 +229,10 @@
               (.slice cql 1 -1)
               cql)]
     cql))
+(defn search-pages [q]
+  (loop [i 0]
+    (if-not (empty? (db [:search [q i]]))
+      (recur (inc i)) i)))
 
 (defn facets-div [l]
   (into [:div {:style {:height "2.3em"}}] l))
@@ -242,29 +246,32 @@
                   (distinct (interleave (:title s) (:creator s) (:subject s))))]
      [facets-div (suggestion-list (keep-indexed #(if (even? %1) %2 nil) (distinct (get-facets (search-query)))))]
      [facets-div (suggestion-list (keep-indexed #(if (odd? %1) %2 nil) (distinct (get-facets (search-query)))))]]))
+(defn search-results [n]
+  (let [result-pids (get-search (search-query) n)
+       results
+       (map
+        (fn [pid]
+          [:a.column (route/ahref {:page "work" :pid pid}
+                                  {:key pid})
+           [:div
+            {:style {:height "9rem"
+                     :color :black
+                     :margin-bottom "1rem"
+                     :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"}}
+            [work-item pid]]])
+        result-pids)]
+    results))
 (defn search [query]
   (let
-   [result-pids (get-search (search-query) 0)
-    results
-    (map
-     (fn [pid]
-       [:a.column (route/ahref {:page "work" :pid pid}
-                               {:key pid})
-        [:div
-         {:style {:height "9rem"
-                  :color :black
-                  :margin-bottom "1rem"
-                  :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"}}
-         [work-item pid]]])
-     result-pids)
-    show-history (db [:ui :show-history])
+   [show-history (db [:ui :show-history])
     search-history [] ; TODO
     suggest (when show-history search-history)
     search-str (or (first (filter string? query)) "")
     active-facets (remove string? query)
     facet-history (or (db [:ui :facet-history]) [])
     facets [] ;@(subscribe [:facets :sample])
-]
+    pages (search-pages (search-query))]
+    (db! [:scroll :loaded] pages)
     [:div
      [:div.ui.container
       [:h1 "Mobibl"]
@@ -318,9 +325,26 @@
      [:p]
      [:div.ui.container
       [:div.ui.grid
-       (merge [:div.stackable.doubling.four.column.row]
-              results)]]]))
+       (apply conj [:div.stackable.doubling.four.column.row]
+              (apply concat (for [n (range (db [:scroll :need] 1))]
+                              (search-results n))))]
+      (if (not= (db [:scroll :need]) pages)
+        [:div.ui.active.centered.inline.loader]
+        "")
+      ]]))
 
+(defn scroll-watcher []
+  (let [pos js/window.scrollY
+        h1 js/window.innerHeight
+        h2 js/document.body.scrollHeight
+        a (search-pages (search-query))
+        scoll-at h1; number of pixels from bottom before requesting more results
+        ]
+    (db! [:scroll (db [:route :page])] pos)
+    (db! [:scroll :need] (if (<= (+ pos h1 scoll-at) h2) a (inc a))))
+  (log (db [:scroll]))
+  )
+(aset js/window "onscroll" scroll-watcher)
 ;; ### Library
 ;; <img width=20% align=top src=doc/wireframes/library.jpg>
 (defn geo->pos [geo] [(get geo "latitude") (get geo "longitude")])
@@ -512,7 +536,7 @@
   )
 ;; ### Main App entry point
 (defn app []
-  (let [prev-route (atom)]
+  (let [prev-page (atom)]
     (fn []
       (let [page (db [:route :page] "search")]
         (db! [:route] (into (db [:history page] {}) (db [:route])))
