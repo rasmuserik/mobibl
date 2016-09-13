@@ -347,7 +347,7 @@
         a (search-pages (search-query))
         scoll-at h1; number of pixels from bottom before requesting more results
         ]
-    (db-async! [:scroll (db [:route :page])] pos)
+    (db! [:scroll (db [:route :page])] pos)
     (db! [:scroll :need] (if (<= (+ pos h1 scoll-at) h2) a (inc a)))))
 (defonce init-scroll
   (js/setInterval #(scroll-watcher) 3000))
@@ -402,8 +402,6 @@
           " "
           [:span (:time phone)]]]]])))
 
-;; ### Status
-;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
 (defn login []
   [:div.ui.container
    [:br]
@@ -610,7 +608,16 @@
 (defn app []
   (let [prev-page (atom)]
     (fn []
+      (when-not (#{"search" "work" "library" "status" "order"}
+                 (db [:route :page]))
+        (db! [:route :page] "search"))
       (let [page (db [:route :page] "search")]
+        (when-not (= @prev-page page)
+          (js/window.scrollTo 0 (db [:scroll page] 0))
+          (js/setTimeout
+           #(js/window.scrollTo 0 (db [:scroll page] 0))
+           100)
+          (reset! prev-page page))
         (db! [:route] (into (db [:history page] {}) (db [:route])))
         (db! [:history page] (db [:route]))
         [:div
@@ -619,8 +626,7 @@
            "work" [work (db [:route :pid])]
            "library" [library (db [:route :library] "710100")]
            "status" [status]
-           "order" [order]
-           [search ""])
+           "order" [order])
          [tabbar]]))))
 
 ;; ## Swipe gestures
