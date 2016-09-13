@@ -34,6 +34,10 @@
   (load-user)
   (db [:user]))
 
+(defn <do-renew [id]
+  (go
+    (<! (<op :renew {:loanId id}))
+    (<! (<load-user))))
 (defn do-login []
   (go
     (db! [:login :progress] true)
@@ -57,6 +61,7 @@
 (defn <do-delete-order [id]
   (go
     (<! (<op :order {:orderId id :delete true}))
+    (<! (<load-user))
     (<! (timeout 5000))
     (<! (<load-user))
     ))

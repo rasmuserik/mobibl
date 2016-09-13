@@ -8,7 +8,7 @@
    [solsort.toolbox.query-route :as route]
    [solsort.mobibl.work :refer [work-tiny work-item work]]
    [solsort.toolbox.ui :refer [input select]]
-   [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets get-user do-login do-order <do-delete-order]]
+   [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets get-user do-login do-order <do-delete-order <do-renew]]
    [solsort.util
     :refer
     [<ajax <seq<! js-seq load-style! put!close!
@@ -452,7 +452,18 @@
                              :margin-right "1ex"}}
       [:div "Afleveres"]
       [:div (.slice (get o "dueDate") 0 10)]]
-      [:span.basic.ui.button "Forny"]]
+      [:span.basic.ui.button
+       {:class (if (db [:status :renew (get o "loanId")])
+                 "loading" "")
+        :foo (log (prn-str o))
+        :on-click
+        #(go
+           (db! [:status :renew (get o "loanId")] true)
+           (<! (<do-renew (get o "loanId")))
+           (db! [:status :renew (get o "loanId")])
+           )
+        }
+       "Forny"]]
      [:div.inline {:style {:float :right
                            :margin-left "1ex"
                            :text-align :right
@@ -473,7 +484,6 @@
         [:span.basic.ui.button
          {:class (if (db [:status :delete (get o "orderId")])
                    "loading" "")
-          :foo (log (prn-str o))
           :on-click
           #(go
              (db! [:status :delete (get o "orderId")] true)
@@ -507,7 +517,6 @@
           (db! [:login :pin] nil)
           (do-login))}
        "Log ud"]]
-     [:p {:style {:color :red}} "Ikke fuldt implementeret endnu."]
      [:p
       [:strong "Afhentningsbibliotek: "]
       [:a (route/ahref {:page "library" :library (db [:login :library])})
@@ -518,14 +527,14 @@
        [:h2 "Lån"]]
       (map
        status-entry
-       (db [:user "loans"])))
+       (sort-by #(get % "title") (db [:user "loans"]))))
      [:hr]
      (into
       [:div
        [:h2 "Bestillinger"]]
       (map
        status-entry
-       (db [:user "orders"])))]))
+       (sort-by #(get % "title") (db [:user "orders"]))))]))
 #_(defn loan-entry [id & content]
     [:div
      {:style {:margin-bottom "1rem"}}
