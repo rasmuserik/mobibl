@@ -404,24 +404,6 @@
 
 ;; ### Status
 ;; <img width=20% align=top src=doc/wireframes/patron-status.jpg>
-(defn loan-entry [id & content]
-  [:div
-   {:style {:margin-bottom "1rem"}}
-   (into [:span
-          {:style
-           {:display :inline-block
-            :vertical-align :top
-            :width "30%"}}]
-         content)
-   [:a
-    (route/ahref {:page "work" :pid id}
-                 {:style
-                  {:display :inline-block
-                   :font-size "70%"
-                   :vertical-align :top
-                   :width "70%"
-                   :height "4rem"}})
-    [work-item id]]])
 (defn login []
   [:div.ui.container
    [:br]
@@ -450,6 +432,52 @@
                                       (first (get v "branchName"))) k])
                         (db [:libraries])))}]]
    [library-map]])
+(load-style!
+ {:.inline {:display :inline-block
+            :vertical-align :top}
+  :.oneline {:display :inline-block
+             :white-space :nowrap
+             :vertical-align :top
+             }
+  :.strong {:font-weight :bold}
+  :.status-entry {}}
+ "status-style")
+(defn status-entry [o]
+  [:div {:style {:margin-bottom "2ex"}}
+   (if (get o "dueDate")
+     [:div.oneline {:style {:float :right
+                           :margin-left "1ex"
+                           :vertical-align :top}}
+      [:div.oneline {:style {:text-align :right
+                             :margin-right "1ex"}}
+      [:div "Afleveres"]
+      [:div (.slice (get o "dueDate") 0 10)]]
+      [:span.basic.ui.button "Forny"]]
+     [:div.inline {:style {:float :right
+                           :margin-left "1ex"
+                           :text-align :right
+                           :vertical-align :top}}
+      [:div.inline {:style {:text-align :right
+                            :max-width "20ex"
+                            :margin-right "1ex"}}
+       (get o "status") [:br]
+       (let [library (re-find #"[0-9]+" (get o "library"))]
+         [:a
+          (route/ahref {:page "library" :library library })
+          (first (get (db [:libraries library] {}) "branchName"))])]
+      (if (get o "pickUpId")
+        [:div.inline
+         [:strong (get o "pickUpId")] [:br]
+         [:span.small (.slice (get o "pickUpExpiryDate" "") 0 10)]
+         ]
+          [:span.basic.ui.button "Slet"])])
+   [:a
+    (route/ahref {:page "search" :q (str (get o "title") " " (get o "author"))})
+    [:strong (get o "title")] [:br]
+    [:em (get o "author")]]
+   [:div {:style {:clear :both}}]
+   ]
+  )
 (defn status []
   (if-not (get-user)
     [login]
@@ -477,17 +505,33 @@
       [:div
        [:h2 "Lån"]]
       (map
-       (fn [loan]
-         [:div (prn-str loan)])
+       status-entry
        (db [:user "loans"])))
      [:hr]
      (into
       [:div
        [:h2 "Bestillinger"]]
       (map
-       (fn [order]
-         [:div (prn-str order)])
+       status-entry
        (db [:user "orders"])))]))
+#_(defn loan-entry [id & content]
+    [:div
+     {:style {:margin-bottom "1rem"}}
+     (into [:span
+            {:style
+             {:display :inline-block
+              :vertical-align :top
+              :width "30%"}}]
+           content)
+     [:a
+      (route/ahref {:page "work" :pid id}
+                   {:style
+                    {:display :inline-block
+                     :font-size "70%"
+                     :vertical-align :top
+                     :width "70%"
+                     :height "4rem"}})
+      [work-item id]]])
 #_(defn old-status []
     (let [arrived [] ;(subscribe [:arrived])
           borrowed   [] ;          (subscribe [:borrowed])
