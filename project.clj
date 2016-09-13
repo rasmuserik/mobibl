@@ -1,4 +1,4 @@
-(defproject solsort.mobibl/mobibl "0.0.1-SNAPSHOT"
+(defproject solsort.mobibl/mobibl "0.1.0-SNAPSHOT"
   :license "Creative Commons BY-NC-ND"
 
   :dependencies
