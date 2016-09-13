@@ -52,7 +52,14 @@
   (go
     (<! (<op :order {:pids pids :library (db [:login :library]) :expires (str (+ (.getFullYear (js/Date.)) 2) "-01-01")}))
     (<! (timeout 5000))
+    (<! (<load-user))
     (db! [:route :page] "status")))
+(defn <do-delete-order [id]
+  (go
+    (<! (<op :order {:orderId id :delete true}))
+    (<! (timeout 5000))
+    (<! (<load-user))
+    ))
 
 (db! [:search ["" 0]] [])
 (db! [:search [nil nil]] [])

@@ -8,7 +8,7 @@
    [solsort.toolbox.query-route :as route]
    [solsort.mobibl.work :refer [work-tiny work-item work]]
    [solsort.toolbox.ui :refer [input select]]
-   [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets get-user do-login do-order]]
+   [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets get-user do-login do-order <do-delete-order]]
    [solsort.util
     :refer
     [<ajax <seq<! js-seq load-style! put!close!
@@ -458,7 +458,7 @@
                            :text-align :right
                            :vertical-align :top}}
       [:div.inline {:style {:text-align :right
-                            :max-width "20ex"
+                            :max-width "18ex"
                             :margin-right "1ex"}}
        (get o "status") [:br]
        (let [library (re-find #"[0-9]+" (get o "library"))]
@@ -470,7 +470,19 @@
          [:strong (get o "pickUpId")] [:br]
          [:span.small (.slice (get o "pickUpExpiryDate" "") 0 10)]
          ]
-          [:span.basic.ui.button "Slet"])])
+        [:span.basic.ui.button
+         {:class (if (db [:status :delete (get o "orderId")])
+                   "loading" "")
+          :foo (log (prn-str o))
+          :on-click
+          #(go
+             (db! [:status :delete (get o "orderId")] true)
+             (<! (<do-delete-order (get o "orderId")))
+             (<! (timeout 3000))
+             (db! [:status :delete (get o "orderId")])
+             )
+          }
+         "Slet"])])
    [:a
     (route/ahref {:page "search" :q (str (get o "title") " " (get o "author"))})
     [:strong (get o "title")] [:br]
