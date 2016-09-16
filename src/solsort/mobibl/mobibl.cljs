@@ -293,12 +293,16 @@
                      (.preventDefault e)
                      (.blur (js/document.getElementById "search-field"))
                      )}
-       [:div.ui.search.fluid.input.left.icon
-        [:i.search.icon]
+       [:div.ui.search.action.fluid.input.left.icon
+        [:i.search.icon
+         ]
         [input {:db [:route :q]
                 :id "search-field"
                 :placeholder "Indtast søgning"
                 }]
+        [:button.ui.basic.icon.button
+         {:on-click #(db! [:route :q] "")}
+         [:i.remove.icon]]
         [:span {:style {:width 0 :overflow :hidden}} [:input {:type :submit }]]
         (when suggest
           (into [:div.results.transition.visible
