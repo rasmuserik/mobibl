@@ -278,11 +278,19 @@
      [:div.ui.container
       [:h1 "Mobibl"]
       [:p {:style {:color :red}} "Under udvikling, ikke fuldt funktionel endnu."]
-      [:div
+      [:form
+       {:on-submit (fn [e]
+                     (.preventDefault e)
+                     (.blur (js/document.getElementById "search-field"))
+
+                     )}
        [:div.ui.search.fluid.input.left.icon
         [:i.search.icon]
         [input {:db [:route :q]
-                :placeholder "Indtast søgning"}]
+                :id "search-field"
+                :placeholder "Indtast søgning"
+                }]
+        [:span {:style {:width 0 :overflow :hidden}} [:input {:type :submit }]]
         (when suggest
           (into [:div.results.transition.visible
                  {:style {:display "block !important"}}]
