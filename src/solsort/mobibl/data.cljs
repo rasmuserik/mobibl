@@ -150,7 +150,7 @@
                       :limit 20})))))))
 (defn load-search [[q page]]
   (go
-    (db! [:search [q page]] [])
+    (db! [:search [q page]] [{:loading :loading}])
     (let [results (<! (<op :search {:fields ["pid" "collection" "collectionDetails"] :q q :limit 10 :offset (* 10 page)}))]
       (when (coll? results)
         (db! [:search [q page]] (map #(first (get % "pid")) results))

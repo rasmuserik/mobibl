@@ -191,7 +191,6 @@
      {:on-click
       (if (:clear-search o)
         (fn []
-          (log o)
           (db! [:route :q] "")
           (add-facet o)
           )
@@ -283,7 +282,7 @@
     facet-history (or (db [:ui :facet-history]) [])
     facets [] ;@(subscribe [:facets :sample])
     pages (search-pages (search-query))
-    all-loaded (= [] (db [:search [(search-query) pages]]))]
+    all-loaded (= [] (log (db [:search [(search-query) pages]])))]
     (db! [:scroll :loaded] pages)
     [:div
      [:div.ui.container
@@ -355,7 +354,9 @@
                                (search-results n)))))]
       (if all-loaded
         ""
-        [:div.ui.active.centered.inline.loader]
+        [:div.ui.active.centered.inline.loader
+         {:style {:margin-top "8ex"
+                  :margin-bottom "8ex"}}]
         )
       ]]))
 (defn scroll-watcher []
@@ -473,7 +474,6 @@
       [:span.basic.ui.button
        {:class (if (db [:status :renew (get o "loanId")])
                  "loading" "")
-        :foo (log (prn-str o))
         :on-click
         #(go
            (db! [:status :renew (get o "loanId")] true)
