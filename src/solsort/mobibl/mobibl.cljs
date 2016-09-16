@@ -188,9 +188,17 @@
                  (select-keys o [:type :term]))
     ""
     [:a.ui.small.basic.button.condensed.bold
-     {:on-click #(add-facet o)
+     {:on-click
+      (if (:clear-search o)
+        (fn []
+          (log o)
+          (db! [:route :q] "")
+          (add-facet o)
+          )
+        #(add-facet o))
       :key (hash o)
-      :class (facet-color (:type o))}
+      :class (facet-color (:type o))
+      }
      (:term o)
      (if (:frequency o)
        [:span.small.regular " " (str (:frequency o)) ""]
@@ -243,7 +251,10 @@
       (concat (map active-facet (db [:route :facets] []))
               (suggestion-list (db [:history :facets])))]
      [facets-div (suggestion-list
-                  (distinct (interleave (:title s) (:creator s) (:subject s))))]
+                  (map #(into % {:clear-search true
+                                 :term (.toLowerCase (:term %))})
+                   (remove nil?
+                           (distinct (interleave (:title s) (:creator s) (:subject s))))))]
      [facets-div (suggestion-list (keep-indexed #(if (even? %1) %2 nil) (distinct (get-facets (search-query)))))]
      [facets-div (suggestion-list (keep-indexed #(if (odd? %1) %2 nil) (distinct (get-facets (search-query)))))]]))
 (defn search-results [n]
@@ -282,7 +293,6 @@
        {:on-submit (fn [e]
                      (.preventDefault e)
                      (.blur (js/document.getElementById "search-field"))
-
                      )}
        [:div.ui.search.fluid.input.left.icon
         [:i.search.icon]
