@@ -426,12 +426,14 @@
    [:p
     [:div.ui.fluid.labeled.input
      [:div.ui.label "Lånernummer"]
-     [input {:type "password"
+     [input {:type "tel"
+             :style {"-webkit-text-security" "disc"}
              :db [:login :user]}]]]
    [:p
     [:div.ui.fluid.labeled.input
      [:div.ui.label "Pin"]
-     [input {:type "password"
+     [input {:type "tel"
+             :style {"-webkit-text-security" "disc"}
              :db [:login :pin]}]]]
    [:p {:style {:text-align :right}}
     [:span.primary.ui.button
