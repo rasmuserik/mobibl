@@ -516,7 +516,9 @@
           }
          "Slet"])])
    [:a
-    (route/ahref {:page "search" :q (str (get o "title") " " (get o "author"))})
+    (route/ahref {:page "search"
+                  :q (str (get o "title") " " (get o "author"))
+                  :facets []})
     [:strong (get o "title")] [:br]
     [:em (get o "author")]]
    [:div {:style {:clear :both}}]
