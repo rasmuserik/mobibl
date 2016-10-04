@@ -166,7 +166,30 @@
                             word]))))
           (if language [:p [:em "Sprog: "] language] "")
           (if location [:p [:em "Opstilling: "] location] "")
-          #_[:p.bold "Relaterede:"]
+          (if (< 1 (count (get work "collection")))
+            [:div
+             [:p.bold "Udgaver:"]
+             (into [:div]
+                   (map work-tiny (get work "collection")))
+             ]
+            "no")
+          (if-not (empty? (get work "tingRelated"))
+            [:div
+          [:p.bold "Relaterede:"]
+             [:div.ui.grid
+             (into 
+                   [:div.stackable.four.column.doubling.row]
+                   (map
+                    (fn [id]
+                      [:div.column
+                       [:a.small
+                        (route/ahref {:page "work" :pid id}
+                                     {:style
+                                      {:display :inline-block
+                                       :height "6em"}})
+                        (work-item id)]])
+                    (take 12 (remove #{(:pid work)} (get work "tingRelated"))))
+                   )]
           #_[:div.ui.grid
            (into
             [:div.stackable.four.column.doubling.row]
@@ -179,7 +202,9 @@
                                {:display :inline-block
                                 :height "6em"}})
                  (work-item id)]])
-             (take 12 (rest (:related work)))))]
+             (take 12 (remove #{(:pid work)} (get work "tingRelated")))))]
+             ]
+          "")
           [:div
            [:h3 "Data"]]
           [:table
