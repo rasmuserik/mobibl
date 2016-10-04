@@ -114,6 +114,16 @@
 (defn load-work [id]
   (go
     (db! [:work id :status-work] :loading)
+    (when (empty? (db [:work id "collection"]))
+      (go
+        (db! [:work id "collection"] [id])
+        (db! [:work id "collection"]
+             (get (first (<! (<op :work {:pids [id] :fields ["collection"]})))
+                  "collection"
+                  ))))
+    (go
+      (db! [:work id "tingRelated"]
+           (map #(get % "pid")(<! (<op :recommend  {:like [id] :limit 20})))))
     (let [[o] (<! (<op :work {:pids [id]}))
           o (into o {:status-work :loaded})]
       (db! [:work id] (into (db [:work id] {}) o)))))
@@ -160,7 +170,9 @@
                  collection (get result "collection")]
              (doall
               (for [work works]
-                (let [pid (first (get work "pid"))]
+                (let [pid (first (get work "pid"))
+                      work (assoc work "collection" collection)
+                      work (into (db [:work pid] {}) work)]
                   (db! [:work pid] work)))))))))))
 (defn load-libraries []
   (go
