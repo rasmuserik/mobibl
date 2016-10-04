@@ -172,7 +172,7 @@
              (into [:div]
                    (map work-tiny (get work "collection")))
              ]
-            "no")
+            "")
           (if-not (empty? (get work "tingRelated"))
             [:div
           [:p.bold "Relaterede:"]
