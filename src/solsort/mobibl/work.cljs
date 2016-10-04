@@ -154,7 +154,7 @@
                 :max-width (* 0.8 (- js/document.body.clientWidth 20))}}])]
           [:p.center [:a.ui.primary.button
                       (route/ahref {:page "order" :pid work-id})
-                      "Bestil"]]
+                      "Reservér"]]
           [:p (:description work)]
           (if-not keywords ""
                   (into [:p {:style {:line-height "2rem"}}]

@@ -555,7 +555,7 @@
      [:hr]
      (into
       [:div
-       [:h2 "Bestillinger"]]
+       [:h2 "Reserveringer"]]
       (map
        status-entry
        (sort-by #(get % "title") (db [:user "orders"]))))]))
@@ -577,48 +577,6 @@
                      :width "70%"
                      :height "4rem"}})
       [work-item id]]])
-#_(defn old-status []
-    (let [arrived [] ;(subscribe [:arrived])
-          borrowed   [] ;          (subscribe [:borrowed])
-          reservations  [];       (subscribe [:reservations])
-]
-      (fn []
-        [:div.ui.container
-         [:div.right.floated.ui.primary.button "Log ud"]
-         [:h1 "Lånerstatus"]
-         [:p
-          [:h2 "Hjemkomne"]
-          (into
-           [:div]
-           (for
-            [ra @arrived]
-             (loan-entry
-              (:id ra)
-              [:div (:until ra)]
-              ; TODO location to fetch
-)))]
-         [:p
-          [:h2.ui.left.header
-           [:div.content
-            {:style
-             {:width "30%"
-              :min-width "8rem"}} "Hjemlån"]
-           [:div.ui.button "Forny alle"]]
-          (into
-           [:div]
-           (for [b @borrowed]
-             (loan-entry
-              (:id b)
-              [:div (:until b)]
-              [:div.ui.small.button "Forny"])))]
-         [:p
-          [:h2 "Bestillinger"]
-          (into
-           [:div]
-           (for [r @reservations]
-             (loan-entry
-              (:id r)
-              [:div.ui.small.button "Slet"])))]])))
 
 (defn order []
    (if-not (get-user)
@@ -627,7 +585,7 @@
        (do-order (or (db [:route :pids]) [(db [:route :pid])]))
       [:div.ui.container
        [:div.ui.active.inverted.dimmer
-        [:div.ui.large.text.loader "Bestiller"]]])
+        [:div.ui.large.text.loader "Reserverer"]]])
      )
   )
 ;; ### Main App entry point
