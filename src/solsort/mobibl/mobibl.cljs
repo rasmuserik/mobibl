@@ -45,8 +45,7 @@
             :overflow-y :hidden}}
           (into [:div {:style {:white-space :nowrap :height work-view/work-tiny-height}}]
                 (map work-tiny (db [:history :works])))]
-         [work-view/work-view work-id]
-         ]))))
+         [work-view/work-view work-id]]))))
 ;; ## Styling
 ;;
 (def highlight "#326bc5")
@@ -219,12 +218,10 @@
       (if (:clear-search o)
         (fn []
           (db! [:route :q] "")
-          (add-facet o)
-          )
+          (add-facet o))
         #(add-facet o))
       :key (hash o)
-      :class (facet-color (:type o))
-      }
+      :class (facet-color (:type o))}
      (:term o)
      (if (:frequency o)
        [:span.small.regular " " (str (:frequency o)) ""]
@@ -279,24 +276,24 @@
      [facets-div (suggestion-list
                   (map #(into % {:clear-search true
                                  :term (.toLowerCase (:term %))})
-                   (remove nil?
-                           (distinct (interleave (:title s) (:creator s) (:subject s))))))]
+                       (remove nil?
+                               (distinct (interleave (:title s) (:creator s) (:subject s))))))]
      [facets-div (suggestion-list (keep-indexed #(if (even? %1) %2 nil) (distinct (get-facets (search-query)))))]
      [facets-div (suggestion-list (keep-indexed #(if (odd? %1) %2 nil) (distinct (get-facets (search-query)))))]]))
 (defn search-results [n]
   (let [result-pids (get-search (search-query) n)
-       results
-       (map
-        (fn [pid]
-          [:a.column (route/ahref {:page "work" :pid pid}
-                                  {:key pid})
-           [:div
-            {:style {:height "9rem"
-                     :color :black
-                     :margin-bottom "1rem"
-                     :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"}}
-            [work-item pid]]])
-        result-pids)]
+        results
+        (map
+         (fn [pid]
+           [:a.column (route/ahref {:page "work" :pid pid}
+                                   {:key pid})
+            [:div
+             {:style {:height "9rem"
+                      :color :black
+                      :margin-bottom "1rem"
+                      :box-shadow "2px 2px 5px 0px rgba(0,0,0,0.1)"}}
+             [work-item pid]]])
+         result-pids)]
     results))
 (db! [:search ["" 0]] [])
 (defn search [query]
@@ -318,19 +315,16 @@
       [:form
        {:on-submit (fn [e]
                      (.preventDefault e)
-                     (.blur (js/document.getElementById "search-field"))
-                     )}
+                     (.blur (js/document.getElementById "search-field")))}
        [:div.ui.search.action.fluid.input.left.icon
-        [:i.search.icon
-         ]
+        [:i.search.icon]
         [input {:db [:route :q]
                 :id "search-field"
-                :placeholder "Indtast søgning"
-                }]
+                :placeholder "Indtast søgning"}]
         [:button.ui.basic.icon.button
          {:on-click #(db! [:route :q] "")}
          [:i.remove.icon]]
-        [:span {:style {:width 0 :overflow :hidden}} [:input {:type :submit }]]
+        [:span {:style {:width 0 :overflow :hidden}} [:input {:type :submit}]]
         (when suggest
           (into [:div.results.transition.visible
                  {:style {:display "block !important"}}]
@@ -376,27 +370,24 @@
      [:div.ui.container
       [:div.ui.grid
        (doall (apply conj [:div.stackable.doubling.four.column.row]
-               (apply concat (for [n 
-                                   (range
-                                    (max 1
-                                          (if (= (inc pages) (db [:scroll :need]))
-                                            (inc pages) pages)))
-                                   ]
-                               (search-results n)))))]
+                     (apply concat (for [n 
+                                         (range
+                                          (max 1
+                                               (if (= (inc pages) (db [:scroll :need]))
+                                                 (inc pages) pages)))]
+                                     (search-results n)))))]
       (if all-loaded
         ""
         [:div.ui.active.centered.inline.loader
          {:style {:margin-top "8ex"
-                  :margin-bottom "8ex"}}]
-        )
-      ]]))
+                  :margin-bottom "8ex"}}])]]))
 (defn scroll-watcher []
   (let [pos js/window.scrollY
         h1 js/window.innerHeight
         h2 js/document.body.scrollHeight
         a (search-pages (search-query))
         scoll-at h1; number of pixels from bottom before requesting more results
-        ]
+]
     (db! [:scroll (db [:route :page])] pos)
     (db! [:scroll :need] (if (<= (+ pos h1 scoll-at) h2) a (inc a)))))
 (defonce init-scroll
@@ -487,8 +478,7 @@
             :vertical-align :top}
   :.oneline {:display :inline-block
              :white-space :nowrap
-             :vertical-align :top
-             }
+             :vertical-align :top}
   :.strong {:font-weight :bold}
   :.status-entry {}}
  "status-style")
@@ -496,12 +486,12 @@
   [:div {:style {:margin-bottom "2ex"}}
    (if (get o "dueDate")
      [:div.oneline {:style {:float :right
-                           :margin-left "1ex"
-                           :vertical-align :top}}
+                            :margin-left "1ex"
+                            :vertical-align :top}}
       [:div.oneline {:style {:text-align :right
                              :margin-right "1ex"}}
-      [:div "Afleveres"]
-      [:div (.slice (get o "dueDate") 0 10)]]
+       [:div "Afleveres"]
+       [:div (.slice (get o "dueDate") 0 10)]]
       [:span.basic.ui.button
        {:class (if (db [:status :renew (get o "loanId")])
                  "loading" "")
@@ -509,9 +499,7 @@
         #(go
            (db! [:status :renew (get o "loanId")] true)
            (<! (<do-renew (get o "loanId")))
-           (db! [:status :renew (get o "loanId")])
-           )
-        }
+           (db! [:status :renew (get o "loanId")]))}
        "Forny"]]
      [:div.inline {:style {:float :right
                            :margin-left "1ex"
@@ -523,13 +511,12 @@
        (get o "status") [:br]
        (let [library (re-find #"[0-9]+" (get o "library"))]
          [:a
-          (route/ahref {:page "library" :library library })
+          (route/ahref {:page "library" :library library})
           (first (get (db [:libraries library] {}) "branchName"))])]
       (if (get o "pickUpId")
         [:div.inline
          [:strong (get o "pickUpId")] [:br]
-         [:span.small (.slice (get o "pickUpExpiryDate" "") 0 10)]
-         ]
+         [:span.small (.slice (get o "pickUpExpiryDate" "") 0 10)]]
         [:span.basic.ui.button
          {:class (if (db [:status :delete (get o "orderId")])
                    "loading" "")
@@ -538,9 +525,7 @@
              (db! [:status :delete (get o "orderId")] true)
              (<! (<do-delete-order (get o "orderId")))
              (<! (timeout 3000))
-             (db! [:status :delete (get o "orderId")])
-             )
-          }
+             (db! [:status :delete (get o "orderId")]))}
          "Slet"])])
    [:a
     (route/ahref {:page "search"
@@ -548,9 +533,7 @@
                   :facets []})
     [:strong (get o "title")] [:br]
     [:em (get o "author")]]
-   [:div {:style {:clear :both}}]
-   ]
-  )
+   [:div {:style {:clear :both}}]])
 (defn status []
   (if-not (get-user)
     [login]
@@ -606,15 +589,13 @@
       [work-item id]]])
 
 (defn order []
-   (if-not (get-user)
-     [login]
-     (do
-       (do-order (or (db [:route :pids]) [(db [:route :pid])]))
+  (if-not (get-user)
+    [login]
+    (do
+      (do-order (or (db [:route :pids]) [(db [:route :pid])]))
       [:div.ui.container
        [:div.ui.active.inverted.dimmer
-        [:div.ui.large.text.loader "Reserverer"]]])
-     )
-  )
+        [:div.ui.large.text.loader "Reserverer"]]])))
 ;; ### Main App entry point
 (defn app []
   (let [prev-page (atom)]
