@@ -110,7 +110,7 @@
 (defn get-facets [q]
   (db [:facets q]))
 
-(def view-fields ["dcTitle" "creator" "coverUrlFull" "subjectDBCF" "description" "language"])
+(def view-fields [] #_["dcTitle" "creator" "coverUrlFull" "subjectDBCF" "description" "language"])
 (defn load-work [id]
   (go
     (db! [:work id :status-work] :loading)
@@ -131,11 +131,12 @@
 (defn load-cover [id]
   (go
     (db! [:work id :cover-url] "assets/loading.png")
-    (db! [:work id :cover-url]
-         (first
-          (get (first (<! (<op :work {:pids [id] :fields ["coverUrlFull"]})))
-               "coverUrlFull"
-               ["assets/no-cover.png"])))))
+    (let [cover (first
+                 (get (first (<! (<op :work {:pids [id] :fields ["coverUrlFull"]})))
+                      "coverUrlFull"
+                      ["assets/no-cover.png"]))]
+      (db! [:work id :cover-url] cover)
+      (db! [:work id "coverUrlFull"] [cover]))))
 (defn transform-facets [facets]
   (reverse
    (sort-by

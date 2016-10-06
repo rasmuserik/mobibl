@@ -43,12 +43,11 @@
 
   :cljsbuild
   {:builds
-   [
-
-    {:id "dev"
+   [{:id "dev"
       :source-paths ["src/" "util/src/"]
       :figwheel
-      {:websocket-host :js-client-host}
+     {:on-jsload "solsort.mobibl.mobibl/on-js-reload"
+      :websocket-host :js-client-host}
       :compiler
       {:main solsort.mobibl.mobibl
        :asset-path "out"

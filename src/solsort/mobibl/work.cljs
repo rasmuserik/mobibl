@@ -120,6 +120,64 @@
    "Article" ["avisartikel" "artikel" "tidsskriftsartikel"]
    "Book" ["årbog" "bog" "ebog" "billedbog" "punktskrift" "bog stor skrift"]})
 
+(def prop-types
+  {:uncategorised
+   ["date" "extent" "format" "abstract" "description" "descriptionSeries"
+    "accessType" "activity" "alternative" "audienceAge" "audience"
+    "audienceMedieraad" "audiencePegi" "collection" "collectionDetails"
+    "version" "multiVolumeType" "publisher" "referencesISBN" "rights"
+    "shelfMusicshelf" "acSource" "source" "typeBibDKType" "type" "workType"]
+   :cover-url
+   ["coverUrlFull"]
+   :language
+   ["language" "dcLanguage" "languageISO6392" "languageSpoken" "languageSubtitles"]
+   :contributor
+   ["contributorAct" "contributorAft" "contributorAnm" "contributorAnt" "contributorArc"
+    "contributorArr" "contributorArt" "contributorAud" "contributorAui" "contributorAus"
+    "contributorAut" "contributorCcp" "contributorChr" "contributorClb" "contributorCli"
+    "contributorCll" "contributorCmm" "contributorCmp" "contributorCnd" "contributorCng"
+    "contributorCom" "contributorCre" "contributorCtb" "contributorCtg" "contributorCur"
+    "contributorCwt" "contributorDkani" "contributorDkbea" "contributorDkdes"
+    "contributorDkfig" "contributorDkfvl" "contributorDkind" "contributorDkmdt"
+    "contributorDkmed" "contributorDkmon" "contributorDkops" "contributorDkref"
+    "contributorDkste" "contributorDktek" "contributorDktil" "contributorDkved"
+    "contributorDrm" "contributorDte" "contributorEdt" "contributorFmo" "contributorHnr"
+    "contributor" "contributorIll" "contributorInv" "contributorIsb" "contributorItr"
+    "contributorIve" "contributorIvr" "contributorLbt" "contributorLtg" "contributorLyr"
+    "contributorMus" "contributorNrt" "contributorOrm" "contributorOth" "contributorPbl"
+    "contributorPht" "contributorPrd" "contributorPrf" "contributorPro"
+    "contributorPROVIDERID" "contributorPrt" "contributorRce" "contributorRes"
+    "contributorRev" "contributorScl" "contributorSds" "contributorSng" "contributorSpk"
+    "contributorStl" "contributorTrl" "contributorWdc"]
+   :creator
+   ["creatorActPeriod" "creatorAnt" "creatorArr" "creatorArt" "creatorAus" "creatorAut"
+    "creatorCcp" "creatorCmp" "creatorCom" "creatorCre" "creatorDkbea" "creatorDkbra"
+    "creatorDkbrm" "creatorDkdes" "creatorDkmed" "creatorDkmon" "creatorDkops"
+    "creatorDkved" "creatorDrm" "creatorDrt" "creatorEdt" "creator" "dcCreator"
+    "creatorIll" "creatorIve" "creatorIvr" "creatorLyr" "creatorMus" "creatorOth"
+    "creatorPht" "creatorPROVIDERID" "creatorScl" "creatorSng" "creatorSort"
+    "creatorTrl" "creatorWdc"]
+   :id
+   ["fedoraPid" "pid" "acIdentifier"
+    "identifier" "identifierISBN" "identifierISMN" "identifierISRC" "identifierISSN"
+    "identifierPROVIDERID" "identifierPROVIDERMID" "identifierUPC" "identifierURI"]
+   :relation
+   ["continuedIn" "continues" "discussedIn" "discusses"
+    "hasAdaptation" "hasAnalysis" "hasCreatorDescription" "hasDescriptionFromPublisher"
+    "hasManuscript" "hasOnlineAccess" "hasPart" "hasPartTrack" "hasReview" "hasSoundtrack"
+    "isAdaptationOf" "isAnalysisOf" "isDescriptionFromPublisherOf" "isManuscriptOf"
+    "isPartOfAlbumId" "isPartOfAlbumTitle" "isPartOf" "isPartOfISBN" "isPartOfISSN"
+    "isPartOfManifestation" "isReplacedBy" "isReviewOf" "isSoundtrackOfGame"
+    "isSoundtrackOfMovie"
+    "partOf" "replaces"]
+   :subject
+   ["spatialCoordinates" "spatialDBCF" "spatialDBCM" "spatialDBCS" "spatial"
+    "temporalDBCM" "temporalDBCP" "temporal"
+    "subjectDBCF" "subjectDBCM" "subjectDBCN" "subjectDBCO" "subjectDBCS" "subjectDK5"
+    "subjectDK5Text" "subjectGenre" "subject" "subjectLCSH" "subjectSort"]
+   :title
+   ["titleFull" "dcTitleFull" "title" "dcTitle" "titleSeries"]})
+
 (defonce types
   (into {}
         (apply concat
