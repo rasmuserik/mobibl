@@ -137,6 +137,7 @@
       :prefix "bib: http://bib.schema.org/ dc: http://purl.org/dc/elements/1.1/
 dkdcplus: http://biblstandard.dk/abm/namespace/dkdcplus/
 "
+      :resource (str "http://rdf.solsort.com/ting/" work-id)
       :typeof schema-type}
      [:p]
      [:div schema-type]
