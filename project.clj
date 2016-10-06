@@ -14,9 +14,9 @@
    [binaryage/devtools "0.6.1"]]
 
   :plugins
-  [[lein-cljsbuild "1.1.3"]
+  [[lein-cljsbuild "1.1.4" :exclusions [[org.clojure/clojure]]]
    [lein-ancient "0.6.8"]
-   [lein-figwheel "0.5.0-2"]
+   [lein-figwheel "0.5.8"]
    [lein-bikeshed "0.2.0"]
    [lein-kibit "0.1.2"]]
 
