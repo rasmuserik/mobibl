@@ -83,6 +83,7 @@
       [:img {:src (:cover-url o) :width "100%" :height "100%"}]
       [:div.bold (:title o)]
       [:div.condensed (:creator o)]]]))
+
 ;; ### work-item
 (defn work-item [pid]
   (let [o (get-work pid)
@@ -110,8 +111,15 @@
     location (:location work)
     creator (:creator work)]
     [:div.ui.container
+     {:vocab "http://schema.org/"
+      :prefix "bib: http://bib.schema.org/ dc: http://purl.org/dc/elements/1.1/
+dkdcplus: http://biblstandard.dk/abm/namespace/dkdcplus/
+"
+      :typeof "CreativeWork"}
      [:p]
-     [:h1.center (:title work)]
+     [:h1.center
+      {:property "title"}
+      (:title work)]
      (if (empty? creator) 
        ""
        [:p.center "af "
