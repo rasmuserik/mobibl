@@ -6,7 +6,7 @@
    [cljs.reader]
    [solsort.toolbox.appdb :refer [db db! db-async!]]
    [solsort.toolbox.query-route :as route]
-   [solsort.mobibl.work :refer [work-tiny work-item work]]
+   [solsort.mobibl.work :as work-view :refer [work-tiny work-item]]
    [solsort.toolbox.ui :refer [input select]]
    [solsort.mobibl.data :refer [get-work get-search get-suggest get-facets get-user do-login do-order <do-delete-order <do-renew]]
    [solsort.util
@@ -21,6 +21,32 @@
    [solsort.toolbox.leaflet :refer [openstreetmap]]
    [cljsjs.hammer]))
 
+(reset! work-view/get-work-fn get-work)
+(reset! work-view/ahref-fn route/ahref)
+
+(defn work [work-id]
+  (let [work (get-work work-id)
+        language (:language work)
+        keywords (:keywords work)
+        location (:location work)
+        creator (:creator work)]
+    (if-not (:title work)
+      (do
+        (when-not (db [:route :pid])
+          (db! [:route] {:page "search"}))
+        [:div])
+      (do
+        (db! [:history :works] (conj (remove #{(:pid work)} (db [:history :works] '())) (:pid work)))
+        [:div
+         [:div
+          {:style
+           {:background-color "#777"
+            :overflow-x :auto
+            :overflow-y :hidden}}
+          (into [:div {:style {:white-space :nowrap :height work-view/work-tiny-height}}]
+                (map work-tiny (db [:history :works])))]
+         [work-view/work-view work-id]
+         ]))))
 ;; ## Styling
 ;;
 (def highlight "#326bc5")
@@ -44,6 +70,7 @@
                              js/document.body.clientWidth)
                 24)
         unit-height (/ js/document.body.clientHeight 24)]
+    (load-style! (work-view/styling))
     (load-style!
      {:body
       {; :background "url(assets/background.jpg)"
