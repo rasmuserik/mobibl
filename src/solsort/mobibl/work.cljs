@@ -1,5 +1,6 @@
 (ns solsort.mobibl.work
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [solsort.util :refer [log]]))
 
 (defonce get-work-fn (atom hash-map))
 (defn get-work [id] (@get-work-fn id))
@@ -103,9 +104,30 @@
        (interpose ", " (map (fn [s] [:span.condensed.inline-block s])
                             (:keywords o))))]]))
 
+(defonce reverse-types
+  {"Book bib:AudioBook" ["lydbog (bånd)" "lydbog (net)" "spolelydbånd" "lydbog" "lydbog (cd)" "lydbog (cd-mp3)"]
+   "PublicationIssue bib:ComicIssue" ["tegneserie"]
+   "Book bib:GraphicNovel" ["graphic novel"]
+   "VideoGame" ["pc-spil" "playstation 3" "playstation 2" "xbox 360" "wii" "nintendo ds" "playstation 4" "wii u" "playstation" "xbox one" "pc-spil (net)" "xbox" "gameboy advance" "psp" "playstation vita" "html5-spil" "gameboy"]
+   "SoftwareApplication" ["cd-rom" "dvd-rom" "diskette"] 
+   "PublicationIssue" ["periodikum" "periodikum (net)" "tidsskrift (net)"]
+   "Map" ["kort" "e-kort"] 
+   "CreativeWorkSeries" ["avis" "avis (net)" "serie" "tidsskrift"]
+   "Movie" ["dvd" "video" "blu-ray" "betamax" "film (net)" "biograffilm" "film"]
+   "MusicComposition" ["node" "sang" "e-node"]
+   "MusicAlbum" ["cd (musik)" "grammofonplade" "bånd" "musik (net)"]
+   "CreativeWork" ["cd"  "cd-rom (mp3)" "netdokument" "sammensat materiale" "diverse" "grafisk blad" "legetøj" "mikroform" "udstilling" "spil" "dias" "teateropførelse" "plakat" "puslespil" "originalkunst" "genstand" "lydspor" "akvarel" "laborativt materiale" "transparent" "elektronisk materiale" "planche" "billedkort" "fotoreproduktion" "emnekasse" "foto" "dcc-bånd" "materiale til indlæringsapparat" "billedbånd" "ordkort" "tegning" "måleapparat" "flonellografmateriale" "teaterdukke" "cd-i" "postkort" "arkitekturtegning" "kunstreproduktion" "maleri" "flipover-materiale" "mini disc" "øvelsesmodel" "fastplade" "billedtæppe" "foto-cd" "teknisk tegning" "udstillingsmontage" "symbolkort"]
+   "Article" ["avisartikel" "artikel" "tidsskriftsartikel"]
+   "Book" ["årbog" "bog" "ebog" "billedbog" "punktskrift" "bog stor skrift"]})
+
+(defonce types
+  (into {}
+        (apply concat
+               (map (fn [[k vs]] (map (fn [v] [v k]) vs)) reverse-types))))
 (defn work-view [work-id]
   (let
    [work (get-work work-id)
+    schema-type (get types (.toLowerCase (first (log (get work "type" [""])))) "missing-type")
     language (:language work)
     keywords (:keywords work)
     location (:location work)
@@ -115,15 +137,19 @@
       :prefix "bib: http://bib.schema.org/ dc: http://purl.org/dc/elements/1.1/
 dkdcplus: http://biblstandard.dk/abm/namespace/dkdcplus/
 "
-      :typeof "CreativeWork"}
+      :typeof schema-type}
      [:p]
+     [:div schema-type]
      [:h1.center
-      {:property "title"}
+      {:property "name"}
       (:title work)]
      (if (empty? creator) 
        ""
        [:p.center "af "
-        [:a (ahref {:page "search" :q "" :facets [{:type "creator" :term creator}]}) creator]])
+        [:a (ahref {:page "search" :q "" :facets [{:type "creator" :term creator}]}
+                   {:property "author"
+                    :typeof "Person"})
+         [:span {:property "name"} creator]]])
      [:p.center
       (if (string/starts-with? (:cover-url work) "assets/")
         ""
