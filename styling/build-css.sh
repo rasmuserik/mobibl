@@ -12,7 +12,7 @@ mkdir -p semantic
 cp -u semantic-theme.config semantic/src/theme.config
 (cd semantic && npm install --ignore-scripts && gulp build)
 (cd semantic/dist/assets/ > /dev/null 2>&1 && tar -cf - themes) | \
-    (cd assets/ && tar -xBf -)
+    (cd ../assets/ && tar -xBf -)
 
 npm install purify-css
 ./purifycss.js
