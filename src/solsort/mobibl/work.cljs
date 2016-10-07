@@ -74,6 +74,10 @@
 
 ;; ### work-tiny
 (def work-tiny-height (* 13 5.5))
+(defn get-cover [work]
+  (first (or (get work "coverUrlFull")
+             (get work "coverDataUrl" [])))
+  )
 (defn work-tiny [pid]
   (let  [o (get-work pid)
          unit 13
@@ -81,7 +85,8 @@
     [:a (ahref {:page "work" :pid pid}
                {:style {:color "#111"}})
      [:div.center.tinywork
-      [:img {:src (:cover-url o) :width "100%" :height "100%"}]
+      [:img {:src (get-cover o)
+             :width "100%" :height "100%"}]
       [:div.bold (:title o)]
       [:div.condensed (:creator o)]]]))
 
@@ -200,12 +205,11 @@
    [work (get-work work-id)
     schema-type (get types (.toLowerCase (first (log (get work "type" [""])))) "missing-type")
     language (:language work)
-    keywords (:keywords work)
+    subjects (get-properties work :subject)
     location (:location work)
     creators (get-properties work :creator)
     contributers (get-properties work :contributor)
     ]
-    (log 'subjs (get-properties work :subject))
     [:div.ui.container
      {:vocab "http://schema.org/"
       :prefix "bib: http://bib.schema.org/ dc: http://purl.org/dc/elements/1.1/
@@ -214,38 +218,33 @@ dkdcplus: http://biblstandard.dk/abm/namespace/dkdcplus/
       :resource (str "http://rdf.solsort.com/ting/" work-id)
       :typeof schema-type}
      [:p]
-     [:div schema-type]
-     [:h1.center
-      {:property "name"}
-      (:title work)]
+     [:h1.center {:property "name"} (:title work)]
      (r-if (not (empty? creators)) 
-       (into [:p.center "af "]
-              (people-list creators "creator")
-             ))
-     [:p.center
+       (into [:p.center "af "] (people-list creators "creator")))
+     [:p.center ; cover
       (if (string/starts-with? (:cover-url work) "assets/")
         ""
         [:img
-         {:src (:cover-url work)
+         {:src (get-cover work)
+          :property "image"
           :style
           {:max-height (* 0.5 (- js/document.body.clientHeight 50))
            :max-width (* 0.8 (- js/document.body.clientWidth 20))}}])]
-
-     [:p.center [:a.ui.primary.button
-                 (ahref {:page "order" :pid work-id})
-                 "Reservér"]]
+     [:p.center [:a.ui.primary.button (ahref {:page "order" :pid work-id}) "Reservér"]]
+     [:a {:property "mainEntityOfPage" :href (str "https://bibliotek.dk/da/work/" (first (get work "pid")))}]
      [:p (:description work)]
      (r-if (not (empty? contributers))
-           (into [:p "Bidrag af: "]
-                 (people-list contributers "contributor")))
-     (if-not keywords ""
+           (into [:p "Bidrag af: "] (people-list contributers "contributor")))
+     (r-if subjects
              (into [:p {:style {:line-height "2rem"}}]
                    (interpose
                     " "
-                    (for [word keywords]
+                    (for [[_ word] subjects]
+                      [:span {:property "keywords"}
                       [:a.ui.label
-                                        ;(ahref {:page "search" :facets [[:subject word]]})
-                       word]))))
+                       (ahref
+                        {:page "search" :q word :facets []})
+                        word]]))))
      (if language [:p [:em "Sprog: "] language] "")
      (if location [:p [:em "Opstilling: "] location] "")
      (if (< 1 (count (get work "collection")))

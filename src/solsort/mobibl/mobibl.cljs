@@ -22,7 +22,7 @@
    [cljsjs.hammer]))
 
 (defn on-js-reload []
-  (console.log "reload"))
+  (js/console.log "reload"))
 (reset! work-view/get-work-fn get-work)
 (reset! work-view/ahref-fn route/ahref)
 
