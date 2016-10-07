@@ -119,7 +119,10 @@
    "CreativeWork" ["cd"  "cd-rom (mp3)" "netdokument" "sammensat materiale" "diverse" "grafisk blad" "legetøj" "mikroform" "udstilling" "spil" "dias" "teateropførelse" "plakat" "puslespil" "originalkunst" "genstand" "lydspor" "akvarel" "laborativt materiale" "transparent" "elektronisk materiale" "planche" "billedkort" "fotoreproduktion" "emnekasse" "foto" "dcc-bånd" "materiale til indlæringsapparat" "billedbånd" "ordkort" "tegning" "måleapparat" "flonellografmateriale" "teaterdukke" "cd-i" "postkort" "arkitekturtegning" "kunstreproduktion" "maleri" "flipover-materiale" "mini disc" "øvelsesmodel" "fastplade" "billedtæppe" "foto-cd" "teknisk tegning" "udstillingsmontage" "symbolkort"]
    "Article" ["avisartikel" "artikel" "tidsskriftsartikel"]
    "Book" ["årbog" "bog" "ebog" "billedbog" "punktskrift" "bog stor skrift"]})
-
+(defonce types
+  (into {}
+        (apply concat
+               (map (fn [[k vs]] (map (fn [v] [v k]) vs)) reverse-types))))
 (def prop-types
   {:uncategorised
    ["date" "extent" "format" "abstract" "description" "descriptionSeries"
@@ -127,6 +130,7 @@
     "audienceMedieraad" "audiencePegi" "collection" "collectionDetails"
     "version" "multiVolumeType" "publisher" "referencesISBN" "rights"
     "shelfMusicshelf" "acSource" "source" "typeBibDKType" "type" "workType"]
+   :ignore ["creatorSort"]
    :cover-url
    ["coverUrlFull"]
    :language
@@ -155,7 +159,7 @@
     "creatorDkbrm" "creatorDkdes" "creatorDkmed" "creatorDkmon" "creatorDkops"
     "creatorDkved" "creatorDrm" "creatorDrt" "creatorEdt" "creator" "dcCreator"
     "creatorIll" "creatorIve" "creatorIvr" "creatorLyr" "creatorMus" "creatorOth"
-    "creatorPht" "creatorPROVIDERID" "creatorScl" "creatorSng" "creatorSort"
+    "creatorPht" "creatorPROVIDERID" "creatorScl" "creatorSng" 
     "creatorTrl" "creatorWdc"]
    :id
    ["fedoraPid" "pid" "acIdentifier"
@@ -177,11 +181,20 @@
     "subjectDK5Text" "subjectGenre" "subject" "subjectLCSH" "subjectSort"]
    :title
    ["titleFull" "dcTitleFull" "title" "dcTitle" "titleSeries"]})
-
-(defonce types
-  (into {}
-        (apply concat
-               (map (fn [[k vs]] (map (fn [v] [v k]) vs)) reverse-types))))
+(defn get-properties [work type]
+  (let [ks (get prop-types type)]
+     (apply
+      concat
+      (for [k ks] (for [v (get work k [])] [k v])))))
+(defn people-list [names type]
+  (interpose
+   " & "
+   (for [name (distinct (map second names))]
+     [:a (ahref {:page "search" :q "" :facets [{:type "creator" :term name}]}
+                {:property type
+                 :typeof "Person"})
+      [:span {:property "name"} name]])))
+(defn r-if [p v] (if p v ""))
 (defn work-view [work-id]
   (let
    [work (get-work work-id)
@@ -189,7 +202,10 @@
     language (:language work)
     keywords (:keywords work)
     location (:location work)
-    creator (:creator work)]
+    creators (get-properties work :creator)
+    contributers (get-properties work :contributor)
+    ]
+    (log 'subjs (get-properties work :subject))
     [:div.ui.container
      {:vocab "http://schema.org/"
       :prefix "bib: http://bib.schema.org/ dc: http://purl.org/dc/elements/1.1/
@@ -202,13 +218,10 @@ dkdcplus: http://biblstandard.dk/abm/namespace/dkdcplus/
      [:h1.center
       {:property "name"}
       (:title work)]
-     (if (empty? creator) 
-       ""
-       [:p.center "af "
-        [:a (ahref {:page "search" :q "" :facets [{:type "creator" :term creator}]}
-                   {:property "author"
-                    :typeof "Person"})
-         [:span {:property "name"} creator]]])
+     (r-if (not (empty? creators)) 
+       (into [:p.center "af "]
+              (people-list creators "creator")
+             ))
      [:p.center
       (if (string/starts-with? (:cover-url work) "assets/")
         ""
@@ -217,10 +230,14 @@ dkdcplus: http://biblstandard.dk/abm/namespace/dkdcplus/
           :style
           {:max-height (* 0.5 (- js/document.body.clientHeight 50))
            :max-width (* 0.8 (- js/document.body.clientWidth 20))}}])]
+
      [:p.center [:a.ui.primary.button
                  (ahref {:page "order" :pid work-id})
                  "Reservér"]]
      [:p (:description work)]
+     (r-if (not (empty? contributers))
+           (into [:p "Bidrag af: "]
+                 (people-list contributers "contributor")))
      (if-not keywords ""
              (into [:p {:style {:line-height "2rem"}}]
                    (interpose
