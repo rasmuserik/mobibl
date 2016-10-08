@@ -123,17 +123,14 @@
       [:span {:property "name"} name]])))
 (defn r-if [p v] (if p v ""))
 (defn work-view [work-id]
-  (log 'a)
   (let
    [work (get-work work-id)
-    schema-type (get types (.toLowerCase (first (log (get work "type" [""])))) "missing-type")
+    schema-type (get types (.toLowerCase (first (get work "type" [""]))) "missing-type")
     language (:language work)
     subjects (get-properties work :subject)
     location (:location work)
     creators (get-properties work :creator)
     contributers (get-properties work :contributor)]
-    (log 'b work schema-type
-         language subjects location creators contributers)
     [:div.ui.container
      {:vocab "http://schema.org/"
       :prefix (string/join " " (map (fn [[k v]] (str k ": " v)) ns))
