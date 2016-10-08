@@ -13,8 +13,6 @@
    [reagent.core :as reagent :refer []]
    [clojure.data]
    [solsort.toolbox.appdb :refer [db db! db-async!]]
-   [re-frame.core :as re-frame
-    :refer [register-sub subscribe register-handler dispatch dispatch-sync]]
    [cljs.core.async :refer [>! <! chan put! take! timeout close! pipe]]))
 (defonce clid "a36227da-e477-491e-b4a2-ccd9df365cf9")
 (defonce clsec "YfO7hc8OJ+vUGh9GhMZhJw06cyHxNi48fwWnVLJGPrPHvkZaYYj0cboM")

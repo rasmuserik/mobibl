@@ -123,6 +123,7 @@
       [:span {:property "name"} name]])))
 (defn r-if [p v] (if p v ""))
 (defn work-view [work-id]
+  (log 'a)
   (let
    [work (get-work work-id)
     schema-type (get types (.toLowerCase (first (log (get work "type" [""])))) "missing-type")
@@ -131,18 +132,19 @@
     location (:location work)
     creators (get-properties work :creator)
     contributers (get-properties work :contributor)]
+    (log 'b work schema-type
+         language subjects location creators contributers)
     [:div.ui.container
      {:vocab "http://schema.org/"
       :prefix (string/join " " (map (fn [[k v]] (str k ": " v)) ns))
       :resource (str "http://rdf.solsort.com/ting/" work-id)
       :typeof (str schema-type " dcterms:BibliographicResource")}
      [:p]
-     [:h1.center {:property "name"} (:title work)]
+     [:h1.center {:property "name"} (first (get work "title" []))]
      (r-if (not (empty? creators)) 
            (into [:p.center "af "] (people-list creators "creator")))
      [:p.center ; cover
-      (if (string/starts-with? (:cover-url work) "assets/")
-        ""
+      (r-if (get-cover work)
         [:img
          {:src (get-cover work)
           :property "image"
@@ -151,7 +153,7 @@
            :max-width (* 0.8 (- js/document.body.clientWidth 20))}}])]
      [:p.center [:a.ui.primary.button (ahref {:page "order" :pid work-id}) "Reservér"]]
      [:a {:property "mainEntityOfPage" :href (str "https://bibliotek.dk/da/work/" (first (get work "pid")))}]
-     [:p {:property "description"} (:description work)]
+     [:p {:property "description"} (first (get work "abstract"))]
      (r-if (not (empty? contributers))
            (into [:p "Bidrag af: "] (people-list contributers "contributor")))
      (r-if subjects
@@ -164,9 +166,11 @@
                       (ahref
                        {:page "search" :q word :facets []})
                       word]]))))
-     (if language [:p [:em "Sprog: "] [:span {:property "inLanguage"
-                                              :content (get work "languageISO6392")}
-                                       (get work "language")]] "")
+     (r-if (get work "language")
+           [:p [:em "Sprog: "]
+            [:span {:property "inLanguage"
+                    :content (get work "languageISO6392")}
+             (first (get work "language"))]])
      (if location [:p [:em "Opstilling: "] location] "")
      (if (< 1 (count (get work "collection")))
        [:div
