@@ -135,7 +135,7 @@
      {:vocab "http://schema.org/"
       :prefix (string/join " " (map (fn [[k v]] (str k ": " v)) ns))
       :resource (str "http://rdf.solsort.com/ting/" work-id)
-      :typeof schema-type}
+      :typeof (str schema-type " dcterms:BibliographicResource")}
      [:p]
      [:h1.center {:property "name"} (:title work)]
      (r-if (not (empty? creators)) 
@@ -151,7 +151,7 @@
            :max-width (* 0.8 (- js/document.body.clientWidth 20))}}])]
      [:p.center [:a.ui.primary.button (ahref {:page "order" :pid work-id}) "Reservér"]]
      [:a {:property "mainEntityOfPage" :href (str "https://bibliotek.dk/da/work/" (first (get work "pid")))}]
-     [:p (:description work)]
+     [:p {:property "description"} (:description work)]
      (r-if (not (empty? contributers))
            (into [:p "Bidrag af: "] (people-list contributers "contributor")))
      (r-if subjects
@@ -164,13 +164,20 @@
                       (ahref
                        {:page "search" :q word :facets []})
                       word]]))))
-     (if language [:p [:em "Sprog: "] language] "")
+     (if language [:p [:em "Sprog: "] [:span {:property "inLanguage"
+                                              :content (get work "languageISO6392")}
+                                       (get work "language")]] "")
      (if location [:p [:em "Opstilling: "] location] "")
      (if (< 1 (count (get work "collection")))
        [:div
         [:p.bold "Udgaver:"]
         (into [:div]
-              (map work-tiny (get work "collection")))]
+              (map (fn [id] [:span
+                             {
+                              ;:property "sameAs"
+                              ;:resource (str "http://rdf.solsort.com/ting/" id)
+                              }
+                             (work-tiny id)]) (get work "collection")))]
        "")
      (if-not (empty? (get work "tingRelated"))
        [:div
@@ -181,6 +188,9 @@
           (map
            (fn [id]
              [:div.column
+              {;:property "related"
+               ;:resource (str "http://rdf.solsort.com/ting/" id)
+               }
               [:a.small
                (ahref {:page "work" :pid id}
                       {:style
@@ -202,4 +212,4 @@
                         :padding-right 5}} k]
           (into [:td {:style {:padding-bottom 5}}]
                 (interpose ", "
-                           (map (fn [s] [:span {:property (get property-mappings k "")} (str s)]) v)))]))]]))
+                           (map (fn [s] [:span {:property (get property-mappings k "misc:unhandled")} (str s)]) v)))]))]]))

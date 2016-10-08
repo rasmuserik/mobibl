@@ -5,6 +5,7 @@
    "dc" "http://purl.org/dc/elements/1.1/"
    "dkdcplus" "http://biblstandard.dk/abm/namespace/dkdcplus/"
    "dcterms" "http://purl.org/dc/terms/1.1/"
+   "misc" "http://rdf.solsort.com/misc"
    "ac" "http://biblstandard.dk/ac/namespace/"
    "bd" "http://opensearch.addi.dk/unspecified/briefDisplay/"
    "os" "http://opensearch.addi.dk/unspecified/"
@@ -13,7 +14,8 @@
    "dbcbib" "http://www.danbib.dk/broend3_relationer/unspecified/"})
 
 (def property-mappings
-  {"abstract" "dcterms:abstract"
+  {"tingRelated" "misc:recommend"
+   "abstract" "dcterms:abstract"
    "accessType" "bd:accessType"
    "activity" "ac:activity"
    "alternative" "dcterms:alternative"
