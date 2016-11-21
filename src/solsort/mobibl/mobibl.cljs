@@ -318,8 +318,15 @@
                      (.blur (js/document.getElementById "search-field")))}
        [:div.ui.search.action.fluid.input.left.icon
         [:i.search.icon]
-        [input {:db [:route :q]
+        [:input {:db [:route :q]
                 :id "search-field"
+                 :style {:text-align :center}
+                 :onKeyDown #(when (= 13 (.-keyCode %))
+                               (.blur (js/document.getElementById "search-field"))
+                               (.preventDefault %)
+                               )
+                :value (db [:route :q])
+                :onChange #(db! [:route :q] (.-value (.-target %)))
                 :placeholder "Indtast søgning"}]
         [:button.ui.basic.icon.button
          {:on-click #(db! [:route :q] "")}
