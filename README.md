@@ -40,7 +40,7 @@ Historik:
 - `August 2016` - Vi får adgang til den Åbne Platform.
 - `2016` - Udviklingen af den Åbne Platform vil gøre det muligt at bygge biblioteksapp. MoBibl påbegyndes.
 
-# English
+# In English
 
 [![Stories in Ready](https://badge.waffle.io/solsort/mobibl.png?label=ready&title=Ready)](https://waffle.io/solsort/mobibl)
 [![Build Status](https://travis-ci.org/solsort/mobibl.svg?branch=master)](https://travis-ci.org/solsort/mobibl)
