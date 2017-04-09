@@ -1,25 +1,39 @@
-# Plan
-RoadMap for crowdfunding:
+# Noter i forbindelse med crowdfunding af mobilapp
+## RoadMap
 
 - _10. april:_ kontakt interessenter, feedback på survey udkast
 - _11. april:_ udsendelse af survey
 - _20. april:_ opfølgning på 
 - _21. april:_ deadline for survey-feedback, - herefter opdatering af crowdfunding beskrivelse ud fra survey-resultater (i.e.: afklaring af feature, teknologibeskrivelse, ).
-- _24. april:_ 
+- _24. april:_ Udsendelse opfordring crowdfunding
+- _26. april:_ Bibliotekernes udviklernetværk, - måske feedback?
+- _28. april:_ Møde i generiske forsider projektet, - måske feedback?
 - _maj:_ projektet tager fat, så snart der er lovning på mindst 90.000
 
-<!--
-
-levels:
+## Niveauer
 
 -  90.000 projektet kører videre
 - 180.000 garanteret leverance af ny mobil biblioteksapp i 3. kvartal 2017
 - 390.000 workshop for udviklere, hjælp til idriftsættelse
 - 780.000 Resultat af crowdfunding placeres i fond/forening eller lignende (med minimalt overhead), hvor flertallet i bestyrelsen kommer fra bibliotekerne. Resultatet udloddes herfra til den faktiske udvikling
 
--->
+## Baggrund
 
-# Breve
+RasmusErik's baggrund:
+
+- Er forøjeblikket i gang med projektet Generiske Forsider for (Ballerup Bibliotekerne)[michael].
+- Lavede tilbud til DDBs app udbud, i samarbejde med (SocialSquare)[kræn]. Desværre var det ikke os der vandt.
+- Deltager i bibliotekernes udviklernetværk
+- Udviklede, for egen regning, mobilapp prototype ovenpå den åbne platform (som dette projekt kan bygge videre på).
+- Har, som konsulentopgave, været med til en stor del af udviklingen af Den Åbne Platform.
+- Byggede app-prototype der vandt 1. prisen i konkurrence om ...
+- Byggede visualisering a relationer i samarbejde med (Vejle Bibliotekerne)[simon].
+- Har arbejdet for DBC (2009-2013), herunder både forsøgt at styrke mobilstrategi, og udviklet forskellige mobile prototyper. Var også DBCs deltager i Bibliotekernes Udviklernetværk, og (mobile.TING)[].
+- Har studeret på Danmarks Biblioteksskole (nu IVA), hvilket er en stor del af hans uddannelse som Datalog(fra KU med speciale i programmeringssprog til mobiltelefoner).
+
+Derudover har han været projektleder på Københavns Biblioteker, arbejdet i det IT-Lab på Danmarks Biblioteksskole, og lavet andre ting i biblioteksbranchen. Har stor erfaring med softwareudvikling, også fra mange andre sammenhænge.
+
+# Drafts
 
 ## Survey-brev
 

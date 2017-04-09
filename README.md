@@ -1,7 +1,49 @@
+# MoBibl - Mobil App til Bibliotekerne
+
+(In English below)[#in-english]
+
+Formålet med MoBibl er, at lave en open source app til bibliotekerne.
+
+Vi er ved at lave en crowdfunding kampagne for den videre udvikling. 
+Se [crowdfunding.md](https://github.com/solsort/mobibl/blob/master/crowdfunding.md) for detaljer.
+
+Projektet ligger på github, og vi kører med 100% transparens omkring process og udvikling. Al kildekode lægges løbende her, - og projektstyring forgår via [github issues](https://github.com/solsort/mobibl/issues).  Klik på [Watch](https://github.com/solsort/mobibl/subscription) herover hvis du løbende vil følge med i udviklingen.
+
+## Roadmap / plan 2017
+
+- `April/Maj` Afklaringsfase. 
+    - [Crowdfunding](https://github.com/solsort/mobibl/blob/master/crowdfunding.md) kampagne for videre udvikling.
+    - Afklaring af funktionalitetskrav og ønsker fra bibliotekerne.
+    - Afklaring af teknologiplatform bedst understøttet på tværs af leverandører og biblioteker med egenudvikling. (Det umiddelbare gæt, er at det er JavaScript/React, men det skal verificeres før end beslutning tages).
+- `Maj/Juni/Juli` Implementation af grundfunktionalitet.
+    - Designet baseres på DDB-app (når den frigives), som genbruges hvor det giver mening.
+    - Kildekoden baseres på MoBibl og delvist DDB-app (når den frigives), som genbruges hvor det giver mening.
+    - Udviklingen foregår agilt og transparent, med release hver 14. dag. Alle biblioteker har mulighed for at komme med løbende input til processen.
+    - Fokus er en grund-applikation, som alle kan bygge videre på.
+- `Juli/August/September` Videreudvikling
+    - Implementation af features udover den kritiske grundfunktionalitet.
+    - Buffer i tilfælde af uforudsete forsinkelser
+    - Workshop til at hjælpe udviklere fra biblioteker og leverandører ind i koden.
+    - Videreudvikling, finpudsning, test, og klargøring til deployment af App'en
+
+## Status / historik
+
+Der er implementeret en første udgave af MoBibl, med virkende funktionalitet:
+
+<img src="screenshots-combined.jpg" width="100%" />
+
+Historik:
+
+- `April 2017` - Der ser stadigt ud til, at kunne være et behov for MoBibl. Vi prøver at stable crowdfunding kampagne på benene, så solsort.com ikke skal betale hele udviklingen af egen lomme denne gang.
+- `Oktober/November 2016` - DDB laver udbud om open source mobilapp. MoBibl projektet sættes derfor på standby. Anden virksomhed vinder udbuddet.
+- `September 2016` - Fuldt fungerende første prototype af MoBibl biblioteksapp, med søgning, bestil, lånerstatus, forny, åbningstider, etc.
+- `August 2016` - Vi får adgang til den Åbne Platform.
+- `2016` - Udviklingen af den Åbne Platform vil gøre det muligt at bygge biblioteksapp. MoBibl påbegyndes.
+
+# English
+
 [![Stories in Ready](https://badge.waffle.io/solsort/mobibl.png?label=ready&title=Ready)](https://waffle.io/solsort/mobibl)
 [![Build Status](https://travis-ci.org/solsort/mobibl.svg?branch=master)](https://travis-ci.org/solsort/mobibl)
-
-# MoBibl
 
 The purpose of this project is to make an mobile/web-app for the public danish libraries.
 
@@ -9,23 +51,8 @@ Feel free to use the issue tracker (https://github.com/solsort/mobibl/issues), f
 
 You can try latest version on https://mobibl.solsort.com/. Not fully working yet.
 
-# Roadmap
 
-- very first prototype, v0.1.0
-    - views
-        - search-page - list of books with cover, open book on click
-        - book - metadata, bestil link, link til bibliotek hvor hjemme
-        - library - map with single library + dummy text
-        - user list of arrived, loans, orders
-    - on top of dummy data
-    - dummy-user-data no order-flow
-    - no suggest
-    - no facets
-    - no recommendations
-
-## Notes: overview of functionality of ddb-cms, med henblik på hvilke dele der giver mening i app...
-
-# Contributing
+## Contributing
 
 We use [github issues](https://github.com/solsort/mobibl/issues) to keep track of the project. 
 
@@ -43,7 +70,7 @@ All kinds of contributions are welcome, including:
 Labels are used to make it easier to find tasks within different areas.
 If you cannot find a task that fits you, feel free to make one, or create an issue about a task missing within the area you would like to contribute in.
 
-## Workflow
+### Workflow
 
 We use the following labels to keep track of issue status.
 
@@ -56,7 +83,7 @@ A board of current issues can be seen on [waffle.io](https://waffle.io/solsort/m
 Techincal tips: create a feature branch to work on the feature with `git checkout -b 42-some-issue-description` where 42 is the issue number. This automatically assigns the issue to you, and move it to `in progress`. If the commit fixing the issue includes the text `fixes #42` this will auto-close the issue when the pull-request is merged.
 
 
-## Coding
+### Coding
 
 The first version is a HTML5-app using React. Later on we might add native UIs using React-native, while keeping the logic.
 
@@ -73,7 +100,7 @@ Recommended readings:
 
 If you are making major contributions to the project, please keep track of the hours/effort you use (in case we apply for or get some funding for the project).
 
-# License
+## License
 
 Current version is released under [Creative Commons BY-NC-ND](https://creativecommons.org/licenses/by-nc-nd/3.0/), and copyrighted by solsort.com ApS.
 
