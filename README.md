@@ -4,10 +4,11 @@
 
 Formålet med MoBibl er, at lave en open source app til bibliotekerne.
 
-Vi er ved at lave en crowdfunding kampagne for den videre udvikling. 
-Se [crowdfunding.md](https://github.com/solsort/mobibl/blob/master/crowdfunding.md) for detaljer.
 
-Projektet ligger på github, og vi kører med 100% transparens omkring process og udvikling. Al kildekode lægges løbende her, - og projektstyring forgår via [github issues](https://github.com/solsort/mobibl/issues).  Klik på [Watch](https://github.com/solsort/mobibl/subscription) herover hvis du løbende vil følge med i udviklingen.
+Projektet ligger på github, og har 100% transparens omkring process og udvikling. Al kildekode lægges løbende her, - og projektstyring forgår via [github issues](https://github.com/solsort/mobibl/issues).
+
+***Crowdfunding kampagne for den videre udvikling er undervejs.***
+Se [crowdfunding.md](https://github.com/solsort/mobibl/blob/master/crowdfunding.md) for detaljer.
 
 ## Roadmap / plan 2017
 
@@ -34,7 +35,7 @@ Der er implementeret en første udgave af MoBibl, med virkende funktionalitet:
 
 Historik:
 
-- `April 2017` - Der ser stadigt ud til, at kunne være et behov for MoBibl. Vi prøver at stable crowdfunding kampagne på benene, så solsort.com ikke skal betale hele udviklingen af egen lomme denne gang.
+- `April 2017` - Der ser stadigt ud til, at kunne være et behov for MoBibl. Crowdfunding kampagne startes, så solsort.com ikke skal betale hele udviklingen af egen lomme denne gang.
 - `Oktober/November 2016` - DDB laver udbud om open source mobilapp. MoBibl projektet sættes derfor på standby. Anden virksomhed vinder udbuddet.
 - `September 2016` - Fuldt fungerende første prototype af MoBibl biblioteksapp, med søgning, bestil, lånerstatus, forny, åbningstider, etc.
 - `August 2016` - Vi får adgang til den Åbne Platform.
