@@ -1,6 +1,6 @@
 RoadMap for crowdfunding:
 
-- _10. april:_ interessenter, feedback på survey udkast
+- _10. april:_ kontakt interessenter, feedback på survey udkast
 - _11. april:_ udsendelse af survey
 - _20. april:_ opfølgning på 
 - _21. april:_ deadline for survey-feedback, - herefter opdatering af crowdfunding beskrivelse ud fra survey-resultater (i.e.: afklaring af feature, teknologibeskrivelse, ).
