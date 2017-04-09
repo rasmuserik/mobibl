@@ -1,6 +1,6 @@
 # MoBibl - Mobil App til Bibliotekerne
 
-(In English below)[#in-english]
+[In English below](#in-english)
 
 Formålet med MoBibl er, at lave en open source app til bibliotekerne.
 
