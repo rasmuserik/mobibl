@@ -1,4 +1,3 @@
-<!--
 RoadMap for crowdfunding:
 
 - 10. april: interessenter, feedback på survey udkast
@@ -7,7 +6,6 @@ RoadMap for crowdfunding:
 - 21. april: deadline for survey-feedback, - herefter opdatering af crowdfunding beskrivelse ud fra survey-resultater (i.e.: afklaring af feature, teknologibeskrivelse, ).
 - 24. april: 
 - maj: projektet tager fat, så snart der er lovning på mindst 90.000
--->
 
 # Initielt survey-brev
 
