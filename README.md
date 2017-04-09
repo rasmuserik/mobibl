@@ -4,11 +4,11 @@
 
 Formålet med MoBibl er, at lave en open source app til bibliotekerne.
 
+***Crowdfunding kampagne for den videre udvikling er undervejs.***
+Se [crowdfunding.md](https://github.com/solsort/mobibl/blob/master/crowdfunding.md) for detaljer.
 
 Projektet ligger på github, og har 100% transparens omkring process og udvikling. Al kildekode lægges løbende her, - og projektstyring forgår via [github issues](https://github.com/solsort/mobibl/issues).
 
-***Crowdfunding kampagne for den videre udvikling er undervejs.***
-Se [crowdfunding.md](https://github.com/solsort/mobibl/blob/master/crowdfunding.md) for detaljer.
 
 ## Roadmap / plan 2017
 

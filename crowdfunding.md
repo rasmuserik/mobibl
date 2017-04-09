@@ -1,5 +1,13 @@
 # Noter i forbindelse med crowdfunding af mobilapp
-## RoadMap
+
+Dette dokument bruges til at planlægge, og udarbejde udkast, i forbindelse med crowdfunding af mobibl.
+
+***Under udarbejdelse***. Endelig udgave forventes at være klar 24. april. 
+
+Nedenstående er kladder, og er ikke endeligt afklaret endnu.
+
+
+## Tidslinje
 
 - _10. april:_ kontakt interessenter, feedback på survey udkast
 - _11. april:_ udsendelse af survey
@@ -19,15 +27,16 @@
 
 ## Baggrund
 
-RasmusErik's baggrund:
+RasmusErik er den primære intiativtager og tovholder for MoBibl projektet. 
+Hans relevante baggrund er:
 
-- Er forøjeblikket i gang med projektet Generiske Forsider for (Ballerup Bibliotekerne)[michael].
-- Lavede tilbud til DDBs app udbud, i samarbejde med (SocialSquare)[kræn]. Desværre var det ikke os der vandt.
-- Deltager i bibliotekernes udviklernetværk
+- Er forøjeblikket i gang med lille biblioteksprojektet om [Generiske Forsider](http://platform.dandigbib.org/projects/generiske-forsider) for Ballerup Bibliotekerne, og har derudover mulighed for at sætte størstedelen af til MoBibl.
+- Lavede tilbud til DDBs app udbud, i samarbejde med SocialSquare. Desværre var det ikke os der vandt.
+- Deltager i bibliotekernes udviklernetværk.
 - Udviklede, for egen regning, mobilapp prototype ovenpå den åbne platform (som dette projekt kan bygge videre på).
 - Har, som konsulentopgave, været med til en stor del af udviklingen af Den Åbne Platform.
-- Byggede app-prototype der vandt 1. prisen i konkurrence om ...
-- Byggede visualisering a relationer i samarbejde med (Vejle Bibliotekerne)[simon].
+- Byggede biblioteks inspirationsapp, der vandt 1. prisen i konkurrence om at [lave en kultur-app](http://www.dbc.dk/news/konkurrence-lav-kultur-app)
+- Byggede visualisering af relationer i biblioteksdata i samarbejde med [Vejle Bibliotekerne](http://projekter.kulturstyrelsen.dk/projekt/visualisering-af-relationer).
 - Har arbejdet for DBC (2009-2013), herunder både forsøgt at styrke mobilstrategi, og udviklet forskellige mobile prototyper. Var også DBCs deltager i Bibliotekernes Udviklernetværk, og (mobile.TING)[].
 - Har studeret på Danmarks Biblioteksskole (nu IVA), hvilket er en stor del af hans uddannelse som Datalog(fra KU med speciale i programmeringssprog til mobiltelefoner).
 
