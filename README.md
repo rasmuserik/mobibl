@@ -16,7 +16,7 @@ Projektet ligger på github, og har 100% transparens omkring process og udviklin
     - [Crowdfunding](https://github.com/solsort/mobibl/blob/master/crowdfunding.md) kampagne for videre udvikling.
     - Afklaring af funktionalitetskrav og ønsker fra bibliotekerne.
     - Afklaring af teknologiplatform bedst understøttet på tværs af leverandører og biblioteker med egenudvikling. (Det umiddelbare gæt, er at det er JavaScript/React, men det skal verificeres før end beslutning tages).
-- `Maj/Juni/Juli` Implementation af grundfunktionalitet.
+- `Maj/Juni/Juli/August` Implementation af grundfunktionalitet.
     - Designet baseres på DDB-app (når den frigives), som genbruges hvor det giver mening.
     - Kildekoden baseres på MoBibl og delvist DDB-app (når den frigives), som genbruges hvor det giver mening.
     - Udviklingen foregår agilt og transparent, med release hver 14. dag. Alle biblioteker har mulighed for at komme med løbende input til processen.
