@@ -50,11 +50,12 @@ Jeg forsøger at tage initiativ til en god open source biblioteksapp, hvor bibli
 4. App'en bliver bygget i den teknologi, som flest mulige kan bygge videre på (biblioteker med egenudvikling, leverandører, etc.). For at sikre, at teknologivalget er korrekt, vil jeg gerne vide: Hvilke af følgende teknologier har I flest kompetencer indenfor: JavaScript(i.e. React Native, Cordova, Ionic, HTML5), C#(Xamarin), native Android, native iOS?
 5. Ved I allerede på nuværende tidspunkt, om I kunne være med til at crowdfunde app'en? (mere info følger).
 
-Dette survey bliver sendt til biblioteker, leverandører og andre interessenter.I er meget velkomne til at dele det med andre, som kunne have relevant feedback.
+Dette survey bliver sendt til biblioteker, leverandører og andre interessenter. I er meget velkomne til at dele det med andre, som kunne have relevant feedback.
 
-Besvarelse af ovenstående sendes til rasmuserik@solsort.com, - inden 21. april, - senere besvarelser er også velkomne. Jeres svar bliver lagt i projektdokumentationen(som open source).
+Besvarelse af ovenstående sendes til rasmuserik@solsort.com, - inden 28. april, - senere besvarelser er også velkomne. Jeres svar bliver lagt i projektdokumentationen(som open source).
 
 Skriv eller ring gerne, hvis I har spørgsmål, kommentarer etc.: rasmuserik@solsort.com, 60703081.
 
 Mange hilsner
+
 RasmusErik
